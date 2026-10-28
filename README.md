@@ -2,6 +2,8 @@
 
 O clássico **Mundo de Wumpus** em 3D, rodando no navegador. Feito com TypeScript + Three.js + Vite.
 
+A documentação técnica completa (arquitetura, decisões e funcionamento de cada arquivo, escrita para quem vai reimplementar o jogo) está em [docs/wumpus3d-documentacao.pdf](docs/wumpus3d-documentacao.pdf).
+
 ## Como jogar
 
 Você entra na caverna pela sala (1,1), marcada com um anel azul. Seu objetivo é achar o ouro e voltar com ele até a entrada.
