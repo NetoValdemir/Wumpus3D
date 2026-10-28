@@ -53,6 +53,13 @@ describe('custos e percepções', () => {
     expect(w.score).toBe(-12);
   });
 
+  it('matar o Wumpus dá +25, que só paga o tiro se acertar', () => {
+    const w = WumpusWorld.fromLayout(layout({ wumpus: [3, 1], gold: [4, 1] }));
+    w.step('shoot');
+    expect(w.score).toBe(-1 + SCORE.shoot + SCORE.wumpusKill);
+    expect(w.score).toBe(14);
+  });
+
   it('andar contra a parede custa 1, não move e acende Batida', () => {
     const w = WumpusWorld.fromLayout(layout());
     play(w, ['right', 'forward']); // virado para o sul, na borda

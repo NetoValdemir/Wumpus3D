@@ -121,7 +121,7 @@ section('2', 'Regras completas', f'''
 <h2>Pontuação</h2>
 {table(['Evento', 'Pontos'], [
     ['Cada ação', '−1'],
-    ['Atirar a flecha (além da ação)', '−10'],
+    ['Atirar a flecha (além da ação); se ela matar o Wumpus', '−10; +25'],
     ['Pegar o ouro', '+1000'],
     ['Voltar à entrada com o ouro (vitória)', '+500'],
     ['Cair num poço ou ser devorado pelo Wumpus', '−1000'],
@@ -392,7 +392,7 @@ section('10', 'Arena de agentes', f'''
 # ---------------------------------------------------------------- 11
 section('11', 'Fim da partida', f'''
 {img('vitoria.png', 'Tela de vitória. No fim da partida o mapa inteiro é revelado.')}
-<p>Ao terminar, aparece um quadro com o resultado, uma dica e a pontuação final. O mapa inteiro é revelado para você ver onde estavam os perigos.</p>
+<p>Ao terminar, aparece um quadro com o resultado, uma dica e a pontuação final. Se a flecha matou o Wumpus durante a partida, aparece também a linha "Matou o Wumpus com a flecha (+25).", em qualquer resultado. O mapa inteiro é revelado para você ver onde estavam os perigos.</p>
 {table(['Título', 'Texto exibido'], [
     ['Vitória!', 'Pegou o ouro (+1000) e voltou vivo à entrada (+500).'],
     ['Caiu no poço', 'Cuidado com as salas onde você sente brisa.'],
@@ -451,7 +451,7 @@ section('15', 'Referência rápida', f'''
 <div class="quick">
 <div><h3>Objetivo</h3><p>Pegar o ouro ({kbd('G')}) e voltar ao anel azul (1, 1). Voltar sem ouro não encerra.</p></div>
 <div><h3>Perigos</h3><p>Poço e Wumpus vivo matam (−1000). Brisa = poço ao lado. Fedor = Wumpus ao lado.</p></div>
-<div><h3>Pontos</h3><p>−1 por ação · −10 tiro · +1000 ouro · +500 vitória · −1000 morte.</p></div>
+<div><h3>Pontos</h3><p>−1 por ação · −10 tiro · +25 matar o Wumpus · +1000 ouro · +500 vitória · −1000 morte.</p></div>
 <div><h3>Você joga</h3><p>{kbd('W')} andar · {kbd('A')} {kbd('D')} girar · {kbd('Espaço')} atirar · {kbd('G')} pegar</p></div>
 <div><h3>Agente joga</h3><p>{kbd('Espaço')} jogar/pausar · {kbd('N')} um passo · {kbd('T')} parar</p></div>
 <div><h3>Sempre</h3><p>{kbd('V')} câmera · {kbd('M')} mapa · {kbd('T')} reiniciar · {kbd('R')} novo mapa · {kbd('C')} painel</p></div>

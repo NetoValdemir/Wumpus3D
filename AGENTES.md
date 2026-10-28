@@ -62,7 +62,7 @@ return {
 ## Regras
 
 - **Vitória:** pegar o ouro (`grab`) e voltar à entrada `(0, 0)`. Não existe "sair": voltar sem o ouro não encerra a partida.
-- **Pontuação:** −1 por ação, −10 pelo tiro, +1000 ao pegar o ouro, +500 ao voltar com ele, −1000 se morrer.
+- **Pontuação:** −1 por ação, −10 pelo tiro, +25 se a flecha matar o Wumpus, +1000 ao pegar o ouro, +500 ao voltar com ele, −1000 se morrer.
 - **Limite:** `maxActions` ações (`size × size × 20`). Ao passar disso a partida termina como "tempo esgotado".
 - **Erros:** se `decide` lançar uma exceção, devolver uma ação inválida ou demorar além do limite, a partida conta como erro (−1000 e o que tinha de negativo).
 - `decide` precisa ser **síncrono** (não devolva Promise). Use só JavaScript puro: não há `require`, `import`, rede nem acesso à página.

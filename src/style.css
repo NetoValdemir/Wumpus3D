@@ -515,6 +515,11 @@ button:hover {
   max-width: 34ch;
 }
 
+/* A linha do bônus por matar o Wumpus vem depois de um \n */
+#go-text {
+  white-space: pre-line;
+}
+
 #go-score {
   font-size: 20px;
   font-weight: 700;
