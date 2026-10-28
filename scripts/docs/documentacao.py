@@ -403,15 +403,16 @@ section('5', 'Regras do jogo — src/game/world.ts', f'''
 
 <h2>Gerando um mapa</h2>
 <p>O construtor sorteia um mapa até achar um em que <b>seja possível vencer</b>:</p>
-{snip('src/game/world.ts', '// Sorteia mapas até achar um em que dá para vencer', '    this.percepts = this.sense();', label='src/game/world.ts — construtor')}
+{snip('src/game/world.ts', '// Número fixo de poços, em salas sorteadas sem repetir', '    this.percepts = this.sense();', label='src/game/world.ts — construtor')}
 <ol>
-<li>Cada sala, exceto a entrada, recebe um poço com a probabilidade pedida.</li>
+<li>O número de poços é fixo: <code>pitCountFor(tamanho, porcentagem)</code> = porcentagem × total de casas, arredondado (3 no 4×4 com 20%), com mínimo de 1. Eles vão para salas sorteadas sem repetição (embaralhamento de Fisher–Yates parcial), nunca na entrada.</li>
 <li>O Wumpus vai para uma sala qualquer fora da entrada (pode coincidir com um poço).</li>
 <li>O ouro vai para uma sala sem poço e sem Wumpus.</li>
 <li>Uma busca em largura (BFS, explicada no capítulo 7) confere se existe caminho da entrada até o ouro sem pisar em poço. O Wumpus não bloqueia, porque pode ser morto com a flecha.</li>
 <li>Se alguma condição falha, sorteia de novo.</li>
 </ol>
 {box('decision', 'Por que sortear de novo em vez de aceitar qualquer mapa', '<p>Com as regras do livro, cerca de 26% dos mapas 4×4 eram impossíveis de vencer (ouro dentro de poço, junto do Wumpus ou cercado por poços). Medimos isso em 10.000 mapas. Para um jogo isso é frustrante, então só mapas vencíveis são aceitos. Repare que isso muda levemente as probabilidades reais em relação ao que os agentes supõem (veja o capítulo 14).</p>')}
+{box('decision', 'Por que um número fixo de poços', '<p>Com uma chance independente por sala, cerca de 4% dos mapas 4×4 saíam sem nenhum poço. O dono do projeto pediu que a porcentagem valesse sobre o total de casas, com pelo menos 3 poços no 4×4. O número exato <b>não é passado aos agentes</b>: eles recebem só a porcentagem e continuam supondo poços independentes com essa chance.</p>')}
 <p>O parâmetro <code>rng</code> é a função de sorteio. Por padrão é <code>Math.random</code>, mas a Arena passa um sorteador com semente, para gerar sempre os mesmos mapas (capítulo 9).</p>
 
 <h2>Um passo do jogo: <code>step()</code></h2>
@@ -512,7 +513,7 @@ section('7', 'Inteligência — base de conhecimento (src/agents/knowledge.ts)',
 {snip('src/agents/knowledge.ts', 'if (frontier.length <= MAX_ENUMERATION) {', '    } else {')}
 <p>O laço usa <b>máscaras de bits</b>: cada combinação é um número inteiro, e o bit <i>i</i> ligado significa "poço na sala <i>i</i> da fronteira". <code>combo & m</code> testa se alguma sala vizinha da brisa tem poço naquela combinação.</p>
 {box('decision', 'Limite de 16 salas na fronteira', '<p>O número de combinações dobra a cada sala: 16 salas são 65.536 combinações, 25 seriam 33 milhões. Acima de 16 o código usa uma estimativa simples (1 ÷ número de vizinhas desconhecidas de cada brisa). Isso só acontece em mapas grandes e é uma aproximação, não o valor exato.</p>')}
-{box('notdo', 'O que knowledge.ts não faz', '<ul><li>A probabilidade do Wumpus é uniforme entre as candidatas (1 ÷ quantidade): ela não considera que uma sala com poço provavelmente não é a do Wumpus.</li><li>Ela não sabe que o gerador só aceita mapas vencíveis; supõe poços independentes com a probabilidade configurada.</li><li>Ela não lembra a ordem das visitas, só o resultado.</li></ul>')}
+{box('notdo', 'O que knowledge.ts não faz', '<ul><li>A probabilidade do Wumpus é uniforme entre as candidatas (1 ÷ quantidade): ela não considera que uma sala com poço provavelmente não é a do Wumpus.</li><li>Ela não sabe que o gerador só aceita mapas vencíveis nem quantos poços o mapa tem; supõe poços independentes com a porcentagem configurada.</li><li>Ela não lembra a ordem das visitas, só o resultado.</li></ul>')}
 ''')
 
 section('8', 'Inteligência — os agentes', f'''
@@ -733,7 +734,7 @@ section('14', 'Limitações conhecidas e próximos passos', f'''
     ['Sem testes automatizados de interface', 'As regras, as deduções e a Arena têm testes (capítulo 13); a tela e o 3D não. Testes com Playwright seriam o próximo passo.'],
     ['Probabilidade do Wumpus uniforme entre candidatas', 'Simplificação. Uma enumeração conjunta de poços e Wumpus seria mais precisa e mais lenta.'],
     ['Estimativa aproximada com mais de 16 salas na fronteira', 'Para não travar em mapas grandes. Poderia dividir a fronteira em grupos independentes e enumerar cada grupo.'],
-    ['Os agentes supõem poços independentes', 'O gerador descarta mapas invencíveis, o que muda um pouco as probabilidades reais.'],
+    ['Os agentes supõem poços independentes', 'O mapa tem um número fixo de poços (que os agentes não conhecem, por escolha) e o gerador descarta mapas invencíveis; as probabilidades reais diferem um pouco das calculadas.'],
     ['Fedor continua depois que o Wumpus morre', 'Regra do livro. A base de conhecimento já ignora fedor quando <code>wumpusDead</code> é verdadeiro.'],
     ['Memória de vídeo não é liberada ao recomeçar', '<code>level.clear()</code> remove objetos, mas não chama <code>dispose()</code> nas geometrias e materiais. Em sessões muito longas a memória cresce. Corrija percorrendo a cena e chamando <code>dispose()</code>.'],
     ['Pacote de ~600 KB (160 KB compactado)', '<code>import * as THREE</code> traz a biblioteca inteira. Importar só as classes usadas pode reduzir.'],

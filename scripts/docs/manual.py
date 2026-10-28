@@ -93,7 +93,7 @@ section('2', 'Regras completas', f'''
 
 <h2>O que existe na caverna</h2>
 {table(['Elemento', 'Regra'], [
-    ['Poço', 'Cada sala, exceto a entrada, pode ter um poço, com a chance escolhida em "Chance de poço por sala". Entrar numa sala com poço mata na hora. Pode haver vários poços ou nenhum.'],
+    ['Poço', 'O mapa tem um número fixo de poços, que vem da porcentagem escolhida em "Poços (% das casas do mapa)": 3 num 4 × 4 com 20%. Eles ficam em salas sorteadas, nunca na entrada nem no ouro. Entrar numa sala com poço mata na hora.'],
     ['Wumpus', 'Um único monstro, parado numa sala que não é a entrada. Entrar na sala dele <b>enquanto ele está vivo</b> mata. Depois que ele morre, a sala dele fica segura (a não ser que também tenha um poço).'],
     ['Ouro', 'Um único ouro, numa sala que não é a entrada, não tem poço e não é a do Wumpus.'],
 ])}
@@ -161,7 +161,7 @@ section('3', 'Controles', f'''
     [kbd('V'), 'Câmera', 'Alterna entre a câmera que segue o personagem e a visão geral do mapa inteiro.'],
     [kbd('M'), 'Mapa', 'Revela ou esconde todo o mapa (poços, Wumpus e ouro). Fica ligado até você desligar, mesmo em partidas novas.'],
     [kbd('T'), 'Reiniciar', 'Volta ao início da partida no mesmo mapa (pontos zerados, flecha de volta).'],
-    [kbd('R'), 'Novo mapa', 'Sorteia outro mapa com o tamanho e a chance de poço atuais.'],
+    [kbd('R'), 'Novo mapa', 'Sorteia outro mapa com o tamanho e a porcentagem de poços atuais.'],
     [kbd('C'), '⚙ Configurar', 'Mostra ou esconde o painel de configuração.'],
 ], 'compact')}
 {box('trap', 'As teclas não respondem?', '<p>Quando o cursor está num campo de texto, numa lista de seleção ou na caixa de JSON, as teclas do jogo são ignoradas, para você poder digitar. Clique no mapa 3D para devolver o controle ao jogo. Na tela da Arena as teclas do jogo também não funcionam; feche a Arena primeiro.</p>')}
@@ -199,12 +199,13 @@ section('5', 'Painel de configuração: Partida', f'''
 <li>Ao mudar, um <b>novo mapa é sorteado</b> na hora e a partida recomeça.</li>
 <li>Mapas maiores são mais difíceis e mais longos: o ouro tende a ficar mais longe e há mais poços no total. O limite de ações cresce junto (capítulo 2).</li>
 </ul>
-<h2>Chance de poço por sala</h2>
+<h2>Poços (% das casas do mapa)</h2>
 <p>Opções: 10%, 15%, 20% (clássico), 25% e 30%.</p>
 <ul>
-<li>É a probabilidade de cada sala (exceto a entrada) ter um poço. Com 20% num 4 × 4, a média é de 3 poços.</li>
+<li>A porcentagem vale sobre o <b>total de casas</b> e é arredondada: todo mapa sorteado tem exatamente esse número de poços. Com 20%, são 2 poços no 3 × 3, 3 no 4 × 4, 7 no 6 × 6 e 13 no 8 × 8. Nunca há menos de 1.</li>
+<li>Abaixo do campo, o painel mostra a conta para o tamanho escolhido.</li>
 <li>Ao mudar, um <b>novo mapa é sorteado</b>.</li>
-<li>Os agentes inteligentes usam esse número nos cálculos de risco.</li>
+<li>Os agentes <b>não sabem</b> quantos poços há. Eles recebem só a porcentagem e a usam como chance de poço em cada sala nos cálculos de risco.</li>
 </ul>
 <h2>Quem joga</h2>
 {table(['Opção', 'Como joga'], [
@@ -315,7 +316,7 @@ section('8', 'Agente genético: pesos e treino', f'''
     ['Treinar só no mapa atual', 'ligado/desligado', 'desligado', 'Ligado: todas as versões jogam só o mapa atual. O agente fica ótimo nele, mas pior em outros mapas.'],
 ])}
 <ul>
-<li>O treino usa o <b>tamanho e a chance de poço do mapa atual</b>.</li>
+<li>O treino usa o <b>tamanho e a porcentagem de poços do mapa atual</b>.</li>
 <li>Clique em <b>Treinar</b>. O gráfico mostra, por geração, a melhor pontuação (amarelo) e a média (cinza). A tela continua utilizável durante o treino.</li>
 <li>No fim, as 5 melhores versões jogam mapas novos, e a vencedora passa a ser usada. Os pesos ficam salvos neste navegador.</li>
 <li><b>Parar treino</b> interrompe e usa a melhor versão da última geração completa.</li>
@@ -329,7 +330,7 @@ section('9', 'Avaliação em 100 partidas', f'''
 <p>A seção <b>Avaliação</b> aparece quando um agente está selecionado. <b>Avaliar em 100 partidas</b> faz o agente jogar 100 partidas sem animação e mostra o resultado, por exemplo:</p>
 {code('Agente probabilístico em mapas 4×4 sorteados: 72 vitórias, 28 mortes. Pontuação média: 790.')}
 <ul>
-<li>Desligado <b>Usar só o mapa atual</b> (padrão): são 100 mapas sorteados com o tamanho e a chance de poço do mapa atual.</li>
+<li>Desligado <b>Usar só o mapa atual</b> (padrão): são 100 mapas sorteados com o tamanho e a porcentagem de poços do mapa atual.</li>
 <li>Ligado: as 100 partidas são no mapa atual. Para agentes que sempre tomam as mesmas decisões (lógico, probabilístico, genético), o resultado se repete 100 vezes; serve mais para o agente aleatório ou agentes importados com sorteio.</li>
 <li>O resultado também mostra partidas por tempo esgotado e erros, quando houver.</li>
 </ul>
@@ -361,7 +362,7 @@ section('10', 'Arena de agentes', f'''
 {table(['Campo', 'Faixa', 'Padrão', 'O que controla'], [
     ['Mapas', '1 a 1000', '100', 'Quantos mapas cada agente joga.'],
     ['Tamanho', '4, 5, 6, 8, 10', '4 × 4', 'Tamanho dos mapas.'],
-    ['Poços', '10%, 20%, 30%', '20%', 'Chance de poço por sala.'],
+    ['Poços', '10%, 20%, 30%', '20%', 'Porcentagem das casas do mapa com poço (20% = 3 poços no 4 × 4).'],
     ['Semente', 'qualquer texto', '"wumpus"', 'Define quais mapas são sorteados. A mesma semente gera sempre os mesmos mapas, em qualquer computador. Troque para outra competição.'],
     ['Limite por decisão (ms)', '50 a 10000', '1000', 'Tempo máximo que um agente pode levar para decidir cada ação. Passou disso, a partida conta como erro.'],
     ['Usar meus mapas salvos', 'ligado/desligado', 'desligado', 'Em vez de sortear, usa todos os mapas salvos neste navegador (podem ter tamanhos diferentes).'],

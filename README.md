@@ -36,7 +36,7 @@ O painel de configuração fica ao lado do mapa (embaixo dele em telas estreitas
 
 ## Agentes inteligentes
 
-No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a chance de poço e quem joga. **Trocar de jogador mantém o mesmo mapa**, então dá para comparar agentes no mesmo cenário. **Novo** (ou R) sorteia outro mapa.
+No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a porcentagem de poços e quem joga. A porcentagem vale sobre o total de casas: todo mapa sorteado tem exatamente esse número de poços (20% num 4×4 = 3 poços; num 6×6 = 7), e o painel mostra a conta. Os agentes não sabem quantos poços há: só recebem a porcentagem e a usam como chance de poço por sala. **Trocar de jogador mantém o mesmo mapa**, então dá para comparar agentes no mesmo cenário. **Novo** (ou R) sorteia outro mapa.
 
 | Jogador | Como pensa |
 |---|---|
@@ -67,7 +67,7 @@ Na linha de comando, `npm run treinar -- --seed texto` faz o mesmo treino com se
 
 ### Desempenho medido
 
-Mesmos mapas para todos os agentes, 20% de poços (1000 mapas no 4×4, 300 no 6×6):
+Mesmos mapas para todos os agentes, 20% de poços, ou seja, 3 poços no 4×4 e 7 no 6×6 (1000 mapas no 4×4, 300 no 6×6):
 
 | Agente | 4×4 | 6×6 |
 |---|---|---|

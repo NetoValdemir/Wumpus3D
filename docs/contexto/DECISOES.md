@@ -14,7 +14,7 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 
 ## D3 — Só mapas sorteados vencíveis
 - **Por quê:** ~26% dos mapas 4×4 eram impossíveis com as regras do livro.
-- **Custo:** muda levemente as probabilidades reais em relação ao que os agentes supõem (poços independentes).
+- **Custo:** muda levemente as probabilidades reais em relação ao que os agentes supõem (poços independentes). Com o número fixo de poços (D15), a diferença aumenta um pouco.
 - **Onde:** construtor de `WumpusWorld` + `reachable()`.
 
 ## D4 — Agente lógico e probabilístico na mesma classe
@@ -68,3 +68,10 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 - **Descartado:** +50 a +100 (chute às cegas passa a dar lucro no 3×3/4×4 e o genético aprenderia a atirar no primeiro turno); < 15 (lucro quase invisível).
 - **Custo:** quebra a invariante 5 de forma consciente: aptidão do genético e números de ranking anteriores deixam de ser comparáveis. Medido: as decisões dos agentes de referência não mudaram (mesmas vitórias), só +5 a +6 pts de média.
 - **Onde:** `SCORE.wumpusKill` e o `case 'shoot'` de `step()` em `src/game/world.ts`.
+
+## D15 — Número fixo de poços; agentes não sabem quantos são
+- **Por quê:** pedido do dono. Com chance independente por sala, ~4% dos mapas 4×4 saíam sem poço. Agora a porcentagem vale sobre o total de casas: `pitCountFor(tamanho, p)` = `round(p × tamanho²)`, no mínimo 1 e no máximo tamanho² − 3. Com 20%: 2 poços no 3×3, 3 no 4×4, 7 no 6×6.
+- **Agentes não recebem o número** (pedido do dono): `AgentInfo` continua com `pitProbability`, e a base de conhecimento continua supondo poços independentes com essa chance. Foi implementada e descartada uma inferência que usava o total exato (peso C(r, K − k) por combinação da fronteira).
+- **Limite:** um agente externo pode calcular o número a partir de `pitProbability` e do tamanho, porque a regra é pública.
+- **Custo:** os mapas ficaram mais difíceis (sem mapas vazios); números medidos antes não valem mais.
+- **Onde:** `pitCountFor()` e o construtor de `WumpusWorld` em `world.ts`; dica no painel em `updatePitHint()` (`main.ts`).
