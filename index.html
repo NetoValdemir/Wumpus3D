@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wumpus 3D</title>
+  </head>
+  <body>
+    <div id="scene"></div>
+
+    <div class="hud top">
+      <div class="stats">
+        <div><span>Pontos</span><b id="score">0</b></div>
+        <div><span>Posição</span><b id="pos">-</b></div>
+        <div><span>Flechas</span><b id="arrow">1</b></div>
+        <div><span>Ouro</span><b id="gold">Não</b></div>
+      </div>
+      <div class="percepts">
+        <span id="p-stench">Fedor</span>
+        <span id="p-breeze">Brisa</span>
+        <span id="p-glitter">Brilho</span>
+        <span id="p-bump">Batida</span>
+        <span id="p-scream">Grito</span>
+      </div>
+    </div>
+
+    <ul id="log" class="hud"></ul>
+
+    <div class="hud controls">
+      <div class="row">
+        <button data-action="left" title="A / ←">⟲</button>
+        <button data-action="forward" title="W / ↑">▲</button>
+        <button data-action="right" title="D / →">⟳</button>
+      </div>
+      <div class="row">
+        <button data-action="shoot" title="Espaço">Atirar</button>
+        <button data-action="grab" title="G">Pegar</button>
+        <button data-action="climb" title="C">Sair</button>
+      </div>
+      <div class="row small">
+        <button id="btn-camera" title="V">Câmera</button>
+        <button id="btn-reveal" title="M">Mapa</button>
+        <button id="btn-restart" title="R">Novo</button>
+      </div>
+      <p class="keys">W/↑ andar · A D girar · Espaço atirar · G pegar · C sair · V câmera · M mapa · R novo</p>
+    </div>
+
+    <div id="gameover" hidden>
+      <div class="panel">
+        <h2 id="go-title"></h2>
+        <p id="go-score"></p>
+        <button id="go-restart">Jogar de novo</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
