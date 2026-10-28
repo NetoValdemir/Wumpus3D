@@ -392,7 +392,7 @@ section('10', 'Arena de agentes', f'''
 # ---------------------------------------------------------------- 11
 section('11', 'Fim da partida', f'''
 {img('vitoria.png', 'Tela de vitória. No fim da partida o mapa inteiro é revelado.')}
-<p>Ao terminar, aparece um quadro com o resultado, uma dica e a pontuação final. O mapa inteiro é revelado para você ver onde estavam os perigos.</p>
+<p>Ao terminar, aparece um quadro com o resultado, uma dica e a pontuação final. Se a flecha matou o Wumpus durante a partida, aparece também a linha "Matou o Wumpus com a flecha (+25).", em qualquer resultado. O mapa inteiro é revelado para você ver onde estavam os perigos.</p>
 {table(['Título', 'Texto exibido'], [
     ['Vitória!', 'Pegou o ouro (+1000) e voltou vivo à entrada (+500).'],
     ['Caiu no poço', 'Cuidado com as salas onde você sente brisa.'],

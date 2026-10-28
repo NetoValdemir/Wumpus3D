@@ -150,7 +150,9 @@ function updateHud() {
     };
     over.dataset.status = world.status;
     $('#go-title').textContent = TITLES[world.status];
-    $('#go-text').textContent = texts[world.status];
+    // O Wumpus só morre pela flecha, então "não está vivo" = o jogador ganhou o bônus
+    const kill = world.wumpusAlive ? '' : `\nMatou o Wumpus com a flecha (+${SCORE.wumpusKill}).`;
+    $('#go-text').textContent = texts[world.status] + kill;
     $('#go-score').textContent = `Pontuação final: ${world.score}`;
   }
 }

@@ -57,6 +57,11 @@ Acrescente novas entradas no fim.
 - **Medido (200 mapas 4×4, semente `verificacao`, antes → depois):** genético 753 → 759, probabilístico 716 → 722, lógico 667 → 672, Cauteloso 222 → 222; vitórias e mortes idênticas (nenhum agente mudou de decisão; agentes de referência não leem `SCORE`).
 - **Pendente:** a tabela "Resultados medidos" abaixo é anterior ao bônus (diferença esperada ~+5 pts); retreinar o genético para ver se a nova aptidão altera os pesos de tiro.
 
+### 16. Bônus na tela de fim de partida
+- **Pedido:** o quadro final deve dizer que o Wumpus foi morto e quanto isso rendeu.
+- **Feito:** `updateHud()` em `main.ts` acrescenta a linha "Matou o Wumpus com a flecha (+25)." quando `wumpusAlive` é falso, em qualquer resultado (vitória, morte ou tempo esgotado). Manual atualizado.
+- **Verificado:** Playwright no build (1280×800), mapa com Wumpus em (3,1): vitória com 1505 pts e a linha nova, console sem erros.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (1000 mapas) | 6×6 (300 mapas) |
