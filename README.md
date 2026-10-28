@@ -14,7 +14,13 @@ Você entra na caverna pela sala (1,1), marcada com um anel azul. Seu objetivo �
 | G | Pegar o ouro |
 | V | Alternar câmera (seguir / visão geral) |
 | M | Revelar o mapa (modo de depuração) |
+| T | Reiniciar a partida no mesmo mapa |
 | R | Novo mapa |
+| C | Mostrar ou esconder o painel de configuração |
+
+Quando um agente está jogando, **Espaço** joga ou pausa, **N** dá um passo e **⏹ Parar** (ou T) interrompe o agente e volta a partida ao início, mantendo o mesmo mapa.
+
+O painel de configuração fica ao lado do mapa (embaixo dele em telas estreitas) e nunca o cobre. Ao fechá-lo, o mapa ocupa a tela inteira.
 
 **Percepções:** *Fedor* = Wumpus em sala vizinha · *Brisa* = poço em sala vizinha · *Brilho* = ouro nesta sala · *Batida* = bateu na parede · *Grito* = o Wumpus morreu.
 

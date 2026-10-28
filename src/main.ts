@@ -98,8 +98,8 @@ function updateHud() {
   $<HTMLButtonElement>('#btn-play').disabled = world.gameOver;
   $<HTMLButtonElement>('#btn-step').disabled = world.gameOver;
   $('#keys').textContent = isAgent
-    ? 'Espaço jogar/pausar · N um passo · V câmera · M mapa · R novo mapa'
-    : 'W/↑ andar · A D girar · Espaço atirar · G pegar · V câmera · M mapa · R novo mapa';
+    ? 'Espaço jogar/pausar · N um passo · T parar e reiniciar · V câmera · M mapa · R novo mapa · C configurar'
+    : 'W/↑ andar · A D girar · Espaço atirar · G pegar · T reiniciar · V câmera · M mapa · R novo mapa · C configurar';
   const thought = $('#thought');
   thought.hidden = !agent?.thought;
   thought.textContent = agent?.thought ? `${AGENTS[agentId].label}: ${agent.thought}` : '';
@@ -156,6 +156,24 @@ function restart(newMap = true) {
   updateHud();
 }
 
+/** Para o agente (se estiver jogando) e volta ao início, no mesmo mapa. */
+function resetSameMap() {
+  const wasPlaying = playing;
+  restart(false);
+  log(wasPlaying ? 'Agente parado. A partida voltou ao início, no mesmo mapa.' : 'Partida reiniciada no mesmo mapa.');
+}
+
+const isSetupOpen = () => !$('#setup').hidden;
+
+/** Mostra ou esconde o painel de configuração; o mapa 3D ocupa o espaço liberado. */
+function setSetupOpen(open: boolean) {
+  $('#setup').hidden = !open;
+  document.body.classList.toggle('setup-open', open);
+  const btn = $('#btn-setup');
+  btn.setAttribute('aria-expanded', String(open));
+  btn.classList.toggle('active', open);
+}
+
 /** Joga um mapa salvo ou importado. */
 function playLayout(l: MapLayout) {
   layout = l;
@@ -202,6 +220,8 @@ window.addEventListener('keydown', (e) => {
     if (!e.repeat) act(KEYS[e.code]);
   }
   if (e.code === 'KeyR') restart();
+  else if (e.code === 'KeyT') resetSameMap();
+  else if (e.code === 'KeyC') setSetupOpen(!isSetupOpen());
   else if (e.code === 'KeyV') toggleCamera();
   else if (e.code === 'KeyM') toggleReveal();
 });
@@ -213,6 +233,10 @@ document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((btn) =>
 $('#btn-restart').addEventListener('click', () => restart());
 $('#go-restart').addEventListener('click', () => restart());
 $('#go-replay').addEventListener('click', () => restart(false));
+$('#btn-stop').addEventListener('click', resetSameMap);
+$('#btn-reset').addEventListener('click', resetSameMap);
+$('#btn-setup').addEventListener('click', () => setSetupOpen(!isSetupOpen()));
+$('#setup-close').addEventListener('click', () => setSetupOpen(false));
 $('#btn-camera').addEventListener('click', toggleCamera);
 $('#btn-reveal').addEventListener('click', toggleReveal);
 $('#btn-play').addEventListener('click', togglePlay);
@@ -502,8 +526,8 @@ $('#btn-bench').addEventListener('click', () => {
   }, 20);
 });
 
-// Painel aberto em telas grandes, fechado no celular
-if (window.innerWidth > 900) $('#setup').setAttribute('open', '');
+// Painel aberto em telas largas, fechado no celular
+setSetupOpen(window.innerWidth > 760);
 
 updateSetup();
 refreshMapList();

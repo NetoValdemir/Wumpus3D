@@ -49,13 +49,15 @@ export class WorldView {
     this.scene.add(new THREE.HemisphereLight(0x8a8aaa, 0x2a1d10, 0.7));
     this.scene.add(this.level);
 
-    window.addEventListener('resize', () => this.resize(container));
+    // Acompanha o tamanho da área do mapa (muda com a janela e ao abrir/fechar o painel)
+    new ResizeObserver(() => this.resize(container)).observe(container);
     this.resize(container);
   }
 
   private resize(container: HTMLElement) {
     const w = container.clientWidth;
     const h = container.clientHeight;
+    if (!w || !h) return;
     this.renderer.setSize(w, h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
