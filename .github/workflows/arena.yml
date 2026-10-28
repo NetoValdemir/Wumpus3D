@@ -20,6 +20,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Testes
+        run: npm run check
       - name: Rodar a arena
         run: npm run arena -- --maps 200 --seed "pr-${{ github.run_id }}" --md arena.md
       - name: Publicar o ranking no resumo

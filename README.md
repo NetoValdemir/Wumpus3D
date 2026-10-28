@@ -125,6 +125,37 @@ npm run build      # gera a versão final em dist/
 npm run preview    # testa a versão final
 ```
 
+## Testes
+
+```bash
+npm run check   # tipos (tsc) + testes (vitest)
+npm test        # só os testes
+```
+
+Os testes ficam em `tests/` e cobrem as regras do jogo, as deduções da base de conhecimento e a Arena. O GitHub Actions roda `npm run check` antes de publicar o site.
+
+## Trabalhando no projeto com o Claude
+
+O repositório guarda a memória do projeto, para qualquer sessão nova do Claude Code retomar o trabalho sem precisar da conversa original:
+
+| Arquivo | Para quê |
+|---|---|
+| `CLAUDE.md` | Resumo carregado automaticamente: comandos, mapa do código, invariantes e convenções. |
+| `docs/contexto/HISTORICO.md` | Tudo o que foi pedido e feito, resultados medidos e pendências. |
+| `docs/contexto/DECISOES.md` | Cada decisão de projeto, com o motivo e o que foi descartado. |
+| `.claude/skills/wumpus-consultar` | Como responder perguntas sobre o projeto lendo só o necessário. |
+| `.claude/skills/wumpus-evoluir` | Roteiro para mudanças: invariantes, testes, arena, documentação e publicação. |
+| `.claude/skills/wumpus-docs` | Como atualizar e regenerar os PDFs. |
+| `.claude/agents/wumpus-especialista.md` | Subagente somente-leitura para investigações longas no código. |
+
+**No Claude Code** (terminal, app ou claude.ai/code): abra uma sessão com este repositório e peça o que quiser ("explique como o árbitro mede erros de lógica", "adicione sons ao jogo"). O `CLAUDE.md` é lido sozinho, e as skills são usadas conforme a tarefa. Também dá para chamá-las pelo nome, como `/wumpus-evoluir`.
+
+**No chat do claude.ai** (sem acesso ao código): crie um Projeto e adicione como conhecimento `CLAUDE.md`, `docs/contexto/HISTORICO.md`, `docs/contexto/DECISOES.md` e, se quiser, os PDFs de `docs/`. Assim o chat responde sobre o projeto, mas não consegue alterar nem testar o código.
+
+## Documentação em PDF
+
+Os PDFs de `docs/` são gerados por `scripts/docs/gerar.sh` a partir do código (os trechos de código são copiados dos arquivos reais). Requer python3, Playwright e as fontes Inter, JetBrains Mono e Bitstream Charter.
+
 ## Estrutura
 
 ```
@@ -147,6 +178,8 @@ src/
 │   └── ui.ts        # tela da Arena
 ├── storage.ts       # mapas, genoma e agentes importados salvos no navegador
 scripts/arena.ts     # arena na linha de comando (npm run arena)
+scripts/docs/        # geradores dos PDFs de docs/
+tests/               # testes automatizados (vitest)
 agents/              # agentes da competição (um arquivo .js cada)
 ├── render/view.ts   # cena 3D com Three.js (lê o estado do mundo e desenha)
 ├── main.ts          # teclado, botões e HUD

@@ -1,0 +1,72 @@
+# Histórico do projeto
+
+Resumo de tudo o que foi pedido e feito, em ordem. Serve para retomar o projeto sem reler as conversas.
+Cada entrada: o pedido, o que foi feito, o que foi medido e o que ficou de fora.
+Acrescente novas entradas no fim.
+
+## Sessão 1 — criação do jogo (28/10/2026)
+
+### 1. Escolha da tecnologia
+- **Pedido:** jogo estilo Mundo de Wumpus, 3D, na web, leve.
+- **Feito:** recomendado TypeScript + Three.js + Vite (alternativas analisadas: Babylon.js, React Three Fiber, Godot, Unity, Rust/WASM). Ver D1.
+
+### 2. Protótipo, passo a passo e hospedagem gratuita
+- **Feito:** protótipo jogável 4×4 (andar, girar, atirar, pegar, percepções, flecha animada, câmera que segue), passo a passo de implementação, workflow do GitHub Pages; comparadas hospedagens gratuitas (GitHub Pages, Netlify, Vercel, Cloudflare Pages, itch.io).
+
+### 3. "Falta a condição de vitória e a pontuação do ouro"
+- **Encontrado:** ~26% dos mapas 4×4 eram impossíveis (ouro em poço ~20%, junto do Wumpus ~7%, ou cercado). Pegar o ouro não dava pontos.
+- **Feito:** geração só aceita mapas vencíveis (BFS sem poços até o ouro; 0 de 10.000 impossíveis), +1000 ao pegar o ouro, campo "Objetivo" no HUD. Ver D3.
+
+### 4. Agentes inteligentes e tamanho do mapa
+- **Feito:** mapas 4×4 a 10×10, chance de poço configurável, agentes aleatório, lógico e probabilístico (inferência bayesiana por enumeração da fronteira), "Mostrar raciocínio" (discos de risco no piso), "Avaliar em 100 partidas". Ver D4, D5.
+
+### 5. Três alterações: vitória, mapas salvos, agente genético
+- **Vitória só ao voltar a (1,1) com o ouro**, automática; voltar sem ouro não encerra; removida a ação `climb` e a "tolerância a risco"; agentes passaram a arriscar em vez de desistir; criado limite de ações `tamanho² × 20`. Ver D6.
+- **Mapas:** salvar no navegador, repetir com outro agente (trocar de jogador mantém o mapa), exportar/importar JSON (formato `wumpus3d-map`, coordenadas 1-based) com validação. Ver D7.
+- **Agente genético:** 12 pesos (9 por sala candidata + 3 da opção de tiro), AG com torneio 3, elitismo 2, cruzamento aritmético, mutação gaussiana (20%, σ 0,8), validação final dos 5 melhores em mapas novos; treino na tela em Web Worker. Ver D8, D9.
+- **Medido:** a primeira evolução ficou pior que o genoma escrito à mão (725 × 760 pts) por ruído; com validação e semente "imita o bayesiano" o genoma evoluído empatou com o probabilístico (tabela abaixo).
+
+### 6. Parar e reiniciar no mesmo mapa; painel sem cobrir o mapa
+- **Feito:** botão ⏹ Parar (tecla T) e Reiniciar; painel virou coluna lateral (faixa inferior no celular) e o canvas redimensiona com `ResizeObserver`; no celular os botões viraram barra abaixo do mapa. Ver D10.
+
+### 7. Arena: agentes de outros devs, competição e ranking
+- **Feito:** contrato `registerAgent({ name, author, create(info) { return { decide(s) } } })`; sandbox em Web Worker (navegador) e `vm` (Node), só JSON entra/sai; árbitro mede erros de lógica e riscos desnecessários; ranking por pontos médios; semente reproduzível; `npm run arena`; workflow de PR (200 mapas, semente nova) e ranking oficial no deploy (500 mapas, semente secreta `ARENA_SEED`). `AGENTES.md` e `agents/exemplo-cauteloso.js`. Ver D11, D12.
+- **Testado:** agentes com laço infinito, erro de sintaxe, ação inválida, exceção e tentativa de acessar `process` — todos viram erro claro sem travar. Navegador e CLI dão números idênticos com a mesma semente.
+
+### 8–10. Documentação em PDF (em `docs/`)
+- `wumpus3d-documentacao.pdf` — documentação técnica para dev júnior reimplementar (arquitetura, cada arquivo, algoritmos, roteiro, limitações).
+- `agente-genetico-fundamentacao.pdf` — fundamentação teórica do agente genético. **Não houve artigo-base único**: técnicas padrão combinadas; cada variável marcada como literatura / adaptação / escolha de projeto; 13 referências verificadas na web; itens não verificados listados no apêndice A (subseções do AIMA 4ª ed., elitismo atribuído a De Jong, edição do Law, texto literal de Michalewicz, páginas de Miller & Goldberg).
+- `wumpus3d-manual-de-uso.pdf` — manual do jogador: regras, controles, cada configuração e casos especiais.
+- Geradores em `scripts/docs/` (`gerar.sh`).
+
+### 11–12. Arquivos para download e HTML único
+- Entregue `.zip` do projeto e `wumpus3d-jogavel.html` (jogo em um arquivo, ~640 KB, sem internet: testado offline, nenhum acesso à rede). No celular abrir HTML local é ruim → usar o site.
+
+### 13. GitHub e GitHub Pages
+- Código enviado para `NetoValdemir/Wumpus3D` (main). Pages ativado pelo dono (Source: GitHub Actions). Site: https://netovaldemir.github.io/Wumpus3D/.
+- Segredo `ARENA_SEED` criado pelo dono. **Não verificado** se a execução usou o segredo (logs inacessíveis da sessão): conferir na etapa "Ranking oficial da arena" se aparece `--seed "***"`.
+
+### 14. Memória do projeto para o Claude
+- **Feito:** `CLAUDE.md`, este histórico, `DECISOES.md`, skills `wumpus-consultar`, `wumpus-evoluir`, `wumpus-docs`, subagente `wumpus-especialista`, testes Vitest (`npm run check`, também no CI antes de publicar), geradores dos PDFs no repositório.
+
+## Resultados medidos (mesmos mapas para todos, 20% de poços)
+
+| Agente | 4×4 (1000 mapas) | 6×6 (300 mapas) |
+|---|---|---|
+| Aleatório | ~6% vitórias, −660 pts | ~2%, −855 pts |
+| Lógico | 70%, 725 pts | 47%, 144 pts |
+| Probabilístico | 72%, 787 pts | 53%, 299 pts |
+| Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 73%, 800 pts | 53%, 292 pts |
+| Genético (`DEFAULT_GENOME`, evoluído) | 71%, 754 pts | 54%, 324 pts |
+
+Sem teste estatístico formal; diferenças entre probabilístico e genético estão dentro do ruído.
+
+## Pendências e ideias (não feitas)
+
+- Conferir no log do Actions se `ARENA_SEED` está sendo usado.
+- Testes automatizados de interface/3D (Playwright) — hoje só regras, deduções e arena têm testes.
+- `WorldView.load()` não chama `dispose()` nas geometrias antigas (memória de vídeo cresce em sessões longas).
+- P(Wumpus) uniforme entre candidatas; enumeração aproximada com fronteira > 16 salas.
+- Agente genético não supera o probabilístico; novas características ou calibração de parâmetros poderiam mudar isso.
+- Bundle ~600 KB (`import * as THREE`).
+- Acessibilidade do 3D (sem descrição textual para leitores de tela).

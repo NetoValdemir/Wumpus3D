@@ -28,6 +28,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Testes
+        run: npm run check
       # Ranking oficial: todos os agentes de agents/ em 500 mapas. Configure o segredo ARENA_SEED
       # (Settings → Secrets and variables → Actions) para a semente ficar secreta.
       - name: Ranking oficial da arena
