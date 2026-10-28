@@ -97,7 +97,7 @@ section('2', 'Regras completas', f'''
     ['Wumpus', 'Um único monstro, parado numa sala que não é a entrada. Entrar na sala dele <b>enquanto ele está vivo</b> mata. Depois que ele morre, a sala dele fica segura (a não ser que também tenha um poço).'],
     ['Ouro', 'Um único ouro, numa sala que não é a entrada, não tem poço e não é a do Wumpus.'],
 ])}
-{box('tip', 'Todo mapa sorteado tem solução', '<p>O jogo só aceita mapas sorteados em que existe um caminho da entrada até o ouro sem pisar em poço. Às vezes esse caminho passa pela sala do Wumpus, e aí é preciso matá-lo com a flecha. Mapas <b>importados</b> não passam por essa checagem (veja o capítulo 7).</p>')}
+{box('tip', 'Todo mapa sorteado tem solução', '<p>O jogo só aceita mapas sorteados em que existe um caminho da entrada até o ouro sem pisar em poço. Às vezes esse caminho passa pela sala do Wumpus, ou o ouro está na própria sala dele, e aí é preciso matá-lo com a flecha. O Wumpus nunca fica numa sala com poço. Mapas <b>importados</b> não passam por essa checagem (veja o capítulo 7).</p>')}
 
 <h2>Percepções</h2>
 <p>Você não vê o mapa. A cada passo, o jogo diz o que você sente <b>na sala onde está</b>:</p>
@@ -299,7 +299,7 @@ section('7', 'Mapas: salvar, repetir, exportar e importar', f'''
     ['<code>name</code>', 'Opcional, até 60 caracteres.', 'Em branco vira "Mapa importado".'],
     ['<code>pitProbability</code>', 'Opcional, número de 0 a 1. É usado pelos agentes nos cálculos de risco.', 'Se faltar, é calculado como número de poços ÷ (salas − 1).'],
 ])}
-{box('notdo', 'Mapas importados podem não ter solução', '<p>Diferente dos mapas sorteados, um mapa importado <b>não</b> é testado para garantir caminho até o ouro. Ele pode ter o ouro cercado de poços, ou o ouro na mesma sala do Wumpus (aí é obrigatório matar o Wumpus antes). Mapas de tamanho 3, 9, 11 ou 12 funcionam, mas não aparecem na lista "Tamanho do mapa".</p>')}
+{box('notdo', 'Mapas importados podem não ter solução', '<p>Diferente dos mapas sorteados, um mapa importado <b>não</b> é testado para garantir caminho até o ouro. Ele pode ter o ouro cercado de poços. O jogo só recusa ouro ou Wumpus dentro de um poço. Mapas de tamanho 3, 9, 11 ou 12 funcionam, mas não aparecem na lista "Tamanho do mapa".</p>')}
 ''')
 
 # ---------------------------------------------------------------- 8

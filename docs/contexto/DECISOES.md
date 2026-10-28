@@ -75,3 +75,9 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 - **Limite:** um agente externo pode calcular o número a partir de `pitProbability` e do tamanho, porque a regra é pública.
 - **Custo:** os mapas ficaram mais difíceis (sem mapas vazios); números medidos antes não valem mais.
 - **Onde:** `pitCountFor()` e o construtor de `WumpusWorld` em `world.ts`; dica no painel em `updatePitHint()` (`main.ts`).
+
+## D16 — Wumpus nunca num poço; pode dividir a sala com o ouro
+- **Por quê:** pedido do dono. Antes o Wumpus era sorteado entre todas as salas (podia cair num poço) e o ouro nunca ficava com ele. Agora os dois são sorteados entre as salas sem poço, de forma independente: em ~1/12 dos mapas 4×4 o ouro está na sala do Wumpus e é obrigatório matá-lo.
+- **Importação:** `parseLayout()` recusa Wumpus dentro de poço, como já recusava ouro.
+- **Não mudou:** a base de conhecimento continua não usando essa regra (P(Wumpus) uniforme entre candidatas, sem descartar poços certos).
+- **Onde:** construtor de `WumpusWorld` e `parseLayout()` em `world.ts`.

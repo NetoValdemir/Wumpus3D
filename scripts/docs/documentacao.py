@@ -406,8 +406,8 @@ section('5', 'Regras do jogo — src/game/world.ts', f'''
 {snip('src/game/world.ts', '// Número fixo de poços, em salas sorteadas sem repetir', '    this.percepts = this.sense();', label='src/game/world.ts — construtor')}
 <ol>
 <li>O número de poços é fixo: <code>pitCountFor(tamanho, porcentagem)</code> = porcentagem × total de casas, arredondado (3 no 4×4 com 20%), com mínimo de 1. Eles vão para salas sorteadas sem repetição (embaralhamento de Fisher–Yates parcial), nunca na entrada.</li>
-<li>O Wumpus vai para uma sala qualquer fora da entrada (pode coincidir com um poço).</li>
-<li>O ouro vai para uma sala sem poço e sem Wumpus.</li>
+<li>O Wumpus vai para uma sala sem poço, fora da entrada.</li>
+<li>O ouro vai para uma sala sem poço, fora da entrada. Pode ser a mesma sala do Wumpus: aí é obrigatório matá-lo antes de pegar o ouro.</li>
 <li>Uma busca em largura (BFS, explicada no capítulo 7) confere se existe caminho da entrada até o ouro sem pisar em poço. O Wumpus não bloqueia, porque pode ser morto com a flecha.</li>
 <li>Se alguma condição falha, sorteia de novo.</li>
 </ol>

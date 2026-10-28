@@ -99,6 +99,7 @@ export function parseLayout(json: string): MapLayout {
   const wumpus = cell(data.wumpus, '"wumpus"');
   const gold = cell(data.gold, '"gold"');
   if (pits.some(([x, y]) => x === gold[0] && y === gold[1])) throw new Error('O ouro está dentro de um poço: seria impossível vencer.');
+  if (pits.some(([x, y]) => x === wumpus[0] && y === wumpus[1])) throw new Error('O Wumpus está dentro de um poço: os dois não podem ficar na mesma sala.');
   const pitProbability = typeof data.pitProbability === 'number' ? data.pitProbability : pits.length / (n * n - 1);
   return {
     format: 'wumpus3d-map',
@@ -165,11 +166,10 @@ export class WumpusWorld {
       }
       const pits = new Set(shuffled.slice(0, this.pitCount).map((c) => key(c.x, c.y)));
       const pick = (from: Cell[]) => from[Math.floor(rng() * from.length)];
-      const wumpus = pick(free);
-      // O ouro nunca fica num poço nem na sala do Wumpus
-      const goldOptions = free.filter((c) => !pits.has(key(c.x, c.y)) && !(c.x === wumpus.x && c.y === wumpus.y));
-      if (goldOptions.length === 0) continue;
-      const gold = pick(goldOptions);
+      // Wumpus e ouro nunca ficam num poço; os dois podem dividir a mesma sala (aí é preciso matar o Wumpus). Ver D16.
+      const noPit = free.filter((c) => !pits.has(key(c.x, c.y)));
+      const wumpus = pick(noPit);
+      const gold = pick(noPit);
       if (!WumpusWorld.reachable(size, pits, gold)) continue;
 
       this.pits = pits;

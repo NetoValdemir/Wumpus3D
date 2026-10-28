@@ -28,7 +28,7 @@ O painel de configuração fica ao lado do mapa (embaixo dele em telas estreitas
 
 **Percepções:** *Fedor* = Wumpus em sala vizinha · *Brisa* = poço em sala vizinha · *Brilho* = ouro nesta sala · *Batida* = bateu na parede · *Grito* = o Wumpus morreu.
 
-**Vitória:** só acontece quando você pega o ouro **e** volta para a sala (1,1). Voltar à entrada sem o ouro não encerra a partida: o jogo continua. Todo mapa sorteado tem caminho sem poços até o ouro (às vezes é preciso matar o Wumpus).
+**Vitória:** só acontece quando você pega o ouro **e** volta para a sala (1,1). Voltar à entrada sem o ouro não encerra a partida: o jogo continua. Todo mapa sorteado tem caminho sem poços até o ouro (às vezes é preciso matar o Wumpus). O Wumpus nunca fica numa sala com poço, mas pode estar na sala do ouro.
 
 **Fim de jogo:** vitória, morte (poço ou Wumpus) ou tempo esgotado, que acontece depois de `tamanho × tamanho × 20` ações (320 num 4×4) para nenhuma partida durar para sempre.
 
@@ -114,7 +114,7 @@ Formato do arquivo (coordenadas como na tela, começando em 1: `[coluna, linha]`
 }
 ```
 
-Também dá para criar mapas à mão nesse formato. O jogo recusa, com a explicação do problema, coordenadas fora do mapa, qualquer coisa na entrada (1,1) e ouro dentro de poço.
+Também dá para criar mapas à mão nesse formato. O jogo recusa, com a explicação do problema, coordenadas fora do mapa, qualquer coisa na entrada (1,1) e ouro ou Wumpus dentro de poço.
 
 ## Rodando localmente
 

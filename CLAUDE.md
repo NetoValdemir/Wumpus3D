@@ -53,7 +53,7 @@ scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
 3. Coordenadas: **0-based** no código e na API de agentes; **1-based** na tela e no JSON de mapa (`toLayout`/`fromLayout` convertem).
 4. Vitória **só** ao chegar em (1,1) com o ouro (automática). Não existe ação `climb`. Voltar sem ouro não encerra. Limite: `tamanho² × 20` ações.
 5. Pontuação: −1 por ação, −10 tiro, +25 matar o Wumpus (D14), +1000 pegar ouro, +500 voltar com ele, −1000 morte. Mudar isso muda a aptidão do agente genético e invalida números medidos.
-6. Mapas sorteados sempre têm caminho sem poço até o ouro e exatamente `round(p × tamanho²)` poços (D15), número que os agentes não recebem; mapas importados não são checados (documentado no manual).
+6. Mapas sorteados sempre têm caminho sem poço até o ouro e exatamente `round(p × tamanho²)` poços (D15), número que os agentes não recebem; Wumpus nunca num poço, mas pode estar na sala do ouro (D16); mapas importados não são checados (documentado no manual).
 7. Mesma semente → mesmos mapas (`src/arena/rng.ts`). A semente oficial é o segredo `ARENA_SEED` — nunca a coloque no repositório (é público).
 8. TypeScript com `erasableSyntaxOnly`: sem `enum`, sem parameter properties; use uniões de strings e campos declarados.
 

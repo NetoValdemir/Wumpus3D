@@ -53,6 +53,22 @@ describe('sorteio de mapas', () => {
     expect(pitCountFor(3, 0.05)).toBe(1); // nunca menos de 1
   });
 
+  it('Wumpus e ouro podem dividir a sala: mata o Wumpus, entra e pega o ouro', () => {
+    const w = WumpusWorld.fromLayout(layout({ wumpus: [3, 1], gold: [3, 1] }));
+    play(w, ['shoot', 'forward', 'forward', 'grab']);
+    expect(w.status).toBe('playing');
+    expect(w.hasGold).toBe(true);
+  });
+
+  it('o sorteio às vezes põe o Wumpus na sala do ouro', () => {
+    let together = 0;
+    for (let i = 0; i < 500; i++) {
+      const w = new WumpusWorld(4, 0.2);
+      if (w.wumpus.x === w.gold!.x && w.wumpus.y === w.gold!.y) together++;
+    }
+    expect(together).toBeGreaterThan(0);
+  });
+
   it('todo mapa sorteado tem exatamente esse número de poços, fora da entrada e do ouro', () => {
     for (const [size, p] of [[3, 0.3], [4, 0.2], [6, 0.2], [8, 0.25]]) {
       for (let i = 0; i < 50; i++) {
@@ -61,6 +77,7 @@ describe('sorteio de mapas', () => {
         expect(w.pitCount).toBe(w.pits.size);
         expect(w.pits.has(key(0, 0))).toBe(false);
         expect(w.pits.has(key(w.gold!.x, w.gold!.y))).toBe(false);
+        expect(w.pits.has(key(w.wumpus.x, w.wumpus.y))).toBe(false);
       }
     }
   });
@@ -130,6 +147,7 @@ describe('mapas', () => {
     [{ size: 13 }, 'size'],
     [{ format: 'outro' }, 'não é um mapa'],
     [{ pits: [[0, 2]] }, 'poço nº 1'],
+    [{ wumpus: [4, 4] }, 'Wumpus está dentro de um poço'],
   ])('recusa mapa inválido %j', (extra, msg) => {
     expect(() => layout(extra)).toThrow(msg);
   });
