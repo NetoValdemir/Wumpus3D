@@ -29,38 +29,92 @@
     <details id="setup" class="hud setup">
       <summary>Configurar partida</summary>
       <div class="fields">
-        <label>Tamanho do mapa
-          <select id="cfg-size">
-            <option value="4" selected>4 × 4</option>
-            <option value="5">5 × 5</option>
-            <option value="6">6 × 6</option>
-            <option value="7">7 × 7</option>
-            <option value="8">8 × 8</option>
-            <option value="10">10 × 10</option>
-          </select>
-        </label>
-        <label>Chance de poço por sala
-          <select id="cfg-pits">
-            <option value="0.1">10%</option>
-            <option value="0.15">15%</option>
-            <option value="0.2" selected>20% (clássico)</option>
-            <option value="0.25">25%</option>
-            <option value="0.3">30%</option>
-          </select>
-        </label>
-        <label>Quem joga
-          <select id="cfg-agent"></select>
-        </label>
-        <p id="agent-desc" class="hint"></p>
-        <label id="row-risk">Tolerância a risco <output id="risk-out"></output>
-          <input type="range" id="cfg-risk" min="5" max="60" step="5" value="30" />
-        </label>
-        <label id="row-speed">Velocidade <output id="speed-out"></output>
-          <input type="range" id="cfg-speed" min="1" max="20" value="4" />
-        </label>
-        <label class="check" id="row-beliefs"><input type="checkbox" id="cfg-beliefs" checked /> Mostrar raciocínio do agente</label>
-        <button id="btn-bench">Avaliar em 100 partidas</button>
-        <p id="bench-out" class="hint"></p>
+        <section>
+          <h3>Partida</h3>
+          <label>Tamanho do mapa
+            <select id="cfg-size">
+              <option value="4" selected>4 × 4</option>
+              <option value="5">5 × 5</option>
+              <option value="6">6 × 6</option>
+              <option value="7">7 × 7</option>
+              <option value="8">8 × 8</option>
+              <option value="10">10 × 10</option>
+            </select>
+          </label>
+          <label>Chance de poço por sala
+            <select id="cfg-pits">
+              <option value="0.1">10%</option>
+              <option value="0.15">15%</option>
+              <option value="0.2" selected>20% (clássico)</option>
+              <option value="0.25">25%</option>
+              <option value="0.3">30%</option>
+            </select>
+          </label>
+          <label>Quem joga
+            <select id="cfg-agent"></select>
+          </label>
+          <p id="agent-desc" class="hint"></p>
+          <p class="hint">Trocar de jogador mantém o mesmo mapa, para comparar agentes no mesmo cenário.</p>
+          <label id="row-speed">Velocidade <output id="speed-out"></output>
+            <input type="range" id="cfg-speed" min="1" max="20" value="4" />
+          </label>
+          <label class="check" id="row-beliefs"><input type="checkbox" id="cfg-beliefs" checked /> Mostrar raciocínio do agente</label>
+        </section>
+
+        <section>
+          <h3>Mapas</h3>
+          <p class="hint">Mapa atual: <b id="map-current">sorteado</b></p>
+          <div class="inline">
+            <input type="text" id="map-name" placeholder="Nome do mapa" maxlength="60" aria-label="Nome do mapa" />
+            <button id="map-save">Salvar</button>
+          </div>
+          <label>Mapas salvos neste navegador
+            <select id="map-list"></select>
+          </label>
+          <div class="inline">
+            <button id="map-load">Jogar</button>
+            <button id="map-export">Exportar</button>
+            <button id="map-delete">Excluir</button>
+          </div>
+          <div class="inline">
+            <button id="map-export-current">Exportar mapa atual</button>
+            <label class="file-button">Importar .json<input type="file" id="map-file" accept=".json,application/json" /></label>
+          </div>
+          <details class="paste">
+            <summary>Copiar ou colar JSON</summary>
+            <textarea id="map-json" rows="6" spellcheck="false" aria-label="JSON do mapa" placeholder='{"format": "wumpus3d-map", ...}'></textarea>
+            <div class="inline">
+              <button id="map-copy">Copiar</button>
+              <button id="map-paste-load">Carregar JSON</button>
+            </div>
+          </details>
+          <p id="map-msg" class="hint msg"></p>
+        </section>
+
+        <section id="ga-section" hidden>
+          <h3>Agente genético</h3>
+          <p class="hint">Pesos em uso: <b id="ga-source">padrão (pré-treinado)</b></p>
+          <div id="ga-weights" class="weights"></div>
+          <div class="grid2">
+            <label>Gerações <input type="number" id="ga-gens" min="1" max="200" value="15" /></label>
+            <label>População <input type="number" id="ga-pop" min="6" max="100" value="20" /></label>
+            <label>Mapas por geração <input type="number" id="ga-maps" min="1" max="200" value="20" /></label>
+          </div>
+          <label class="check"><input type="checkbox" id="ga-on-map" /> Treinar só no mapa atual</label>
+          <div class="inline">
+            <button id="ga-train">Treinar</button>
+            <button id="ga-reset">Usar pesos padrão</button>
+          </div>
+          <canvas id="ga-chart" width="560" height="200" aria-label="Evolução da aptidão por geração"></canvas>
+          <p id="ga-msg" class="hint msg"></p>
+        </section>
+
+        <section id="bench-section">
+          <h3>Avaliação</h3>
+          <label class="check"><input type="checkbox" id="bench-on-map" /> Usar só o mapa atual</label>
+          <button id="btn-bench">Avaliar em 100 partidas</button>
+          <p id="bench-out" class="hint msg"></p>
+        </section>
       </div>
     </details>
 
@@ -82,14 +136,13 @@
       <div class="row manual">
         <button data-action="shoot" title="Espaço">Atirar</button>
         <button data-action="grab" title="G">Pegar</button>
-        <button data-action="climb" id="btn-climb" title="C">Sair</button>
       </div>
       <div class="row small">
         <button id="btn-camera" title="V">Câmera</button>
         <button id="btn-reveal" title="M">Mapa</button>
         <button id="btn-restart" title="R">Novo</button>
       </div>
-      <p class="keys" id="keys">W/↑ andar · A D girar · Espaço atirar · G pegar · C sair · V câmera · M mapa · R novo</p>
+      <p class="keys" id="keys"></p>
     </div>
 
     <div id="gameover" hidden>
@@ -97,7 +150,10 @@
         <h2 id="go-title"></h2>
         <p id="go-text"></p>
         <p id="go-score"></p>
-        <button id="go-restart">Jogar de novo</button>
+        <div class="inline center">
+          <button id="go-replay">Repetir este mapa</button>
+          <button id="go-restart">Novo mapa</button>
+        </div>
       </div>
     </div>
 

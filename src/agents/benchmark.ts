@@ -1,36 +1,39 @@
 // Roda várias partidas sem 3D para medir o desempenho de um agente.
-import { WumpusWorld, type Status } from '../game/world';
+import { WumpusWorld, type MapLayout, type Status } from '../game/world';
 import { createAgent, sensesOf, type AgentId } from './agents';
 
 export interface BenchmarkResult {
   games: number;
   wins: number;
   deaths: number;
+  timeouts: number;
   avgScore: number;
 }
 
-export function runEpisode(id: Exclude<AgentId, 'human'>, size: number, pitProbability: number, riskTolerance: number, maxSteps = 2000) {
-  const world = new WumpusWorld(size, pitProbability);
-  const agent = createAgent(id, size, pitProbability, riskTolerance);
-  for (let i = 0; i < maxSteps && !world.gameOver; i++) world.step(agent.decide(sensesOf(world)));
+export interface EpisodeOptions {
+  size: number;
+  pitProbability: number;
+  /** Se informado, joga sempre este mapa em vez de sortear */
+  layout?: MapLayout | null;
+  /** Pesos do agente genético */
+  genome?: number[];
+}
+
+export function runEpisode(id: Exclude<AgentId, 'human'>, opts: EpisodeOptions) {
+  const world = opts.layout ? WumpusWorld.fromLayout(opts.layout) : new WumpusWorld(opts.size, opts.pitProbability);
+  const agent = createAgent(id, world.size, world.pitProbability, opts.genome);
+  while (!world.gameOver) world.step(agent.decide(sensesOf(world)));
   return { status: world.status as Status, score: world.score };
 }
 
-export function benchmark(
-  id: Exclude<AgentId, 'human'>,
-  size: number,
-  pitProbability: number,
-  riskTolerance: number,
-  games = 100,
-): BenchmarkResult {
-  let wins = 0;
-  let deaths = 0;
-  let total = 0;
+export function benchmark(id: Exclude<AgentId, 'human'>, opts: EpisodeOptions, games = 100): BenchmarkResult {
+  const r: BenchmarkResult = { games, wins: 0, deaths: 0, timeouts: 0, avgScore: 0 };
   for (let i = 0; i < games; i++) {
-    const r = runEpisode(id, size, pitProbability, riskTolerance);
-    if (r.status === 'won') wins++;
-    if (r.status === 'dead-pit' || r.status === 'dead-wumpus') deaths++;
-    total += r.score;
+    const e = runEpisode(id, opts);
+    if (e.status === 'won') r.wins++;
+    else if (e.status === 'timeout') r.timeouts++;
+    else r.deaths++;
+    r.avgScore += e.score / games;
   }
-  return { games, wins, deaths, avgScore: total / games };
+  return r;
 }

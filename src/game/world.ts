@@ -10,8 +10,8 @@ export const DIR_VEC: Record<Dir, [number, number]> = {
 };
 export const DIR_NAME: Record<Dir, string> = { 0: 'Leste', 1: 'Norte', 2: 'Oeste', 3: 'Sul' };
 
-export type Action = 'forward' | 'left' | 'right' | 'shoot' | 'grab' | 'climb';
-export type Status = 'playing' | 'won' | 'escaped' | 'dead-pit' | 'dead-wumpus';
+export type Action = 'forward' | 'left' | 'right' | 'shoot' | 'grab';
+export type Status = 'playing' | 'won' | 'dead-pit' | 'dead-wumpus' | 'timeout';
 
 export interface Cell {
   x: number;
@@ -37,10 +37,70 @@ export const SCORE = {
   shoot: -10,
   death: -1000,
   gold: 1000, // ao pegar o ouro
-  escape: 500, // bônus de vitória: sair pela entrada com o ouro
+  escape: 500, // bônus de vitória: voltar à entrada com o ouro
 };
 
+/** Limite de ações por partida, para que nenhum jogo dure para sempre. */
+export const maxActionsFor = (size: number) => size * size * 20;
+
 export const key = (x: number, y: number) => `${x},${y}`;
+
+/**
+ * Configuração de um mapa, no formato usado para salvar, exportar e importar.
+ * As coordenadas começam em 1, como aparecem na tela: [coluna, linha].
+ */
+export interface MapLayout {
+  format: 'wumpus3d-map';
+  version: 1;
+  name: string;
+  size: number;
+  pitProbability: number;
+  pits: [number, number][];
+  wumpus: [number, number];
+  gold: [number, number];
+}
+
+export const MIN_SIZE = 3;
+export const MAX_SIZE = 12;
+
+/** Lê e valida um mapa vindo de JSON. Lança um Error com a explicação se algo estiver errado. */
+export function parseLayout(json: string): MapLayout {
+  let data: Partial<MapLayout>;
+  try {
+    data = JSON.parse(json);
+  } catch {
+    throw new Error('O texto não é um JSON válido.');
+  }
+  if (!data || data.format !== 'wumpus3d-map') throw new Error('Este JSON não é um mapa do Wumpus 3D (falta "format": "wumpus3d-map").');
+  const size = data.size;
+  if (!Number.isInteger(size) || size! < MIN_SIZE || size! > MAX_SIZE) {
+    throw new Error(`"size" precisa ser um número inteiro entre ${MIN_SIZE} e ${MAX_SIZE}.`);
+  }
+  const n = size!;
+  const cell = (c: unknown, what: string): [number, number] => {
+    if (!Array.isArray(c) || c.length !== 2 || !c.every((v) => Number.isInteger(v) && v >= 1 && v <= n)) {
+      throw new Error(`${what} precisa ser [coluna, linha] com valores de 1 a ${n}.`);
+    }
+    if (c[0] === 1 && c[1] === 1) throw new Error(`${what} não pode ficar na entrada (1, 1).`);
+    return [c[0], c[1]];
+  };
+  if (!Array.isArray(data.pits)) throw new Error('"pits" precisa ser uma lista de salas, por exemplo [[3, 1], [2, 4]].');
+  const pits = data.pits.map((p, i) => cell(p, `O poço nº ${i + 1}`));
+  const wumpus = cell(data.wumpus, '"wumpus"');
+  const gold = cell(data.gold, '"gold"');
+  if (pits.some(([x, y]) => x === gold[0] && y === gold[1])) throw new Error('O ouro está dentro de um poço: seria impossível vencer.');
+  const pitProbability = typeof data.pitProbability === 'number' ? data.pitProbability : pits.length / (n * n - 1);
+  return {
+    format: 'wumpus3d-map',
+    version: 1,
+    name: typeof data.name === 'string' && data.name.trim() ? data.name.trim().slice(0, 60) : 'Mapa importado',
+    size: n,
+    pitProbability,
+    pits,
+    wumpus,
+    gold,
+  };
+}
 
 export class WumpusWorld {
   readonly size: number;
@@ -49,18 +109,31 @@ export class WumpusWorld {
   readonly wumpus: Cell;
   wumpusAlive = true;
   gold: Cell | null;
+  readonly goldStart: Cell; // onde o ouro estava no começo (depois de pego, `gold` vira null)
 
   agent: Cell & { dir: Dir } = { x: 0, y: 0, dir: 0 };
   hasArrow = true;
   hasGold = false;
   score = 0;
+  actions = 0;
+  readonly maxActions: number;
   status: Status = 'playing';
   readonly visited = new Set<string>([key(0, 0)]);
   percepts: Percepts;
 
-  constructor(size = 4, pitProbability = 0.2, rng: () => number = Math.random) {
-    this.size = size;
-    this.pitProbability = pitProbability;
+  constructor(size = 4, pitProbability = 0.2, rng: () => number = Math.random, layout?: MapLayout) {
+    this.size = layout?.size ?? size;
+    this.pitProbability = layout?.pitProbability ?? pitProbability;
+    this.maxActions = maxActionsFor(this.size);
+
+    if (layout) {
+      // Mapa salvo: coordenadas do arquivo começam em 1
+      this.pits = new Set(layout.pits.map(([x, y]) => key(x - 1, y - 1)));
+      this.wumpus = { x: layout.wumpus[0] - 1, y: layout.wumpus[1] - 1 };
+      this.gold = this.goldStart = { x: layout.gold[0] - 1, y: layout.gold[1] - 1 };
+      this.percepts = this.sense();
+      return;
+    }
 
     // Sorteia mapas até achar um em que dá para vencer
     for (;;) {
@@ -83,11 +156,30 @@ export class WumpusWorld {
 
       this.pits = pits;
       this.wumpus = wumpus;
-      this.gold = gold;
+      this.gold = this.goldStart = gold;
       break;
     }
 
     this.percepts = this.sense();
+  }
+
+  static fromLayout(layout: MapLayout) {
+    return new WumpusWorld(layout.size, layout.pitProbability, Math.random, layout);
+  }
+
+  /** Configuração inicial deste mapa (para salvar ou exportar), independente do andamento da partida. */
+  toLayout(name: string): MapLayout {
+    const gold = this.goldStart;
+    return {
+      format: 'wumpus3d-map',
+      version: 1,
+      name,
+      size: this.size,
+      pitProbability: this.pitProbability,
+      pits: [...this.pits].map((k) => k.split(',').map((v) => Number(v) + 1) as [number, number]),
+      wumpus: [this.wumpus.x + 1, this.wumpus.y + 1],
+      gold: [gold.x + 1, gold.y + 1],
+    };
   }
 
   /** Existe caminho da entrada até `target` sem passar por poços? (o Wumpus pode ser morto com a flecha) */
@@ -146,6 +238,7 @@ export class WumpusWorld {
     if (this.gameOver) return { percepts: this.percepts, message: 'O jogo acabou. Pressione R para recomeçar.' };
 
     this.score += SCORE.action;
+    this.actions++;
     let message = '';
     let bump = false;
     let scream = false;
@@ -182,6 +275,14 @@ export class WumpusWorld {
           this.status = 'dead-wumpus';
           this.score += SCORE.death;
           message = 'O Wumpus te devorou! Fim de jogo.';
+        } else if (nx === 0 && ny === 0) {
+          if (this.hasGold) {
+            this.score += SCORE.escape;
+            this.status = 'won';
+            message = `Você voltou à entrada com o ouro! Vitória! (+${SCORE.escape})`;
+          } else {
+            message = 'De volta à entrada, mas sem o ouro. A partida continua.';
+          }
         }
         break;
       }
@@ -219,25 +320,16 @@ export class WumpusWorld {
           this.gold = null;
           this.hasGold = true;
           this.score += SCORE.gold;
-          message = `Você pegou o ouro! (+${SCORE.gold}) Volte para (1, 1) e saia (C).`;
+          message = `Você pegou o ouro! (+${SCORE.gold}) Volte para (1, 1) para vencer.`;
         } else {
           message = 'Não há nada para pegar aqui.';
         }
         break;
-      case 'climb':
-        if (a.x === 0 && a.y === 0) {
-          if (this.hasGold) {
-            this.score += SCORE.escape;
-            this.status = 'won';
-            message = `Você escapou com o ouro! Vitória! (+${SCORE.escape})`;
-          } else {
-            this.status = 'escaped';
-            message = 'Você saiu da caverna sem o ouro.';
-          }
-        } else {
-          message = 'Só dá para sair pela entrada, em (1, 1).';
-        }
-        break;
+    }
+
+    if (this.status === 'playing' && this.actions >= this.maxActions) {
+      this.status = 'timeout';
+      message = `Limite de ${this.maxActions} ações atingido. Fim de jogo.`;
     }
 
     this.percepts = this.sense(bump, scream);

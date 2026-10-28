@@ -146,10 +146,10 @@ button.highlight {
   pointer-events: auto;
   top: calc(64px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));
-  width: 260px;
+  width: 300px;
   max-height: calc(100% - 300px);
   overflow-y: auto;
-  background: rgba(20, 16, 12, 0.85);
+  background: rgba(20, 16, 12, 0.96);
   border: 1px solid #3a3028;
   border-radius: 10px;
   font-size: 13px;
@@ -164,8 +164,183 @@ button.highlight {
 .setup .fields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   padding: 0 12px 12px;
+}
+
+.setup section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #3a3028;
+}
+
+.setup h3 {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #c9b48a;
+}
+
+.inline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inline.center {
+  justify-content: center;
+}
+
+.setup .inline > * {
+  flex: 1 1 auto;
+}
+
+.setup button,
+.file-button {
+  padding: 7px 10px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.file-button {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+  background: rgba(40, 32, 24, 0.85);
+  border: 1px solid #5a4a3a;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.file-button:hover {
+  background: rgba(70, 56, 40, 0.95);
+}
+
+.file-button:focus-within {
+  outline: 2px solid #ffcc33;
+  outline-offset: 2px;
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.setup input[type='text'],
+.setup input[type='number'],
+.setup textarea {
+  font: inherit;
+  color: inherit;
+  background: #2a221a;
+  border: 1px solid #5a4a3a;
+  border-radius: 6px;
+  padding: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.setup textarea {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 11px;
+  resize: vertical;
+}
+
+.setup details.paste summary {
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 2px 0 8px;
+}
+
+.setup details.paste[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.grid2 label {
+  font-size: 11px;
+}
+
+.weights {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.weight {
+  display: grid;
+  grid-template-columns: 110px 1fr 32px;
+  align-items: center;
+  gap: 6px;
+}
+
+.weight b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.weight .bar {
+  position: relative;
+  height: 8px;
+  background: #2a221a;
+  border-radius: 4px;
+}
+
+.weight .bar::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: #6a5a4a;
+}
+
+.weight i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+}
+
+.weight i.pos {
+  left: 50%;
+  background: #3ddc84;
+}
+
+.weight i.neg {
+  right: 50%;
+  background: #ff6b5a;
+}
+
+#ga-chart {
+  width: 100%;
+  height: auto;
+  background: #15110d;
+  border-radius: 6px;
+}
+
+.setup .msg {
+  opacity: 1;
+  color: #ffd76a;
+}
+
+.setup .msg.error {
+  color: #ff8a7a;
 }
 
 .setup label {
@@ -210,11 +385,6 @@ button.highlight {
 
 .setup .hint:empty {
   display: none;
-}
-
-#bench-out {
-  opacity: 1;
-  color: #ffd76a;
 }
 
 button:disabled {

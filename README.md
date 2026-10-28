@@ -4,7 +4,7 @@ O clássico **Mundo de Wumpus** em 3D, rodando no navegador. Feito com TypeScrip
 
 ## Como jogar
 
-Você entra na caverna pela sala (1,1), marcada com um anel azul. Seu objetivo é achar o ouro e sair pela mesma entrada.
+Você entra na caverna pela sala (1,1), marcada com um anel azul. Seu objetivo é achar o ouro e voltar com ele até a entrada.
 
 | Tecla | Ação |
 |---|---|
@@ -12,38 +12,87 @@ Você entra na caverna pela sala (1,1), marcada com um anel azul. Seu objetivo �
 | A / ← e D / → | Girar para a esquerda / direita |
 | Espaço | Atirar a flecha (você só tem uma) |
 | G | Pegar o ouro |
-| C | Sair da caverna (só na sala 1,1) |
 | V | Alternar câmera (seguir / visão geral) |
 | M | Revelar o mapa (modo de depuração) |
-| R | Novo jogo |
+| R | Novo mapa |
 
 **Percepções:** *Fedor* = Wumpus em sala vizinha · *Brisa* = poço em sala vizinha · *Brilho* = ouro nesta sala · *Batida* = bateu na parede · *Grito* = o Wumpus morreu.
 
-**Vitória:** pegar o ouro, voltar para a sala (1,1) e sair da caverna. Todo mapa sorteado tem caminho seguro até o ouro (às vezes é preciso matar o Wumpus).
+**Vitória:** só acontece quando você pega o ouro **e** volta para a sala (1,1). Voltar à entrada sem o ouro não encerra a partida: o jogo continua. Todo mapa sorteado tem caminho sem poços até o ouro (às vezes é preciso matar o Wumpus).
 
-**Pontuação:** −1 por ação, −10 pelo tiro, +1000 ao pegar o ouro, +500 ao sair com ele (vitória), −1000 se morrer.
+**Fim de jogo:** vitória, morte (poço ou Wumpus) ou tempo esgotado, que acontece depois de `tamanho × tamanho × 20` ações (320 num 4×4) para nenhuma partida durar para sempre.
+
+**Pontuação:** −1 por ação, −10 pelo tiro, +1000 ao pegar o ouro, +500 ao voltar com ele (vitória), −1000 se morrer.
 
 ## Agentes inteligentes
 
-No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a chance de poço e quem joga:
+No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a chance de poço e quem joga. **Trocar de jogador mantém o mesmo mapa**, então dá para comparar agentes no mesmo cenário. **Novo** (ou R) sorteia outro mapa.
 
 | Jogador | Como pensa |
 |---|---|
 | Você (teclado) | Você joga. |
 | Agente aleatório | Age ao acaso. Serve de base de comparação. |
-| Agente lógico | Deduz quais salas são seguras e só pisa nelas. Mata o Wumpus quando descobre onde ele está. Sem saída segura, volta e sai. Nunca morre. |
-| Agente probabilístico | Faz as mesmas deduções e, quando não há sala segura, calcula P(poço) por inferência bayesiana (enumeração da fronteira, como no cap. 12 do AIMA) e P(Wumpus). Arrisca a sala de menor risco se ela estiver abaixo da **tolerância a risco**. |
+| Agente lógico | Deduz quais salas são seguras e vai nelas primeiro. Mata o Wumpus quando descobre onde ele está. Sem sala comprovadamente segura, chuta a com menos indícios de perigo (brisa/fedor ao redor). |
+| Agente probabilístico | Faz as mesmas deduções e, quando não há sala segura, calcula P(poço) por inferência bayesiana (enumeração da fronteira, como no cap. 12 do AIMA) e P(Wumpus), e vai na de menor risco. |
+| Agente genético | Dá uma nota a cada sala candidata somando características com pesos (risco, distância, salas novas ao redor...). Os pesos foram evoluídos por um algoritmo genético. |
 
-Com **Mostrar raciocínio** ligado, cada sala da fronteira mostra no piso o que o agente acredita (verde = segura, amarelo/vermelho = risco). **Avaliar em 100 partidas** joga 100 mapas sem 3D e mostra vitórias, mortes e a pontuação média.
+Com **Mostrar raciocínio** ligado, cada sala da fronteira mostra no piso o que o agente acredita (verde = segura, amarelo/vermelho = risco). **Avaliar em 100 partidas** joga 100 vezes sem 3D (em mapas sorteados ou só no mapa atual) e mostra vitórias, mortes e a pontuação média.
 
-Desempenho medido (300 partidas, 20% de poços):
+### Agente genético
 
-| Mapa | Aleatório | Lógico | Probabilístico (tolerância 30%) |
-|---|---|---|---|
-| 4×4 | 7% de vitórias | 48% (0% de mortes) | ~55% |
-| 8×8 | 0% | 21% (0% de mortes) | ~30% |
+O genoma é uma lista de 12 pesos, entre −5 e 5:
+
+- 9 pesos dão a nota de cada sala candidata: probabilidade de poço, probabilidade de Wumpus, se é segura, distância, vizinhas desconhecidas, distância da entrada, giros necessários, brisas ao lado e fedores ao lado. O agente vai para a sala de maior nota.
+- 3 pesos dão a nota da opção "atirar no Wumpus": viés, certeza sobre o alvo e se ainda há sala segura. Se ela superar a melhor sala, o agente atira.
+
+O algoritmo genético (`src/agents/genetic.ts`) funciona assim:
+
+1. Cria uma população de genomas aleatórios (mais o genoma atual, para continuar de onde parou).
+2. Cada genoma joga os mesmos mapas sorteados da geração. A **aptidão** é a pontuação média.
+3. Os 2 melhores passam direto (elitismo). O resto nasce de pais escolhidos por torneio (3 sorteados, vence o melhor), com cruzamento aritmético e mutação gaussiana (20% de chance por peso).
+
+Na seção **Agente genético** do painel você vê os pesos em uso e pode treinar de novo, com gráfico da aptidão por geração (melhor em amarelo, média em cinza). O treino roda em segundo plano (Web Worker), então a tela não trava. Marcando **Treinar só no mapa atual**, o agente se especializa naquele cenário. Os pesos treinados ficam salvos no navegador. **Usar pesos padrão** volta ao genoma que vem com o jogo.
+
+### Desempenho medido
+
+Mesmos mapas para todos os agentes, 20% de poços (1000 mapas no 4×4, 300 no 6×6):
+
+| Agente | 4×4 | 6×6 |
+|---|---|---|
+| Aleatório | ~6% de vitórias, −660 pts | ~2%, −855 pts |
+| Lógico | 70%, 725 pts | 47%, 144 pts |
+| Probabilístico | 72%, 787 pts | 53%, 299 pts |
+| Genético (genoma padrão) | 71%, 754 pts | 54%, 324 pts |
+
+O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão (as diferenças estão dentro da margem de ruído). Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
+
+## Mapas: salvar, exportar e importar
+
+Na seção **Mapas** do painel:
+
+- **Salvar** guarda o mapa atual neste navegador, com um nome.
+- **Jogar** carrega um mapa salvo, para testá-lo com outro agente quando quiser.
+- **Exportar** baixa o mapa como `.json`. **Importar .json** carrega um arquivo exportado (o mapa também é salvo na lista).
+- **Copiar ou colar JSON** permite levar o mapa como texto, por exemplo por e-mail ou chat.
+
+Formato do arquivo (coordenadas como na tela, começando em 1: `[coluna, linha]`):
+
+```json
+{
+  "format": "wumpus3d-map",
+  "version": 1,
+  "name": "Caverna da prova",
+  "size": 4,
+  "pitProbability": 0.2,
+  "pits": [[3, 1], [3, 3], [4, 4]],
+  "wumpus": [1, 3],
+  "gold": [2, 3]
+}
+```
+
+Também dá para criar mapas à mão nesse formato. O jogo recusa, com a explicação do problema, coordenadas fora do mapa, qualquer coisa na entrada (1,1) e ouro dentro de poço.
 
 ## Rodando localmente
 
@@ -63,8 +112,12 @@ src/
 ├── game/world.ts    # regras do jogo (puro TypeScript, sem 3D)
 ├── agents/
 │   ├── knowledge.ts # base de conhecimento: deduções lógicas e probabilidades
-│   ├── agents.ts    # agentes aleatório, lógico e probabilístico
+│   ├── agents.ts    # agentes aleatório, lógico, probabilístico e genético
+│   ├── genome.ts    # genes (pesos) do agente genético e o genoma padrão
+│   ├── genetic.ts   # algoritmo genético (seleção, cruzamento, mutação)
+│   ├── ga.worker.ts # roda o treino em segundo plano
 │   └── benchmark.ts # roda várias partidas para medir um agente
+├── storage.ts       # mapas e genoma salvos no navegador
 ├── render/view.ts   # cena 3D com Three.js (lê o estado do mundo e desenha)
 ├── main.ts          # teclado, botões e HUD
 └── style.css        # interface sobre o canvas
