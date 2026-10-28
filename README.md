@@ -67,16 +67,16 @@ Na linha de comando, `npm run treinar -- --seed texto` faz o mesmo treino com se
 
 ### Desempenho medido
 
-Mesmos mapas para todos os agentes, 20% de poços, ou seja, 3 poços no 4×4 e 7 no 6×6 (1000 mapas no 4×4, 300 no 6×6):
+Mesmos mapas para todos os agentes, 20% de poços, ou seja, 3 poços no 4×4 e 7 no 6×6 (5000 mapas no 4×4, 1000 no 6×6; refaça com `npm run medir`):
 
 | Agente | 4×4 | 6×6 |
 |---|---|---|
-| Aleatório | ~6% de vitórias, −675 pts | ~2%, −857 pts |
-| Lógico | 68%, 676 pts | 54%, 331 pts |
-| Probabilístico | 69%, 718 pts | 57%, 395 pts |
-| Genético (genoma padrão) | 70%, 744 pts | 57%, 406 pts |
+| Aleatório | ~4% de vitórias, −760 pts | ~1%, −879 pts |
+| Lógico | 63%, 564 pts | 42%, 20 pts |
+| Probabilístico | 66%, 635 pts | 48%, 174 pts |
+| Genético (genoma padrão) | 66%, 637 pts | 51%, 255 pts |
 
-O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão (as diferenças são pequenas). Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
+O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão no 4×4 e fica à frente no 6×6. Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 
@@ -181,6 +181,7 @@ src/
 ├── storage.ts       # mapas, genoma e agentes importados salvos no navegador
 scripts/arena.ts     # arena na linha de comando (npm run arena)
 scripts/treinar.ts   # treino do agente genético na linha de comando (npm run treinar)
+scripts/medir.ts     # tabela de desempenho dos agentes (npm run medir)
 scripts/docs/        # geradores dos PDFs de docs/
 tests/               # testes automatizados (vitest)
 agents/              # agentes da competição (um arquivo .js cada)

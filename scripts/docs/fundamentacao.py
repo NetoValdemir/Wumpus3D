@@ -311,18 +311,19 @@ section('4', 'Cada variável do agente', f'''
 
 # ---------------------------------------------------------------- 5
 section('5', 'Resultados obtidos e o que eles significam', f'''
-<p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços.</p>
-{table(['Agente', '4×4 (1000 mapas)', '6×6 (300 mapas)'], [
-    ['Lógico', '68% de vitórias, 676 pts', '54%, 331 pts'],
-    ['Probabilístico', '69%, 718 pts', '57%, 395 pts'],
-    ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '69%, 716 pts', '57%, 405 pts'],
-    ['<code>DEFAULT_GENOME</code> anterior (treinado sem o bônus)', '69%, 702 pts', '57%, 387 pts'],
-    ['<code>DEFAULT_GENOME</code> (evoluído)', '70%, 744 pts', '57%, 406 pts'],
+<p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços (3 no 4×4, 7 no 6×6).</p>
+{table(['Agente', '4×4 (5000 mapas)', '6×6 (1000 mapas)'], [
+    ['Lógico', '63% de vitórias, 564 pts', '42%, 20 pts'],
+    ['Probabilístico', '66%, 635 pts', '48%, 174 pts'],
+    ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '66%, 641 pts', '48%, 178 pts'],
+    ['<code>DEFAULT_GENOME</code> (evoluído)', '66%, 637 pts', '51%, 255 pts'],
 ])}
-<p>Pontuação com o bônus de +25 por matar o Wumpus. Os mapas são sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>.</p>
+<p>Regras atuais: bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus nunca num poço. Os mapas são sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>.</p>
 <ul>
-<li>O genoma evoluído ficou <b>um pouco à frente</b> do agente probabilístico no 4×4 (+26 pts) e empatou no 6×6. São diferenças pequenas para essa quantidade de mapas, e não foi feito um teste estatístico formal.</li>
-<li>O bônus não fez o agente atirar mais: a fração de partidas com tiro ficou igual entre o genoma anterior e o novo (cerca de 31% no 4×4 e 26% no 6×6), o que confirma que atirar às cegas continua sem compensar.</li>
+<li>No 4×4 o genoma evoluído <b>empata</b> com o agente probabilístico e com o ponto de partida. No 6×6, mapa em que ele não foi treinado, fica <b>à frente</b> (+81 pts sobre o probabilístico). Não foi feito um teste estatístico formal.</li>
+<li>Lotes menores enganam: em 1000 mapas 4×4 de outra semente o genético ficou 19 pts abaixo do probabilístico, e em 200 mapas, 151 pts abaixo. Como todos jogam os mesmos mapas, um lote difícil derruba todos juntos, mas a ordem entre agentes próximos muda de lote para lote.</li>
+<li>O bônus de +25 não fez o agente atirar às cegas: com o bônus, a fração de partidas com tiro ficou igual entre o genoma treinado antes e depois dele.</li>
+<li>Depois da mudança para número fixo de poços e Wumpus fora dos poços, três novos treinos (sementes <code>regras16-a</code>, <code>-b</code> e <code>-c</code>) ficaram de 8 a 14 pts abaixo do genoma atual em 2000 mapas, e por isso o genoma foi mantido.</li>
 <li>O algoritmo genético, portanto, encontrou uma estratégia <b>equivalente</b> à inferência bayesiana escrita à mão. Isso é coerente com o fato de as 12 características descreverem essencialmente as mesmas informações que o agente probabilístico já usa.</li>
 <li>Em mapas maiores o ganho relativo foi um pouco melhor, mas o genoma foi treinado só em 4×4. A generalização para outros tamanhos não foi estudada a fundo.</li>
 </ul>

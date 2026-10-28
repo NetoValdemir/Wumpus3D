@@ -67,18 +67,27 @@ Acrescente novas entradas no fim.
 - **Medido:** tabela abaixo. O bônus não aumentou o uso da flecha (tiro em ~31% das partidas 4×4 antes e depois).
 - **Atenção:** na arena de 200 mapas (semente `verificacao`) o genoma novo fez 736 pts contra 759 do anterior (vitórias 70% × 71%). Nos conjuntos maiores (3000 de seleção e 1000 de medição) o novo ficou à frente; com 200 mapas a diferença está dentro do ruído.
 
+### 18. Número fixo de poços (pedido: pelo menos 3 no 4×4)
+- **Feito:** `pitCountFor(tamanho, p)` = `round(p × tamanho²)` (mín. 1); 3 poços no 4×4 com 20%, 7 no 6×6. Dica no painel com a conta. Ver D15.
+- **Pedido no meio do caminho:** agentes **não** devem saber quantos poços há. Foi implementada uma inferência com o total exato (peso C(r, K − k)) e desfeita; agentes continuam com a porcentagem como chance por sala.
+- **Medido:** em 40 sorteios pela tela, todos com o número exato; antes, ~4% dos mapas 4×4 vinham sem poço (20 000 sorteios).
+
+### 19. Wumpus nunca num poço; pode ficar na sala do ouro
+- **Feito:** Wumpus e ouro sorteados entre salas sem poço, independentes (~1/12 dos 4×4 com os dois juntos). `parseLayout()` recusa Wumpus em poço. Ver D16. Testes novos (29 no total).
+- **Retreino:** três treinos com as regras novas (`regras16-a/b/c`) ficaram 8–14 pts abaixo do genoma atual em 2000 mapas → genoma mantido (`bonus25-c`).
+- **Medido:** tabela abaixo (5000 mapas 4×4, 1000 6×6). Genético empata com o probabilístico no 4×4 (637 × 635) e fica à frente no 6×6 (255 × 174). Na arena: 200 mapas (`verificacao`) probabilístico 664 × genético 513; 1000 mapas (`verificacao-1000`) 663 × 644; conferido que arena e medição dão números idênticos nos mesmos mapas.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
-| Agente | 4×4 (1000 mapas) | 6×6 (300 mapas) |
+| Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
 |---|---|---|
-| Aleatório | ~6% vitórias, −675 pts | ~2%, −857 pts |
-| Lógico | 68%, 676 pts | 54%, 331 pts |
-| Probabilístico | 69%, 718 pts | 57%, 395 pts |
-| Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 69%, 716 pts | 57%, 405 pts |
-| Genético (`DEFAULT_GENOME` anterior, sem o bônus) | 69%, 702 pts | 57%, 387 pts |
-| Genético (`DEFAULT_GENOME`, retreinado com o bônus) | 70%, 744 pts | 57%, 406 pts |
+| Aleatório | ~4% vitórias, −760 pts | ~1%, −879 pts |
+| Lógico | 63%, 564 pts | 42%, 20 pts |
+| Probabilístico | 66%, 635 pts | 48%, 174 pts |
+| Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 66%, 641 pts | 48%, 178 pts |
+| Genético (`DEFAULT_GENOME`, semente `bonus25-c`) | 66%, 637 pts | 51%, 255 pts |
 
-Com o bônus de +25 (D14); mapas das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal; as diferenças entre probabilístico e genético são pequenas.
+Regras atuais (D14, D15, D16); 5000 mapas 4×4 e 1000 6×6 das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal. Lotes de 200 a 1000 mapas variam muito: use pelo menos 5000 mapas 4×4 para comparar agentes próximos.
 
 ## Pendências e ideias (não feitas)
 

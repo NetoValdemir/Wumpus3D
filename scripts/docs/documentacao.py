@@ -568,14 +568,14 @@ section('8', 'Inteligência — os agentes', f'''
 <p>Leitura dos pesos: "Poço" −4,6, "Wumpus" −5 e "Segura" +3,4 dizem "fuja do risco, prefira o seguro"; "Tiro: certeza" +3,0 e "Tiro: há sala segura" −2,4 dizem "atire quando tiver certeza de onde está o Wumpus, e menos quando ainda houver sala segura para explorar". O algoritmo chegou sozinho a uma estratégia parecida com a do agente probabilístico.</p>
 
 <h2>Resultados medidos</h2>
-<p>Mesmos mapas para todos os agentes, 20% de poços:</p>
-{table(['Agente', '4×4 (1000 mapas)', '6×6 (300 mapas)'], [
-    ['Aleatório', '~6% de vitórias, −675 pts', '~2%, −857 pts'],
-    ['Lógico', '68%, 676 pts', '54%, 331 pts'],
-    ['Probabilístico', '69%, 718 pts', '57%, 395 pts'],
-    ['Genético (genoma padrão)', '70%, 744 pts', '57%, 406 pts'],
+<p>Mesmos mapas para todos os agentes, 20% de poços (3 no 4×4, 7 no 6×6):</p>
+{table(['Agente', '4×4 (5000 mapas)', '6×6 (1000 mapas)'], [
+    ['Aleatório', '~4% de vitórias, −760 pts', '~1%, −879 pts'],
+    ['Lógico', '63%, 564 pts', '42%, 20 pts'],
+    ['Probabilístico', '66%, 635 pts', '48%, 174 pts'],
+    ['Genético (genoma padrão)', '66%, 637 pts', '51%, 255 pts'],
 ])}
-<p>Medido com o bônus de +25 por matar o Wumpus e o genoma retreinado com ele. O genético fica um pouco à frente do probabilístico no 4×4 e empata no 6×6; as diferenças são pequenas e não houve teste estatístico formal. Ele reproduz uma estratégia equivalente à inferência bayesiana sem que ninguém a tenha programado.</p>
+<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. O genético empata com o probabilístico no 4×4 e fica à frente no 6×6; não houve teste estatístico formal. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
 ''')
 
 section('9', 'A Arena de agentes (src/arena/)', f'''
