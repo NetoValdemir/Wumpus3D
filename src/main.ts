@@ -1,13 +1,18 @@
 import './style.css';
 import { WumpusWorld, DIR_NAME, SCORE, parseLayout, type Action, type MapLayout, type Status } from './game/world';
 import { WorldView } from './render/view';
-import { AGENTS, createAgent, sensesOf, type Agent, type AgentId } from './agents/agents';
-import { benchmark } from './agents/benchmark';
+import { AGENTS, type AgentId } from './agents/agents';
 import { DEFAULT_GENOME, GENES } from './agents/genome';
 import type { GenerationReport } from './agents/genetic';
 import type { CellBelief } from './agents/knowledge';
 import { deleteMap, loadGenome, loadSavedMaps, saveGenome, saveMap } from './storage';
 import GAWorker from './agents/ga.worker?worker&inline';
+import { infoOf, publicSensesOf, type Controller, type Decision } from './arena/protocol';
+import { builtinController, playEpisode, type EpisodeResult } from './arena/runner';
+import { aggregate } from './arena/ranking';
+import { arenaMaps } from './arena/rng';
+import { WorkerSandbox } from './arena/sandbox';
+import { externalAgents, externalById, initArena, openArena } from './arena/ui';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
@@ -18,14 +23,43 @@ const cfg = {
   speed: $<HTMLInputElement>('#cfg-speed'),
   beliefs: $<HTMLInputElement>('#cfg-beliefs'),
 };
-for (const [id, a] of Object.entries(AGENTS)) cfg.agent.add(new Option(a.label, id));
+
+/** Quem joga: 'human', um agente embutido ('logic', ...) ou um agente importado ('ext:<id>'). */
+type PlayerId = string;
+
+function playerInfo(id: PlayerId): { label: string; description: string } {
+  if (id.startsWith('ext:')) {
+    const a = externalById(id.slice(4));
+    return a ? { label: a.name, description: `Agente importado, por ${a.author}. ${a.description}` } : { label: 'Agente removido', description: '' };
+  }
+  return AGENTS[id as AgentId];
+}
+
+/** Monta as opções de "Quem joga": embutidos e, num grupo separado, os importados. */
+function refreshPlayerOptions() {
+  const current = cfg.agent.value;
+  cfg.agent.innerHTML = '';
+  for (const [id, a] of Object.entries(AGENTS)) cfg.agent.add(new Option(a.label, id));
+  const imported = externalAgents();
+  if (imported.length) {
+    const group = document.createElement('optgroup');
+    group.label = 'Agentes importados';
+    for (const a of imported) group.append(new Option(`${a.name} (${a.author})`, `ext:${a.id}`));
+    cfg.agent.append(group);
+  }
+  cfg.agent.value = [...cfg.agent.options].some((o) => o.value === current) ? current : 'human';
+}
 
 const view = new WorldView($('#scene'));
 let world: WumpusWorld;
 let layout: MapLayout; // configuração do mapa atual, para repetir com outro jogador
 let mapName: string | null = null; // nome do mapa salvo/importado em uso (null = sorteado)
-let agentId: AgentId = 'human';
-let agent: Agent | null = null;
+let playerId: PlayerId = 'human';
+let controller: Controller | null = null; // o agente que está jogando (null = você)
+let ready: Promise<void> = Promise.resolve(); // agente pronto para a partida atual
+let decision: Decision | null = null; // última decisão do agente (pensamento e crenças)
+let game = 0; // muda a cada partida, para ignorar respostas atrasadas de partidas anteriores
+let stepping = false;
 let playing = false;
 let lastStep = 0;
 let genome: number[] | null = loadGenome(); // pesos treinados pelo usuário (null = padrão)
@@ -59,9 +93,8 @@ function log(msg: string) {
 
 /** Só as salas que interessam: fronteira do que já foi explorado e onde o Wumpus pode estar. */
 function visibleBeliefs(): Map<string, CellBelief> | null {
-  if (!agent || !cfg.beliefs.checked) return null;
-  const all = agent.beliefs();
-  if (!all) return null;
+  const all = decision?.beliefs;
+  if (!controller || !cfg.beliefs.checked || !all) return null;
   const nearVisited = (k: string) => {
     const [x, y] = k.split(',').map(Number);
     return world.neighbors(x, y).some((n) => world.isVisited(n.x, n.y));
@@ -91,7 +124,7 @@ function updateHud() {
   set('scream', p.scream);
 
   // Controles do modo agente
-  const isAgent = agentId !== 'human';
+  const isAgent = playerId !== 'human';
   document.querySelectorAll<HTMLElement>('.row.manual').forEach((r) => (r.hidden = isAgent));
   $('#agent-controls').hidden = !isAgent;
   $('#btn-play').textContent = playing ? '⏸ Pausar' : '▶ Jogar';
@@ -101,8 +134,8 @@ function updateHud() {
     ? 'Espaço jogar/pausar · N um passo · T parar e reiniciar · V câmera · M mapa · R novo mapa · C configurar'
     : 'W/↑ andar · A D girar · Espaço atirar · G pegar · T reiniciar · V câmera · M mapa · R novo mapa · C configurar';
   const thought = $('#thought');
-  thought.hidden = !agent?.thought;
-  thought.textContent = agent?.thought ? `${AGENTS[agentId].label}: ${agent.thought}` : '';
+  thought.hidden = !decision?.thought;
+  thought.textContent = decision?.thought ? `${playerInfo(playerId).label}: ${decision.thought}` : '';
   $('#map-current').textContent = `${mapName ?? 'sorteado'} (${world.size}×${world.size})`;
 
   const over = $('#gameover');
@@ -132,14 +165,39 @@ function act(action: Action) {
   updateHud();
 }
 
-function agentStep() {
-  if (!agent || world.gameOver) return;
-  act(agent.decide(sensesOf(world)));
+function makeController(id: PlayerId, withBeliefs: boolean): Controller {
+  if (id.startsWith('ext:')) return new WorkerSandbox(externalById(id.slice(4))!.code, 3000);
+  return builtinController(id as Exclude<AgentId, 'human'>, { genome: genome ?? DEFAULT_GENOME, withBeliefs });
+}
+
+async function agentStep() {
+  if (!controller || world.gameOver || stepping) return;
+  const g = game;
+  stepping = true;
+  try {
+    await ready;
+    if (g !== game || world.gameOver) return;
+    const d = await controller.decide(publicSensesOf(world));
+    if (g !== game) return;
+    decision = d;
+    act(d.action);
+  } catch (err) {
+    if (g !== game) return;
+    playing = false;
+    log(`Erro do agente: ${(err as Error)?.message ?? err}`);
+    updateHud();
+  } finally {
+    if (g === game) stepping = false;
+  }
 }
 
 /** Começa uma partida. `newMap` sorteia outro mapa; senão repete o atual (útil para trocar de jogador). */
 function restart(newMap = true) {
-  agentId = cfg.agent.value as AgentId;
+  playerId = cfg.agent.value;
+  game++;
+  stepping = false;
+  decision = null;
+  controller?.dispose?.();
   if (newMap || !layout) {
     world = new WumpusWorld(Number(cfg.size.value), Number(cfg.pits.value));
     layout = world.toLayout('Mapa sorteado');
@@ -147,12 +205,17 @@ function restart(newMap = true) {
   } else {
     world = WumpusWorld.fromLayout(layout);
   }
-  agent = agentId === 'human' ? null : createAgent(agentId, world.size, world.pitProbability, genome ?? DEFAULT_GENOME);
+  controller = playerId === 'human' ? null : makeController(playerId, true);
+  if (controller) {
+    const c = controller;
+    ready = Promise.resolve().then(() => c.start(infoOf(world)));
+    ready.catch(() => {}); // o erro aparece no primeiro passo do agente
+  }
   playing = false;
   view.load(world);
   view.showBeliefs(visibleBeliefs());
   $('#log').innerHTML = '';
-  log(agent ? `${AGENTS[agentId].label} entrou na caverna. Aperte ▶ Jogar.` : 'Você entrou na caverna. Encontre o ouro e volte vivo!');
+  log(controller ? `${playerInfo(playerId).label} entrou na caverna. Aperte ▶ Jogar.` : 'Você entrou na caverna. Encontre o ouro e volte vivo!');
   updateHud();
 }
 
@@ -183,8 +246,8 @@ function playLayout(l: MapLayout) {
 }
 
 function updateSetup() {
-  const id = cfg.agent.value as AgentId;
-  $('#agent-desc').textContent = AGENTS[id].description;
+  const id = cfg.agent.value;
+  $('#agent-desc').textContent = playerInfo(id).description;
   $('#row-speed').hidden = id === 'human';
   $('#row-beliefs').hidden = id === 'human' || id === 'random';
   $('#bench-section').hidden = id === 'human';
@@ -210,7 +273,7 @@ function toggleReveal() {
 
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-  if (agentId !== 'human') {
+  if (playerId !== 'human') {
     if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();
@@ -454,7 +517,7 @@ function finishTraining(stopped: boolean) {
         : `Melhor aptidão: ${Math.round(last.best)} pontos por partida. `) +
       'Os novos pesos já estão em uso.',
   );
-  if (agentId === 'genetic') restart(false);
+  if (playerId === 'genetic') restart(false);
 }
 
 $('#ga-train').addEventListener('click', () => {
@@ -502,33 +565,65 @@ $('#ga-reset').addEventListener('click', () => {
   saveGenome(null);
   renderWeights();
   gaMsg('Voltou aos pesos padrão.');
-  if (agentId === 'genetic') restart(false);
+  if (playerId === 'genetic') restart(false);
 });
 
 // ---------- Avaliação ----------
 
-$('#btn-bench').addEventListener('click', () => {
-  const id = cfg.agent.value as AgentId;
-  if (id === 'human') return;
+let benchmarking = false;
+$('#btn-bench').addEventListener('click', async () => {
+  const id = cfg.agent.value;
+  if (id === 'human' || benchmarking) return;
+  benchmarking = true;
   const onMap = $<HTMLInputElement>('#bench-on-map').checked;
   const out = $('#bench-out');
-  out.textContent = 'Jogando 100 partidas...';
-  setTimeout(() => {
-    const r = benchmark(
-      id,
-      { size: world.size, pitProbability: world.pitProbability, layout: onMap ? layout : null, genome: genome ?? DEFAULT_GENOME },
-      100,
-    );
-    out.textContent =
-      `${AGENTS[id].label} ${onMap ? `no mapa "${mapName ?? 'atual'}"` : `em mapas ${world.size}×${world.size} sorteados`}: ` +
-      `${r.wins} vitórias, ${r.deaths} mortes${r.timeouts ? `, ${r.timeouts} por tempo esgotado` : ''}. ` +
-      `Pontuação média: ${Math.round(r.avgScore)}.`;
-  }, 20);
+  const maps = onMap ? Array.from({ length: 100 }, () => layout) : arenaMaps(String(Math.random()), 100, world.size, world.pitProbability);
+  const ctrl = makeController(id, false);
+  const results: EpisodeResult[] = [];
+  for (const m of maps) {
+    results.push(await playEpisode(ctrl, m, 3000));
+    if (results.length % 10 === 0) {
+      out.textContent = `Jogando: ${results.length} de 100 partidas...`;
+      await new Promise((r) => setTimeout(r));
+    }
+  }
+  ctrl.dispose?.();
+  const r = aggregate(playerInfo(id).label, '', results);
+  const deaths = r.deathsPit + r.deathsWumpus;
+  out.textContent =
+    `${r.name} ${onMap ? `no mapa "${mapName ?? 'atual'}"` : `em mapas ${world.size}×${world.size} sorteados`}: ` +
+    `${r.wins} vitórias, ${deaths} mortes${r.timeouts ? `, ${r.timeouts} por tempo esgotado` : ''}${r.errors ? `, ${r.errors} erros (${r.firstError})` : ''}. ` +
+    `Pontuação média: ${Math.round(r.avgScore)}.`;
+  benchmarking = false;
 });
+
+// ---------- Arena ----------
+
+initArena({
+  genome: () => genome ?? DEFAULT_GENOME,
+  savedMaps: loadSavedMaps,
+  onAgentsChanged: () => {
+    const before = cfg.agent.value;
+    refreshPlayerOptions();
+    if (cfg.agent.value !== before) {
+      updateSetup();
+      restart(false);
+    }
+  },
+  onWatch: (id) => {
+    refreshPlayerOptions();
+    cfg.agent.value = id;
+    updateSetup();
+    restart(false);
+    setSetupOpen(true);
+  },
+});
+$('#open-arena').addEventListener('click', openArena);
 
 // Painel aberto em telas largas, fechado no celular
 setSetupOpen(window.innerWidth > 760);
 
+refreshPlayerOptions();
 updateSetup();
 refreshMapList();
 renderWeights();
@@ -536,7 +631,7 @@ drawChart();
 restart();
 
 view.renderer.setAnimationLoop((now) => {
-  if (playing && agent && !world.gameOver && now - lastStep >= 1000 / Number(cfg.speed.value)) {
+  if (playing && controller && !world.gameOver && now - lastStep >= 1000 / Number(cfg.speed.value)) {
     lastStep = now;
     agentStep();
   }

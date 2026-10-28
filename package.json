@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "arena": "vite build --ssr scripts/arena.ts --outDir .arena --emptyOutDir --logLevel warn && node .arena/arena.js"
   },
   "devDependencies": {
     "@types/three": "^0.186.0",

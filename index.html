@@ -107,6 +107,7 @@
             </label>
             <p id="agent-desc" class="hint"></p>
             <p class="hint">Trocar de jogador mantém o mesmo mapa, para comparar agentes no mesmo cenário.</p>
+          <button id="open-arena">🏆 Arena: importar e comparar agentes</button>
             <label id="row-speed">Velocidade <output id="speed-out"></output>
               <input type="range" id="cfg-speed" min="1" max="20" value="4" />
             </label>
@@ -169,6 +170,95 @@
           </section>
         </div>
       </aside>
+    </div>
+
+    <div id="arena" role="dialog" aria-modal="true" aria-labelledby="arena-title" hidden>
+      <div class="arena-box">
+        <header>
+          <h2 id="arena-title">Arena de agentes</h2>
+          <button id="arena-close">Fechar</button>
+        </header>
+        <p class="hint">
+          Todos os agentes jogam os mesmos mapas, gerados pela semente. Agentes importados rodam isolados: recebem só as percepções, nunca o mapa.
+        </p>
+
+        <div class="arena-grid">
+          <section>
+            <h3>Participantes</h3>
+            <div id="arena-players" class="players"></div>
+            <div class="inline">
+              <label class="file-button">Importar agente (.js)<input type="file" id="agent-file" accept=".js,text/javascript" multiple /></label>
+              <button id="agent-template">Ver modelo de agente</button>
+            </div>
+            <details class="paste" id="agent-paste">
+              <summary>Colar código de agente</summary>
+              <textarea id="agent-code" rows="8" spellcheck="false" aria-label="Código do agente" placeholder="registerAgent({ name: 'Meu agente', author: 'Eu', create(info) { return { decide(s) { return 'forward'; } }; } });"></textarea>
+              <div class="inline">
+                <button id="agent-copy">Copiar</button>
+                <button id="agent-add">Adicionar agente</button>
+              </div>
+            </details>
+            <p id="agent-msg" class="hint msg"></p>
+          </section>
+
+          <section>
+            <h3>Regras da competição</h3>
+            <div class="grid2">
+              <label>Mapas <input type="number" id="arena-maps" min="1" max="1000" value="100" /></label>
+              <label>Tamanho
+                <select id="arena-size">
+                  <option value="4" selected>4 × 4</option>
+                  <option value="5">5 × 5</option>
+                  <option value="6">6 × 6</option>
+                  <option value="8">8 × 8</option>
+                  <option value="10">10 × 10</option>
+                </select>
+              </label>
+              <label>Poços
+                <select id="arena-pits">
+                  <option value="0.1">10%</option>
+                  <option value="0.2" selected>20%</option>
+                  <option value="0.3">30%</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid2">
+              <label class="span2">Semente <input type="text" id="arena-seed" value="wumpus" maxlength="40" /></label>
+              <label>Limite por decisão (ms) <input type="number" id="arena-timeout" min="50" max="10000" value="1000" /></label>
+            </div>
+            <label class="check"><input type="checkbox" id="arena-saved" /> Usar meus mapas salvos em vez de sortear</label>
+            <div class="inline">
+              <button id="arena-run" class="primary">Iniciar competição</button>
+            </div>
+            <progress id="arena-progress" max="1" value="0" hidden></progress>
+            <p id="arena-status" class="hint msg"></p>
+          </section>
+        </div>
+
+        <section id="arena-results" hidden>
+          <h3>Ranking</h3>
+          <div class="table-wrap">
+            <table id="arena-table"></table>
+          </div>
+          <p class="hint legend">
+            <b>Pontos</b>: média por partida, o critério do ranking. <b>Ações/vitória</b>: eficiência de caminho.
+            <b>ms/decisão</b>: custo de processamento. <b>Erros de lógica</b>: passos para uma sala que já dava para provar ser poço ou Wumpus.
+            <b>Riscos desnecessários</b>: arriscou uma sala incerta havendo sala comprovadamente segura. Os dois últimos são por partida e medem a qualidade do raciocínio.
+          </p>
+          <div class="inline">
+            <button id="arena-copy-md">Copiar ranking (Markdown)</button>
+            <button id="arena-export">Exportar resultados (JSON)</button>
+          </div>
+        </section>
+
+        <section id="arena-official" hidden>
+          <h3>Ranking oficial</h3>
+          <p id="arena-official-meta" class="hint"></p>
+          <div class="table-wrap">
+            <table id="arena-official-table"></table>
+          </div>
+        </section>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

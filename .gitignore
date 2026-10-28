@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Arena
+.arena
+public/ranking.json
+public/ranking.md

@@ -28,6 +28,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Ranking oficial: todos os agentes de agents/ em 500 mapas. Configure o segredo ARENA_SEED
+      # (Settings → Secrets and variables → Actions) para a semente ficar secreta.
+      - name: Ranking oficial da arena
+        env:
+          ARENA_SEED: ${{ secrets.ARENA_SEED }}
+        run: npm run arena -- --maps 500 --seed "${ARENA_SEED:-${{ github.sha }}}" --ocultar-semente --json public/ranking.json --md public/ranking.md
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

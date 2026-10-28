@@ -1,0 +1,26 @@
+# Roda a arena quando um pull request adiciona ou altera agentes em agents/.
+# O resultado aparece no resumo da execução (aba Actions → Summary).
+# Os mapas usam uma semente nova a cada execução, então não dá para decorar mapas.
+name: Arena (pull request)
+
+on:
+  pull_request:
+    paths: ['agents/**']
+
+permissions:
+  contents: read
+
+jobs:
+  arena:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Rodar a arena
+        run: npm run arena -- --maps 200 --seed "pr-${{ github.run_id }}" --md arena.md
+      - name: Publicar o ranking no resumo
+        run: cat arena.md >> "$GITHUB_STEP_SUMMARY"

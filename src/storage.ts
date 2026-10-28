@@ -59,3 +59,44 @@ export function saveGenome(genome: number[] | null) {
     // sem armazenamento: o genoma vale só nesta sessão
   }
 }
+
+// ---------- Agentes importados ----------
+
+const AGENTS_KEY = 'wumpus3d.agents';
+
+export interface ExternalAgent {
+  id: string;
+  name: string;
+  author: string;
+  description: string;
+  code: string;
+}
+
+export function loadExternalAgents(): ExternalAgent[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(AGENTS_KEY) ?? '[]');
+    return Array.isArray(raw) ? raw.filter((a) => a && typeof a.id === 'string' && typeof a.code === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Guarda (ou substitui, se já existir um com o mesmo nome e autor). Devolve false se o navegador bloquear. */
+export function saveExternalAgent(agent: ExternalAgent): boolean {
+  const list = loadExternalAgents().filter((a) => a.id !== agent.id);
+  list.push(agent);
+  try {
+    localStorage.setItem(AGENTS_KEY, JSON.stringify(list));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function deleteExternalAgent(id: string) {
+  try {
+    localStorage.setItem(AGENTS_KEY, JSON.stringify(loadExternalAgents().filter((a) => a.id !== id)));
+  } catch {
+    // sem armazenamento: nada a apagar
+  }
+}

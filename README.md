@@ -74,6 +74,16 @@ O agente genético chega sozinho a um desempenho equivalente ao da inferência b
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 
+## Arena: competição de agentes
+
+Outros devs podem criar seus próprios agentes (um arquivo `.js`), importá-los e competir num ranking. O guia completo está em [AGENTES.md](AGENTES.md).
+
+- **No navegador:** em **⚙ Configurar → 🏆 Arena** você importa agentes, assiste cada um jogando no 3D e roda uma competição. Todos jogam os mesmos mapas (gerados por uma semente), e o resultado é um ranking com pontos, vitórias, eficiência, tempo de decisão e métricas de raciocínio (erros de lógica e riscos desnecessários).
+- **Na linha de comando:** `npm run arena` roda todos os agentes da pasta `agents/` e imprime o ranking em Markdown.
+- **Competição oficial:** cada dev envia o agente por pull request. O GitHub Actions avalia o PR e, depois do merge, publica no site o ranking oficial, com 500 mapas de semente secreta.
+
+Os agentes importados rodam isolados (Web Worker no navegador, `vm` no Node) e recebem só as percepções de cada passo, nunca o mapa.
+
 ## Mapas: salvar, exportar e importar
 
 Na seção **Mapas** do painel:
@@ -123,7 +133,17 @@ src/
 │   ├── genetic.ts   # algoritmo genético (seleção, cruzamento, mutação)
 │   ├── ga.worker.ts # roda o treino em segundo plano
 │   └── benchmark.ts # roda várias partidas para medir um agente
-├── storage.ts       # mapas e genoma salvos no navegador
+├── arena/
+│   ├── protocol.ts  # contrato com os agentes externos (registerAgent, sentidos, decisão)
+│   ├── sandbox.ts   # roda agentes externos isolados num Web Worker
+│   ├── referee.ts   # árbitro: erros de lógica e riscos desnecessários
+│   ├── runner.ts    # executa partidas da arena
+│   ├── ranking.ts   # estatísticas e ordenação do ranking
+│   ├── rng.ts       # mapas reproduzíveis a partir de uma semente
+│   └── ui.ts        # tela da Arena
+├── storage.ts       # mapas, genoma e agentes importados salvos no navegador
+scripts/arena.ts     # arena na linha de comando (npm run arena)
+agents/              # agentes da competição (um arquivo .js cada)
 ├── render/view.ts   # cena 3D com Three.js (lê o estado do mundo e desenha)
 ├── main.ts          # teclado, botões e HUD
 └── style.css        # interface sobre o canvas
