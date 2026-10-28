@@ -55,24 +55,30 @@ Acrescente novas entradas no fim.
 - **Pedido:** bônus ao matar o Wumpus sem desviar o agente do ouro.
 - **Feito:** `SCORE.wumpusKill = 25` em `world.ts` (tiro certeiro rende +14 líquidos); teste em `tests/world.test.ts`; README, AGENTES.md, textos dos 3 PDFs e PDFs regenerados. Ver D14.
 - **Medido (200 mapas 4×4, semente `verificacao`, antes → depois):** genético 753 → 759, probabilístico 716 → 722, lógico 667 → 672, Cauteloso 222 → 222; vitórias e mortes idênticas (nenhum agente mudou de decisão; agentes de referência não leem `SCORE`).
-- **Pendente:** a tabela "Resultados medidos" abaixo é anterior ao bônus (diferença esperada ~+5 pts); retreinar o genético para ver se a nova aptidão altera os pesos de tiro.
+- **Pendente (resolvido no item 17):** atualizar a tabela de resultados e retreinar o genético.
 
 ### 16. Bônus na tela de fim de partida
 - **Pedido:** o quadro final deve dizer que o Wumpus foi morto e quanto isso rendeu.
 - **Feito:** `updateHud()` em `main.ts` acrescenta a linha "Matou o Wumpus com a flecha (+25)." quando `wumpusAlive` é falso, em qualquer resultado (vitória, morte ou tempo esgotado). Manual atualizado.
 - **Verificado:** Playwright no build (1280×800), mapa com Wumpus em (3,1): vitória com 1505 pts e a linha nova, console sem erros.
 
+### 17. Retreino do agente genético com o bônus
+- **Feito:** `npm run treinar` (`scripts/treinar.ts`, semente fixa, mesmo `train()` da tela). Três treinos (pop. 24, 20 gerações, 120 mapas/geração): `bonus25-a` e `bonus25-c` a partir do `BAYES_LIKE_GENOME`, `bonus25-b` a partir do genoma anterior. Escolhido o C pelo desempenho em mapas de seleção (3000 4×4: antigo 752, A 760, B 733, C 765; 600 6×6: antigo 293, A 332, B 298, C 358), separados dos mapas da medição final. `DEFAULT_GENOME` atualizado.
+- **Medido:** tabela abaixo. O bônus não aumentou o uso da flecha (tiro em ~31% das partidas 4×4 antes e depois).
+- **Atenção:** na arena de 200 mapas (semente `verificacao`) o genoma novo fez 736 pts contra 759 do anterior (vitórias 70% × 71%). Nos conjuntos maiores (3000 de seleção e 1000 de medição) o novo ficou à frente; com 200 mapas a diferença está dentro do ruído.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (1000 mapas) | 6×6 (300 mapas) |
 |---|---|---|
-| Aleatório | ~6% vitórias, −660 pts | ~2%, −855 pts |
-| Lógico | 70%, 725 pts | 47%, 144 pts |
-| Probabilístico | 72%, 787 pts | 53%, 299 pts |
-| Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 73%, 800 pts | 53%, 292 pts |
-| Genético (`DEFAULT_GENOME`, evoluído) | 71%, 754 pts | 54%, 324 pts |
+| Aleatório | ~6% vitórias, −675 pts | ~2%, −857 pts |
+| Lógico | 68%, 676 pts | 54%, 331 pts |
+| Probabilístico | 69%, 718 pts | 57%, 395 pts |
+| Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 69%, 716 pts | 57%, 405 pts |
+| Genético (`DEFAULT_GENOME` anterior, sem o bônus) | 69%, 702 pts | 57%, 387 pts |
+| Genético (`DEFAULT_GENOME`, retreinado com o bônus) | 70%, 744 pts | 57%, 406 pts |
 
-Sem teste estatístico formal; diferenças entre probabilístico e genético estão dentro do ruído. Medidos antes do bônus de +25 por matar o Wumpus (D14).
+Com o bônus de +25 (D14); mapas das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal; as diferenças entre probabilístico e genético são pequenas.
 
 ## Pendências e ideias (não feitas)
 

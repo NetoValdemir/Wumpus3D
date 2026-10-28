@@ -564,17 +564,17 @@ section('8', 'Inteligência — os agentes', f'''
 {snip('src/agents/genetic.ts', 'if (gen === opts.generations) {', '      return;')}
 {box('decision', 'Por que a validação final existe', '<p>Na primeira versão, o melhor da última geração às vezes era só sortudo: com poucos mapas por geração, um genoma mediano pode ter tido mapas fáceis. O genoma "evoluído" chegou a ficar <b>pior</b> que o escrito à mão (725 contra 760 pontos). Validar os finalistas em mapas que eles nunca viram reduz esse efeito. É a mesma ideia de separar dados de treino e de teste em aprendizado de máquina.</p>')}
 <p>O treino roda dentro de <code>ga.worker.ts</code>, um <b>Web Worker</b>: uma thread separada do navegador. Sem isso, a tela congelaria por segundos a cada geração. O <code>train()</code> é um <b>gerador</b> (<code>function*</code>) que entrega um relatório por geração (<code>yield</code>), e o worker repassa cada um para a tela desenhar o gráfico.</p>
-<p>Leitura dos pesos: "Poço" −4,7 e "Segura" +4,0 dizem "fuja do risco, prefira o seguro"; "Distância" −2,2 diz "prefira o que está perto"; "Tiro: há sala segura" −4,1 diz "não atire enquanto houver sala segura para explorar". O algoritmo chegou sozinho a uma estratégia parecida com a do agente probabilístico.</p>
+<p>Leitura dos pesos: "Poço" −4,6, "Wumpus" −5 e "Segura" +3,4 dizem "fuja do risco, prefira o seguro"; "Tiro: certeza" +3,0 e "Tiro: há sala segura" −2,4 dizem "atire quando tiver certeza de onde está o Wumpus, e menos quando ainda houver sala segura para explorar". O algoritmo chegou sozinho a uma estratégia parecida com a do agente probabilístico.</p>
 
 <h2>Resultados medidos</h2>
 <p>Mesmos mapas para todos os agentes, 20% de poços:</p>
 {table(['Agente', '4×4 (1000 mapas)', '6×6 (300 mapas)'], [
-    ['Aleatório', '~6% de vitórias, −660 pts', '~2%, −855 pts'],
-    ['Lógico', '70%, 725 pts', '47%, 144 pts'],
-    ['Probabilístico', '72%, 787 pts', '53%, 299 pts'],
-    ['Genético (genoma padrão)', '71%, 754 pts', '54%, 324 pts'],
+    ['Aleatório', '~6% de vitórias, −675 pts', '~2%, −857 pts'],
+    ['Lógico', '68%, 676 pts', '54%, 331 pts'],
+    ['Probabilístico', '69%, 718 pts', '57%, 395 pts'],
+    ['Genético (genoma padrão)', '70%, 744 pts', '57%, 406 pts'],
 ])}
-<p>O genético empata com o probabilístico: as diferenças estão dentro da margem de ruído. Ele não supera a inferência bayesiana; reproduz uma estratégia equivalente sem que ninguém a tenha programado.</p>
+<p>Medido com o bônus de +25 por matar o Wumpus e o genoma retreinado com ele. O genético fica um pouco à frente do probabilístico no 4×4 e empata no 6×6; as diferenças são pequenas e não houve teste estatístico formal. Ele reproduz uma estratégia equivalente à inferência bayesiana sem que ninguém a tenha programado.</p>
 ''')
 
 section('9', 'A Arena de agentes (src/arena/)', f'''

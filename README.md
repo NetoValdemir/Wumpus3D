@@ -63,18 +63,20 @@ O algoritmo genético (`src/agents/genetic.ts`) funciona assim:
 
 Na seção **Agente genético** do painel você vê os pesos em uso e pode treinar de novo, com gráfico da aptidão por geração (melhor em amarelo, média em cinza). O treino roda em segundo plano (Web Worker), então a tela não trava. Marcando **Treinar só no mapa atual**, o agente se especializa naquele cenário. Os pesos treinados ficam salvos no navegador. **Usar pesos padrão** volta ao genoma que vem com o jogo.
 
+Na linha de comando, `npm run treinar -- --seed texto` faz o mesmo treino com semente fixa (reproduzível) e compara o resultado com o genoma padrão nos mesmos mapas.
+
 ### Desempenho medido
 
 Mesmos mapas para todos os agentes, 20% de poços (1000 mapas no 4×4, 300 no 6×6):
 
 | Agente | 4×4 | 6×6 |
 |---|---|---|
-| Aleatório | ~6% de vitórias, −660 pts | ~2%, −855 pts |
-| Lógico | 70%, 725 pts | 47%, 144 pts |
-| Probabilístico | 72%, 787 pts | 53%, 299 pts |
-| Genético (genoma padrão) | 71%, 754 pts | 54%, 324 pts |
+| Aleatório | ~6% de vitórias, −675 pts | ~2%, −857 pts |
+| Lógico | 68%, 676 pts | 54%, 331 pts |
+| Probabilístico | 69%, 718 pts | 57%, 395 pts |
+| Genético (genoma padrão) | 70%, 744 pts | 57%, 406 pts |
 
-O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão (as diferenças estão dentro da margem de ruído). Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
+O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão (as diferenças são pequenas). Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 
@@ -178,6 +180,7 @@ src/
 │   └── ui.ts        # tela da Arena
 ├── storage.ts       # mapas, genoma e agentes importados salvos no navegador
 scripts/arena.ts     # arena na linha de comando (npm run arena)
+scripts/treinar.ts   # treino do agente genético na linha de comando (npm run treinar)
 scripts/docs/        # geradores dos PDFs de docs/
 tests/               # testes automatizados (vitest)
 agents/              # agentes da competição (um arquivo .js cada)
