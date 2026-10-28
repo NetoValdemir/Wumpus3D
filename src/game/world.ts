@@ -36,14 +36,16 @@ export const SCORE = {
   action: -1,
   shoot: -10,
   death: -1000,
-  goldEscape: 1000,
+  gold: 1000, // ao pegar o ouro
+  escape: 500, // bônus de vitória: sair pela entrada com o ouro
 };
 
-const key = (x: number, y: number) => `${x},${y}`;
+export const key = (x: number, y: number) => `${x},${y}`;
 
 export class WumpusWorld {
   readonly size: number;
-  readonly pits = new Set<string>();
+  readonly pitProbability: number;
+  readonly pits: Set<string>;
   readonly wumpus: Cell;
   wumpusAlive = true;
   gold: Cell | null;
@@ -58,20 +60,52 @@ export class WumpusWorld {
 
   constructor(size = 4, pitProbability = 0.2, rng: () => number = Math.random) {
     this.size = size;
+    this.pitProbability = pitProbability;
 
-    const free: Cell[] = [];
-    for (let x = 0; x < size; x++) {
-      for (let y = 0; y < size; y++) {
-        if (x === 0 && y === 0) continue; // sala inicial é sempre segura
-        free.push({ x, y });
-        if (rng() < pitProbability) this.pits.add(key(x, y));
+    // Sorteia mapas até achar um em que dá para vencer
+    for (;;) {
+      const pits = new Set<string>();
+      const free: Cell[] = [];
+      for (let x = 0; x < size; x++) {
+        for (let y = 0; y < size; y++) {
+          if (x === 0 && y === 0) continue; // sala inicial é sempre segura
+          free.push({ x, y });
+          if (rng() < pitProbability) pits.add(key(x, y));
+        }
       }
+      const pick = (from: Cell[]) => from[Math.floor(rng() * from.length)];
+      const wumpus = pick(free);
+      // O ouro nunca fica num poço nem na sala do Wumpus
+      const goldOptions = free.filter((c) => !pits.has(key(c.x, c.y)) && !(c.x === wumpus.x && c.y === wumpus.y));
+      if (goldOptions.length === 0) continue;
+      const gold = pick(goldOptions);
+      if (!WumpusWorld.reachable(size, pits, gold)) continue;
+
+      this.pits = pits;
+      this.wumpus = wumpus;
+      this.gold = gold;
+      break;
     }
-    const pick = () => free[Math.floor(rng() * free.length)];
-    this.wumpus = pick();
-    this.gold = pick();
 
     this.percepts = this.sense();
+  }
+
+  /** Existe caminho da entrada até `target` sem passar por poços? (o Wumpus pode ser morto com a flecha) */
+  private static reachable(size: number, pits: Set<string>, target: Cell) {
+    const seen = new Set([key(0, 0)]);
+    const queue: Cell[] = [{ x: 0, y: 0 }];
+    while (queue.length) {
+      const c = queue.shift()!;
+      if (c.x === target.x && c.y === target.y) return true;
+      for (const [dx, dy] of Object.values(DIR_VEC)) {
+        const n = { x: c.x + dx, y: c.y + dy };
+        const k = key(n.x, n.y);
+        if (n.x < 0 || n.y < 0 || n.x >= size || n.y >= size || seen.has(k) || pits.has(k)) continue;
+        seen.add(k);
+        queue.push(n);
+      }
+    }
+    return false;
   }
 
   inBounds(x: number, y: number) {
@@ -184,7 +218,8 @@ export class WumpusWorld {
         if (this.gold && this.gold.x === a.x && this.gold.y === a.y) {
           this.gold = null;
           this.hasGold = true;
-          message = 'Você pegou o ouro! Volte para (1, 1) e saia (C).';
+          this.score += SCORE.gold;
+          message = `Você pegou o ouro! (+${SCORE.gold}) Volte para (1, 1) e saia (C).`;
         } else {
           message = 'Não há nada para pegar aqui.';
         }
@@ -192,9 +227,9 @@ export class WumpusWorld {
       case 'climb':
         if (a.x === 0 && a.y === 0) {
           if (this.hasGold) {
-            this.score += SCORE.goldEscape;
+            this.score += SCORE.escape;
             this.status = 'won';
-            message = 'Você escapou com o ouro! Vitória!';
+            message = `Você escapou com o ouro! Vitória! (+${SCORE.escape})`;
           } else {
             this.status = 'escaped';
             message = 'Você saiu da caverna sem o ouro.';

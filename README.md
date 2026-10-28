@@ -19,7 +19,31 @@ Você entra na caverna pela sala (1,1), marcada com um anel azul. Seu objetivo �
 
 **Percepções:** *Fedor* = Wumpus em sala vizinha · *Brisa* = poço em sala vizinha · *Brilho* = ouro nesta sala · *Batida* = bateu na parede · *Grito* = o Wumpus morreu.
 
-**Pontuação:** −1 por ação, −10 pelo tiro, −1000 se morrer, +1000 se sair com o ouro.
+**Vitória:** pegar o ouro, voltar para a sala (1,1) e sair da caverna. Todo mapa sorteado tem caminho seguro até o ouro (às vezes é preciso matar o Wumpus).
+
+**Pontuação:** −1 por ação, −10 pelo tiro, +1000 ao pegar o ouro, +500 ao sair com ele (vitória), −1000 se morrer.
+
+## Agentes inteligentes
+
+No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a chance de poço e quem joga:
+
+| Jogador | Como pensa |
+|---|---|
+| Você (teclado) | Você joga. |
+| Agente aleatório | Age ao acaso. Serve de base de comparação. |
+| Agente lógico | Deduz quais salas são seguras e só pisa nelas. Mata o Wumpus quando descobre onde ele está. Sem saída segura, volta e sai. Nunca morre. |
+| Agente probabilístico | Faz as mesmas deduções e, quando não há sala segura, calcula P(poço) por inferência bayesiana (enumeração da fronteira, como no cap. 12 do AIMA) e P(Wumpus). Arrisca a sala de menor risco se ela estiver abaixo da **tolerância a risco**. |
+
+Com **Mostrar raciocínio** ligado, cada sala da fronteira mostra no piso o que o agente acredita (verde = segura, amarelo/vermelho = risco). **Avaliar em 100 partidas** joga 100 mapas sem 3D e mostra vitórias, mortes e a pontuação média.
+
+Desempenho medido (300 partidas, 20% de poços):
+
+| Mapa | Aleatório | Lógico | Probabilístico (tolerância 30%) |
+|---|---|---|---|
+| 4×4 | 7% de vitórias | 48% (0% de mortes) | ~55% |
+| 8×8 | 0% | 21% (0% de mortes) | ~30% |
+
+Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 
 ## Rodando localmente
 
@@ -37,6 +61,10 @@ npm run preview    # testa a versão final
 ```
 src/
 ├── game/world.ts    # regras do jogo (puro TypeScript, sem 3D)
+├── agents/
+│   ├── knowledge.ts # base de conhecimento: deduções lógicas e probabilidades
+│   ├── agents.ts    # agentes aleatório, lógico e probabilístico
+│   └── benchmark.ts # roda várias partidas para medir um agente
 ├── render/view.ts   # cena 3D com Three.js (lê o estado do mundo e desenha)
 ├── main.ts          # teclado, botões e HUD
 └── style.css        # interface sobre o canvas

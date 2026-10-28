@@ -1,6 +1,7 @@
 // Camada 3D: lê o estado do WumpusWorld e desenha a caverna com Three.js.
 import * as THREE from 'three';
 import { DIR_VEC, type Cell, type WumpusWorld } from '../game/world';
+import type { CellBelief } from '../agents/knowledge';
 
 const TILE = 2; // tamanho de cada sala em unidades 3D
 
@@ -27,6 +28,7 @@ export class WorldView {
   private torch!: THREE.PointLight;
   private breeze!: THREE.Points;
   private stench!: THREE.Points;
+  private beliefGroup = new THREE.Group();
   private arrow: { mesh: THREE.Mesh; from: THREE.Vector3; to: THREE.Vector3; t: number; duration: number } | null = null;
 
   private agentYaw = 0;
@@ -146,9 +148,66 @@ export class WorldView {
     this.stench = this.makeParticles(0x6dff4a, 50, 0.09);
     this.agent.add(this.breeze, this.stench);
 
+    this.level.add(this.beliefGroup);
+
     this.camTarget.copy(this.agent.position);
     this.placeCamera(1);
     this.sync();
+  }
+
+  /** Desenha sobre o piso o que o agente acredita sobre cada sala (null apaga). */
+  showBeliefs(beliefs: Map<string, CellBelief> | null) {
+    for (const obj of this.beliefGroup.children) {
+      if (obj instanceof THREE.Sprite) obj.material.map?.dispose();
+    }
+    this.beliefGroup.clear();
+    if (!beliefs) return;
+
+    const discGeo = new THREE.CircleGeometry(0.75, 32);
+    for (const [k, b] of beliefs) {
+      const [x, y] = k.split(',').map(Number);
+      const risk = 1 - (1 - b.pit) * (1 - b.wumpus);
+      const color = new THREE.Color(0x3ddc84).lerp(new THREE.Color(0xffc93d), Math.min(risk * 2, 1));
+      if (risk > 0.5) color.lerp(new THREE.Color(0xff3d3d), (risk - 0.5) * 2);
+      const disc = new THREE.Mesh(
+        discGeo,
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, depthWrite: false }),
+      );
+      disc.rotation.x = -Math.PI / 2;
+      disc.position.copy(toWorld(x, y)).setY(0.03);
+
+      const lines: string[] = [];
+      if (b.pit > 0) lines.push(`Poço ${Math.round(b.pit * 100)}%`);
+      if (b.wumpus > 0) lines.push(`Wumpus ${Math.round(b.wumpus * 100)}%`);
+      if (!lines.length) lines.push('Segura');
+      const label = this.makeLabel(lines, color);
+      label.position.copy(toWorld(x, y)).setY(0.5);
+      this.beliefGroup.add(disc, label);
+    }
+  }
+
+  private makeLabel(lines: string[], color: THREE.Color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+    ctx.font = 'bold 44px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillStyle = `#${color.getHexString()}`;
+    lines.forEach((line, i) => {
+      const y = 64 + (i - (lines.length - 1) / 2) * 46;
+      ctx.strokeText(line, 128, y);
+      ctx.fillText(line, 128, y);
+    });
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true }));
+    sprite.scale.set(2, 1, 1);
+    sprite.renderOrder = 10;
+    return sprite;
   }
 
   private makeAgent() {
@@ -282,6 +341,8 @@ export class WorldView {
     const n = this.world.size;
     let pos: THREE.Vector3;
     let look: THREE.Vector3;
+    const fog = this.scene.fog as THREE.Fog;
+    fog.far = this.cameraMode === 'overview' ? 30 + n * TILE * 2 : 26;
     if (this.cameraMode === 'overview') {
       const c = toWorld((n - 1) / 2, (n - 1) / 2);
       look = c;

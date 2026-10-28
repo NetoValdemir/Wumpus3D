@@ -15,6 +15,7 @@
         <div><span>Posição</span><b id="pos">-</b></div>
         <div><span>Flechas</span><b id="arrow">1</b></div>
         <div><span>Ouro</span><b id="gold">Não</b></div>
+        <div class="goal"><span>Objetivo</span><b id="goal">-</b></div>
       </div>
       <div class="percepts">
         <span id="p-stench">Fedor</span>
@@ -25,30 +26,76 @@
       </div>
     </div>
 
-    <ul id="log" class="hud"></ul>
+    <details id="setup" class="hud setup">
+      <summary>Configurar partida</summary>
+      <div class="fields">
+        <label>Tamanho do mapa
+          <select id="cfg-size">
+            <option value="4" selected>4 × 4</option>
+            <option value="5">5 × 5</option>
+            <option value="6">6 × 6</option>
+            <option value="7">7 × 7</option>
+            <option value="8">8 × 8</option>
+            <option value="10">10 × 10</option>
+          </select>
+        </label>
+        <label>Chance de poço por sala
+          <select id="cfg-pits">
+            <option value="0.1">10%</option>
+            <option value="0.15">15%</option>
+            <option value="0.2" selected>20% (clássico)</option>
+            <option value="0.25">25%</option>
+            <option value="0.3">30%</option>
+          </select>
+        </label>
+        <label>Quem joga
+          <select id="cfg-agent"></select>
+        </label>
+        <p id="agent-desc" class="hint"></p>
+        <label id="row-risk">Tolerância a risco <output id="risk-out"></output>
+          <input type="range" id="cfg-risk" min="5" max="60" step="5" value="30" />
+        </label>
+        <label id="row-speed">Velocidade <output id="speed-out"></output>
+          <input type="range" id="cfg-speed" min="1" max="20" value="4" />
+        </label>
+        <label class="check" id="row-beliefs"><input type="checkbox" id="cfg-beliefs" checked /> Mostrar raciocínio do agente</label>
+        <button id="btn-bench">Avaliar em 100 partidas</button>
+        <p id="bench-out" class="hint"></p>
+      </div>
+    </details>
+
+    <div class="hud feed">
+      <p id="thought" hidden></p>
+      <ul id="log"></ul>
+    </div>
 
     <div class="hud controls">
-      <div class="row">
+      <div class="row" id="agent-controls" hidden>
+        <button id="btn-play" title="Espaço">▶ Jogar</button>
+        <button id="btn-step" title="N">Um passo</button>
+      </div>
+      <div class="row manual">
         <button data-action="left" title="A / ←">⟲</button>
         <button data-action="forward" title="W / ↑">▲</button>
         <button data-action="right" title="D / →">⟳</button>
       </div>
-      <div class="row">
+      <div class="row manual">
         <button data-action="shoot" title="Espaço">Atirar</button>
         <button data-action="grab" title="G">Pegar</button>
-        <button data-action="climb" title="C">Sair</button>
+        <button data-action="climb" id="btn-climb" title="C">Sair</button>
       </div>
       <div class="row small">
         <button id="btn-camera" title="V">Câmera</button>
         <button id="btn-reveal" title="M">Mapa</button>
         <button id="btn-restart" title="R">Novo</button>
       </div>
-      <p class="keys">W/↑ andar · A D girar · Espaço atirar · G pegar · C sair · V câmera · M mapa · R novo</p>
+      <p class="keys" id="keys">W/↑ andar · A D girar · Espaço atirar · G pegar · C sair · V câmera · M mapa · R novo</p>
     </div>
 
     <div id="gameover" hidden>
       <div class="panel">
         <h2 id="go-title"></h2>
+        <p id="go-text"></p>
         <p id="go-score"></p>
         <button id="go-restart">Jogar de novo</button>
       </div>
