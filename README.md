@@ -2,6 +2,8 @@
 
 O clássico **Mundo de Wumpus** em 3D, rodando no navegador. Feito com TypeScript + Three.js + Vite.
 
+O manual de uso (como jogar e o que cada configuração faz) está em [docs/wumpus3d-manual-de-uso.pdf](docs/wumpus3d-manual-de-uso.pdf).
+
 A documentação técnica completa (arquitetura, decisões e funcionamento de cada arquivo, escrita para quem vai reimplementar o jogo) está em [docs/wumpus3d-documentacao.pdf](docs/wumpus3d-documentacao.pdf).
 
 ## Como jogar
