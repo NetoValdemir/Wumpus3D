@@ -32,7 +32,7 @@ O painel de configuração fica ao lado do mapa (embaixo dele em telas estreitas
 
 **Fim de jogo:** vitória, morte (poço ou Wumpus) ou tempo esgotado, que acontece depois de `tamanho × tamanho × 20` ações (320 num 4×4) para nenhuma partida durar para sempre.
 
-**Pontuação:** −1 por ação, −10 pelo tiro, +1000 ao pegar o ouro, +500 ao voltar com ele (vitória), −1000 se morrer.
+**Pontuação:** −1 por ação, −10 pelo tiro, +25 se a flecha matar o Wumpus, +1000 ao pegar o ouro, +500 ao voltar com ele (vitória), −1000 se morrer.
 
 ## Agentes inteligentes
 

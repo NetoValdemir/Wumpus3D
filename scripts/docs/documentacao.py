@@ -290,16 +290,17 @@ section('2', 'O jogo', f'''
 {table(['Ação', 'O que faz', 'Pontos'], [
     ['<code>forward</code>', 'Anda uma sala para a frente (ou bate na parede)', '−1'],
     ['<code>left</code> / <code>right</code>', 'Gira 90° sem sair do lugar', '−1'],
-    ['<code>shoot</code>', 'Atira a flecha na direção em que está virado', '−1 e −10'],
+    ['<code>shoot</code>', 'Atira a flecha na direção em que está virado', '−1 e −10; +25 se matar o Wumpus'],
     ['<code>grab</code>', 'Pega o ouro, se ele estiver na sala', '−1 e +1000 se pegou'],
     ['(automático)', 'Chegar à entrada carregando o ouro', '+500 e vitória'],
     ['(automático)', 'Entrar num poço ou na sala do Wumpus vivo', '−1000 e derrota'],
 ])}
 <p>A partida também termina por <b>tempo esgotado</b> depois de <code>tamanho × tamanho × 20</code> ações (320 num 4×4). Sem esse limite, um agente sem saída poderia andar para sempre.</p>
 
-{box('decision', 'Duas mudanças em relação ao livro', '''<p>No AIMA existe uma ação <code>climb</code> (sair da caverna), e o +1000 só entra ao sair com o ouro. Aqui:</p>
+{box('decision', 'Três mudanças em relação ao livro', '''<p>No AIMA existe uma ação <code>climb</code> (sair da caverna), e o +1000 só entra ao sair com o ouro. Aqui:</p>
 <ol><li>Não existe <code>climb</code>. A vitória é automática ao chegar à entrada com o ouro, e voltar sem ele não encerra a partida (pedido do dono do projeto). Por isso os agentes não podem "desistir", e o limite de ações passou a ser necessário.</li>
-<li>Os pontos foram divididos: +1000 ao pegar o ouro e +500 ao voltar com ele, para o jogador ver que pegar o ouro valeu algo.</li></ol>''')}
+<li>Os pontos foram divididos: +1000 ao pegar o ouro e +500 ao voltar com ele, para o jogador ver que pegar o ouro valeu algo.</li>
+<li>Matar o Wumpus dá +25 (no livro, nada). O valor é pequeno de propósito: o tiro certeiro rende +14 líquidos, mas um tiro às cegas da entrada tem valor esperado negativo mesmo no mapa 3×3 (acerta 2 de 8 salas: 25% × 25 = 6,25 &lt; 11), e nenhum desvio arriscado para caçar o Wumpus compensa perto dos 1500 pontos do ouro.</li></ol>''')}
 
 <h2>O que mais o projeto oferece</h2>
 <ul>

@@ -49,6 +49,14 @@ Acrescente novas entradas no fim.
 ### 14. Memória do projeto para o Claude
 - **Feito:** `CLAUDE.md`, este histórico, `DECISOES.md`, skills `wumpus-consultar`, `wumpus-evoluir`, `wumpus-docs`, subagente `wumpus-especialista`, testes Vitest (`npm run check`, também no CI antes de publicar), geradores dos PDFs no repositório.
 
+## Sessão 2 — bônus por matar o Wumpus (28/10/2026)
+
+### 15. "Matar o Wumpus não dá pontos"
+- **Pedido:** bônus ao matar o Wumpus sem desviar o agente do ouro.
+- **Feito:** `SCORE.wumpusKill = 25` em `world.ts` (tiro certeiro rende +14 líquidos); teste em `tests/world.test.ts`; README, AGENTES.md, textos dos 3 PDFs e PDFs regenerados. Ver D14.
+- **Medido (200 mapas 4×4, semente `verificacao`, antes → depois):** genético 753 → 759, probabilístico 716 → 722, lógico 667 → 672, Cauteloso 222 → 222; vitórias e mortes idênticas (nenhum agente mudou de decisão; agentes de referência não leem `SCORE`).
+- **Pendente:** a tabela "Resultados medidos" abaixo é anterior ao bônus (diferença esperada ~+5 pts); retreinar o genético para ver se a nova aptidão altera os pesos de tiro.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (1000 mapas) | 6×6 (300 mapas) |
@@ -59,7 +67,7 @@ Acrescente novas entradas no fim.
 | Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 73%, 800 pts | 53%, 292 pts |
 | Genético (`DEFAULT_GENOME`, evoluído) | 71%, 754 pts | 54%, 324 pts |
 
-Sem teste estatístico formal; diferenças entre probabilístico e genético estão dentro do ruído.
+Sem teste estatístico formal; diferenças entre probabilístico e genético estão dentro do ruído. Medidos antes do bônus de +25 por matar o Wumpus (D14).
 
 ## Pendências e ideias (não feitas)
 

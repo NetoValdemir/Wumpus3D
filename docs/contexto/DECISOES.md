@@ -62,3 +62,9 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 ## D13 — Memória do projeto no repositório
 - **Por quê:** a conversa original ficou longa demais para caber num contexto. `CLAUDE.md` curto + documentos sob demanda + skills + subagente permitem retomar sem reler tudo.
 - **Onde:** `CLAUDE.md`, `docs/contexto/`, `.claude/skills/`, `.claude/agents/`.
+
+## D14 — Bônus de +25 por matar o Wumpus
+- **Por quê:** pedido do dono: matar o Wumpus não rendia nada (no AIMA também não). O bônus precisa recompensar sem tirar o foco do ouro. Três condições: (1) dar lucro sobre o tiro (> 11 = −10 do tiro −1 da ação); (2) tiro às cegas da entrada continuar com valor esperado negativo — o limite é o menor mapa, 3×3, onde a linha cobre 2 de 8 salas possíveis (25%): exige bônus < 44 (4×4: < 55); (3) desvio para caçar não compensar: lucro líquido +14 equivale a ~14 ações ou ~1,4% de risco de morte.
+- **Descartado:** +50 a +100 (chute às cegas passa a dar lucro no 3×3/4×4 e o genético aprenderia a atirar no primeiro turno); < 15 (lucro quase invisível).
+- **Custo:** quebra a invariante 5 de forma consciente: aptidão do genético e números de ranking anteriores deixam de ser comparáveis. Medido: as decisões dos agentes de referência não mudaram (mesmas vitórias), só +5 a +6 pts de média.
+- **Onde:** `SCORE.wumpusKill` e o `case 'shoot'` de `step()` em `src/game/world.ts`.

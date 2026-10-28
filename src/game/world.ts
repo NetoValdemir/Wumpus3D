@@ -35,6 +35,9 @@ export interface StepResult {
 export const SCORE = {
   action: -1,
   shoot: -10,
+  // Bônus pequeno de propósito: dá lucro (+14 líquido do tiro), mas chutar às cegas segue com
+  // valor esperado negativo mesmo no 3×3 (25% × 25 < 11) e não compensa desviar do ouro. Ver D14.
+  wumpusKill: 25,
   death: -1000,
   gold: 1000, // ao pegar o ouro
   escape: 500, // bônus de vitória: voltar à entrada com o ouro
@@ -308,8 +311,9 @@ export class WumpusWorld {
         arrow = { from: { x: a.x, y: a.y }, to: { x: cx, y: cy }, hit };
         if (hit) {
           this.wumpusAlive = false;
+          this.score += SCORE.wumpusKill;
           scream = true;
-          message = 'AAARGH! Um grito ecoa pela caverna. O Wumpus morreu!';
+          message = `AAARGH! Um grito ecoa pela caverna. O Wumpus morreu! (+${SCORE.wumpusKill})`;
         } else {
           message = 'A flecha se perdeu na escuridão...';
         }

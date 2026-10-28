@@ -287,7 +287,7 @@ section('4', 'Cada variável do agente', f'''
 
 <h2>4.4 A aptidão (fitness)</h2>
 <p>A aptidão é a <b>pontuação média</b> do genoma nos mapas da geração. A pontuação de cada partida segue a medida de desempenho do mundo de Wumpus do AIMA {cite('aima')}: −1 por ação, −10 pelo tiro, −1000 por morrer e +1000 pelo ouro.</p>
-<p>No livro, os +1000 são ganhos ao sair da caverna com o ouro. Neste jogo eles foram divididos em +1000 ao pegar o ouro e +500 ao voltar com ele à entrada, e foi criado um limite de ações por partida. Essas três mudanças são {OWN} e alteram a aptidão em relação à medida original.</p>
+<p>No livro, os +1000 são ganhos ao sair da caverna com o ouro. Neste jogo eles foram divididos em +1000 ao pegar o ouro e +500 ao voltar com ele à entrada, foi criado um limite de ações por partida e matar o Wumpus passou a valer +25 (pequeno o bastante para que atirar às cegas continue dando prejuízo em média). Essas quatro mudanças são {OWN} e alteram a aptidão em relação à medida original.</p>
 
 <h2>4.5 Os genomas prontos</h2>
 {table(['Gene'] + [f'{i + 1}' for i in range(12)], [
