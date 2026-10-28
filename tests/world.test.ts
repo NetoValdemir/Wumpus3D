@@ -1,6 +1,6 @@
 // Regras do jogo (src/game/world.ts). Coordenadas no código começam em 0; no JSON de mapa, em 1.
 import { describe, expect, it } from 'vitest';
-import { SCORE, WumpusWorld, key, maxActionsFor, parseLayout, type Action } from '../src/game/world';
+import { SCORE, WumpusWorld, key, maxActionsFor, parseLayout, pitCountFor, type Action } from '../src/game/world';
 
 // Mapa fixo: poço em (4,4), Wumpus em (1,4) e ouro em (3,1), na numeração da tela
 const layout = (extra: object = {}) =>
@@ -41,6 +41,45 @@ describe('vitória e fim de partida', () => {
     for (let i = 0; i < maxActionsFor(4); i++) w.step('left');
     expect(w.status).toBe('timeout');
     expect(w.actions).toBe(320);
+  });
+});
+
+describe('sorteio de mapas', () => {
+  it('a porcentagem de poços vale sobre o total de casas: 3 poços no 4×4 com 20%', () => {
+    expect(pitCountFor(4, 0.2)).toBe(3);
+    expect(pitCountFor(3, 0.2)).toBe(2);
+    expect(pitCountFor(6, 0.2)).toBe(7);
+    expect(pitCountFor(4, 0.1)).toBe(2);
+    expect(pitCountFor(3, 0.05)).toBe(1); // nunca menos de 1
+  });
+
+  it('Wumpus e ouro podem dividir a sala: mata o Wumpus, entra e pega o ouro', () => {
+    const w = WumpusWorld.fromLayout(layout({ wumpus: [3, 1], gold: [3, 1] }));
+    play(w, ['shoot', 'forward', 'forward', 'grab']);
+    expect(w.status).toBe('playing');
+    expect(w.hasGold).toBe(true);
+  });
+
+  it('o sorteio às vezes põe o Wumpus na sala do ouro', () => {
+    let together = 0;
+    for (let i = 0; i < 500; i++) {
+      const w = new WumpusWorld(4, 0.2);
+      if (w.wumpus.x === w.gold!.x && w.wumpus.y === w.gold!.y) together++;
+    }
+    expect(together).toBeGreaterThan(0);
+  });
+
+  it('todo mapa sorteado tem exatamente esse número de poços, fora da entrada e do ouro', () => {
+    for (const [size, p] of [[3, 0.3], [4, 0.2], [6, 0.2], [8, 0.25]]) {
+      for (let i = 0; i < 50; i++) {
+        const w = new WumpusWorld(size, p);
+        expect(w.pits.size).toBe(pitCountFor(size, p));
+        expect(w.pitCount).toBe(w.pits.size);
+        expect(w.pits.has(key(0, 0))).toBe(false);
+        expect(w.pits.has(key(w.gold!.x, w.gold!.y))).toBe(false);
+        expect(w.pits.has(key(w.wumpus.x, w.wumpus.y))).toBe(false);
+      }
+    }
   });
 });
 
@@ -108,6 +147,7 @@ describe('mapas', () => {
     [{ size: 13 }, 'size'],
     [{ format: 'outro' }, 'não é um mapa'],
     [{ pits: [[0, 2]] }, 'poço nº 1'],
+    [{ wumpus: [4, 4] }, 'Wumpus está dentro de um poço'],
   ])('recusa mapa inválido %j', (extra, msg) => {
     expect(() => layout(extra)).toThrow(msg);
   });

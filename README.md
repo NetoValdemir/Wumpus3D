@@ -28,7 +28,7 @@ O painel de configuração fica ao lado do mapa (embaixo dele em telas estreitas
 
 **Percepções:** *Fedor* = Wumpus em sala vizinha · *Brisa* = poço em sala vizinha · *Brilho* = ouro nesta sala · *Batida* = bateu na parede · *Grito* = o Wumpus morreu.
 
-**Vitória:** só acontece quando você pega o ouro **e** volta para a sala (1,1). Voltar à entrada sem o ouro não encerra a partida: o jogo continua. Todo mapa sorteado tem caminho sem poços até o ouro (às vezes é preciso matar o Wumpus).
+**Vitória:** só acontece quando você pega o ouro **e** volta para a sala (1,1). Voltar à entrada sem o ouro não encerra a partida: o jogo continua. Todo mapa sorteado tem caminho sem poços até o ouro (às vezes é preciso matar o Wumpus). O Wumpus nunca fica numa sala com poço, mas pode estar na sala do ouro.
 
 **Fim de jogo:** vitória, morte (poço ou Wumpus) ou tempo esgotado, que acontece depois de `tamanho × tamanho × 20` ações (320 num 4×4) para nenhuma partida durar para sempre.
 
@@ -36,7 +36,7 @@ O painel de configuração fica ao lado do mapa (embaixo dele em telas estreitas
 
 ## Agentes inteligentes
 
-No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a chance de poço e quem joga. **Trocar de jogador mantém o mesmo mapa**, então dá para comparar agentes no mesmo cenário. **Novo** (ou R) sorteia outro mapa.
+No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10), a porcentagem de poços e quem joga. A porcentagem vale sobre o total de casas: todo mapa sorteado tem exatamente esse número de poços (20% num 4×4 = 3 poços; num 6×6 = 7), e o painel mostra a conta. Os agentes não sabem quantos poços há: só recebem a porcentagem e a usam como chance de poço por sala. **Trocar de jogador mantém o mesmo mapa**, então dá para comparar agentes no mesmo cenário. **Novo** (ou R) sorteia outro mapa.
 
 | Jogador | Como pensa |
 |---|---|
@@ -63,18 +63,20 @@ O algoritmo genético (`src/agents/genetic.ts`) funciona assim:
 
 Na seção **Agente genético** do painel você vê os pesos em uso e pode treinar de novo, com gráfico da aptidão por geração (melhor em amarelo, média em cinza). O treino roda em segundo plano (Web Worker), então a tela não trava. Marcando **Treinar só no mapa atual**, o agente se especializa naquele cenário. Os pesos treinados ficam salvos no navegador. **Usar pesos padrão** volta ao genoma que vem com o jogo.
 
+Na linha de comando, `npm run treinar -- --seed texto` faz o mesmo treino com semente fixa (reproduzível) e compara o resultado com o genoma padrão nos mesmos mapas.
+
 ### Desempenho medido
 
-Mesmos mapas para todos os agentes, 20% de poços (1000 mapas no 4×4, 300 no 6×6):
+Mesmos mapas para todos os agentes, 20% de poços, ou seja, 3 poços no 4×4 e 7 no 6×6 (5000 mapas no 4×4, 1000 no 6×6; refaça com `npm run medir`):
 
 | Agente | 4×4 | 6×6 |
 |---|---|---|
-| Aleatório | ~6% de vitórias, −660 pts | ~2%, −855 pts |
-| Lógico | 70%, 725 pts | 47%, 144 pts |
-| Probabilístico | 72%, 787 pts | 53%, 299 pts |
-| Genético (genoma padrão) | 71%, 754 pts | 54%, 324 pts |
+| Aleatório | ~4% de vitórias, −760 pts | ~1%, −879 pts |
+| Lógico | 63%, 564 pts | 42%, 20 pts |
+| Probabilístico | 66%, 635 pts | 48%, 174 pts |
+| Genético (genoma padrão) | 66%, 637 pts | 51%, 255 pts |
 
-O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão (as diferenças estão dentro da margem de ruído). Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
+O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão no 4×4 e fica à frente no 6×6. Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 
@@ -112,7 +114,7 @@ Formato do arquivo (coordenadas como na tela, começando em 1: `[coluna, linha]`
 }
 ```
 
-Também dá para criar mapas à mão nesse formato. O jogo recusa, com a explicação do problema, coordenadas fora do mapa, qualquer coisa na entrada (1,1) e ouro dentro de poço.
+Também dá para criar mapas à mão nesse formato. O jogo recusa, com a explicação do problema, coordenadas fora do mapa, qualquer coisa na entrada (1,1) e ouro ou Wumpus dentro de poço.
 
 ## Rodando localmente
 
@@ -178,6 +180,8 @@ src/
 │   └── ui.ts        # tela da Arena
 ├── storage.ts       # mapas, genoma e agentes importados salvos no navegador
 scripts/arena.ts     # arena na linha de comando (npm run arena)
+scripts/treinar.ts   # treino do agente genético na linha de comando (npm run treinar)
+scripts/medir.ts     # tabela de desempenho dos agentes (npm run medir)
 scripts/docs/        # geradores dos PDFs de docs/
 tests/               # testes automatizados (vitest)
 agents/              # agentes da competição (um arquivo .js cada)

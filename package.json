@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "arena": "vite build --ssr scripts/arena.ts --outDir .arena --emptyOutDir --logLevel warn && node .arena/arena.js",
     "test": "vitest run",
-    "check": "tsc && vitest run"
+    "check": "tsc && vitest run",
+    "treinar": "vite build --ssr scripts/treinar.ts --outDir .arena --emptyOutDir --logLevel warn && node .arena/treinar.js",
+    "medir": "vite build --ssr scripts/medir.ts --outDir .arena --emptyOutDir --logLevel warn && node .arena/medir.js"
   },
   "devDependencies": {
     "@types/three": "^0.186.0",

@@ -34,6 +34,7 @@ export const BAYES_LIKE_GENOME: number[] = [-5, -5, 5, -0.5, 0, 0, 0, 0, 0, 0, 2
 
 /**
  * Genoma pré-treinado: evoluído a partir do BAYES_LIKE_GENOME em mapas 4×4 com 20% de poços
- * (população 24, 20 gerações, 120 mapas por geração, validação final em 360 mapas novos).
+ * (população 24, 20 gerações, 120 mapas por geração, validação final em 360 mapas novos),
+ * já com o bônus de +25 por matar o Wumpus. Reproduzir: npm run treinar -- --seed bonus25-c
  */
-export const DEFAULT_GENOME: number[] = [-4.67, -3.13, 3.97, -2.16, 0.85, 0.42, -0.34, -0.97, -0.64, 0.05, 0.65, -4.1];
+export const DEFAULT_GENOME: number[] = [-4.64, -5, 3.42, -0.05, 0.1, -0.35, -1.05, 0.63, -1.02, 0.4, 3.04, -2.35];

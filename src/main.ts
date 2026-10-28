@@ -1,5 +1,5 @@
 import './style.css';
-import { WumpusWorld, DIR_NAME, SCORE, parseLayout, type Action, type MapLayout, type Status } from './game/world';
+import { WumpusWorld, DIR_NAME, SCORE, parseLayout, pitCountFor, type Action, type MapLayout, type Status } from './game/world';
 import { WorldView } from './render/view';
 import { AGENTS, type AgentId } from './agents/agents';
 import { DEFAULT_GENOME, GENES } from './agents/genome';
@@ -307,9 +307,17 @@ $('#btn-reveal').addEventListener('click', toggleReveal);
 $('#btn-play').addEventListener('click', togglePlay);
 $('#btn-step').addEventListener('click', agentStep);
 
-// Mudar tamanho ou chance de poço sorteia outro mapa; trocar de jogador mantém o mapa
+/** Mostra quantos poços a porcentagem escolhida dá no tamanho escolhido. */
+function updatePitHint() {
+  const size = Number(cfg.size.value);
+  const n = pitCountFor(size, Number(cfg.pits.value));
+  $('#cfg-pits-hint').textContent = `${size} × ${size} = ${size * size} casas → ${n} ${n === 1 ? 'poço' : 'poços'} em todo mapa sorteado. Os agentes não sabem esse número.`;
+}
+
+// Mudar tamanho ou porcentagem de poços sorteia outro mapa; trocar de jogador mantém o mapa
 for (const el of [cfg.size, cfg.pits]) {
   el.addEventListener('change', () => {
+    updatePitHint();
     restart();
     el.blur();
   });
@@ -627,6 +635,7 @@ setSetupOpen(window.innerWidth > 760);
 
 refreshPlayerOptions();
 updateSetup();
+updatePitHint();
 refreshMapList();
 renderWeights();
 drawChart();

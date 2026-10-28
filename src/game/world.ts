@@ -46,6 +46,13 @@ export const SCORE = {
 /** Limite de ações por partida, para que nenhum jogo dure para sempre. */
 export const maxActionsFor = (size: number) => size * size * 20;
 
+/**
+ * Quantos poços um mapa sorteado tem: a porcentagem vale sobre o total de casas, arredondada
+ * (20% de 16 casas = 3 poços no 4×4). Pelo menos 1, e sempre sobra espaço para a entrada e o ouro. Ver D15.
+ */
+export const pitCountFor = (size: number, pitProbability: number) =>
+  pitProbability <= 0 ? 0 : Math.min(size * size - 3, Math.max(1, Math.round(pitProbability * size * size)));
+
 export const key = (x: number, y: number) => `${x},${y}`;
 
 /**
@@ -92,6 +99,7 @@ export function parseLayout(json: string): MapLayout {
   const wumpus = cell(data.wumpus, '"wumpus"');
   const gold = cell(data.gold, '"gold"');
   if (pits.some(([x, y]) => x === gold[0] && y === gold[1])) throw new Error('O ouro está dentro de um poço: seria impossível vencer.');
+  if (pits.some(([x, y]) => x === wumpus[0] && y === wumpus[1])) throw new Error('O Wumpus está dentro de um poço: os dois não podem ficar na mesma sala.');
   const pitProbability = typeof data.pitProbability === 'number' ? data.pitProbability : pits.length / (n * n - 1);
   return {
     format: 'wumpus3d-map',
@@ -108,6 +116,8 @@ export function parseLayout(json: string): MapLayout {
 export class WumpusWorld {
   readonly size: number;
   readonly pitProbability: number;
+  /** Número de poços do mapa (não é passado aos agentes: eles só sabem a porcentagem) */
+  readonly pitCount: number;
   readonly pits: Set<string>;
   readonly wumpus: Cell;
   wumpusAlive = true;
@@ -134,27 +144,32 @@ export class WumpusWorld {
       this.pits = new Set(layout.pits.map(([x, y]) => key(x - 1, y - 1)));
       this.wumpus = { x: layout.wumpus[0] - 1, y: layout.wumpus[1] - 1 };
       this.gold = this.goldStart = { x: layout.gold[0] - 1, y: layout.gold[1] - 1 };
+      this.pitCount = this.pits.size;
       this.percepts = this.sense();
       return;
     }
 
-    // Sorteia mapas até achar um em que dá para vencer
+    // Número fixo de poços, em salas sorteadas sem repetir; sorteia mapas até achar um em que dá para vencer
+    this.pitCount = pitCountFor(size, pitProbability);
     for (;;) {
-      const pits = new Set<string>();
       const free: Cell[] = [];
       for (let x = 0; x < size; x++) {
         for (let y = 0; y < size; y++) {
           if (x === 0 && y === 0) continue; // sala inicial é sempre segura
           free.push({ x, y });
-          if (rng() < pitProbability) pits.add(key(x, y));
         }
       }
+      const shuffled = [...free];
+      for (let i = 0; i < this.pitCount; i++) {
+        const j = i + Math.floor(rng() * (shuffled.length - i));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const pits = new Set(shuffled.slice(0, this.pitCount).map((c) => key(c.x, c.y)));
       const pick = (from: Cell[]) => from[Math.floor(rng() * from.length)];
-      const wumpus = pick(free);
-      // O ouro nunca fica num poço nem na sala do Wumpus
-      const goldOptions = free.filter((c) => !pits.has(key(c.x, c.y)) && !(c.x === wumpus.x && c.y === wumpus.y));
-      if (goldOptions.length === 0) continue;
-      const gold = pick(goldOptions);
+      // Wumpus e ouro nunca ficam num poço; os dois podem dividir a mesma sala (aí é preciso matar o Wumpus). Ver D16.
+      const noPit = free.filter((c) => !pits.has(key(c.x, c.y)));
+      const wumpus = pick(noPit);
+      const gold = pick(noPit);
       if (!WumpusWorld.reachable(size, pits, gold)) continue;
 
       this.pits = pits;

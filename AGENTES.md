@@ -15,6 +15,8 @@ registerAgent({
   // Chamado no início de cada partida. Guarde aqui a memória do agente.
   create(info) {
     // info = { size, pitProbability, maxActions }
+    // pitProbability é a porcentagem de poços escolhida (ex.: 0.2). O mapa tem round(pitProbability × size²)
+    // poços, mas o agente não recebe esse número: use a porcentagem como chance de poço por sala.
     return {
       // Chamado a cada passo. Precisa responder rápido (padrão: 1000 ms).
       decide(s) {
