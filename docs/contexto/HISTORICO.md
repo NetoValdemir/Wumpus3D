@@ -95,6 +95,11 @@ Acrescente novas entradas no fim.
 - **Treino:** 3 sementes (`utilidade-a/b/c`), pop. 20, 20 gerações, 500 mapas/geração (4×4 + 6×6), validação 2000. Seleção em 4000 mapas 4×4 + 800 6×6 (`selecao-v2-*`): A +4 / +85 sobre o probabilístico, B +1 / +76, C +6 / +76 → A.
 - **Medido (mapas de medição):** 4×4 638 × 650 (−12; IC −49 a +25); 6×6 242 × 182 (+60; IC −18 a +138). Sem diferença comprovada; tendência a favor no 6×6. Desvio pareado ~640 pts/partida: com 5000 mapas a margem ainda é ±37.
 
+### 23. Registro e análise das partidas humanas
+- **Pedido:** registrar as partidas do jogador para comparar com os agentes e com outros jogadores.
+- **Feito (D20):** seção "Minhas partidas" (nome do jogador, semente de desafio, resumo, exportar HTML/JSON, abrir na análise, comparar com os agentes nos mesmos mapas, apagar). Árbitro acompanha a partida humana (erros de lógica, riscos). Só contam primeira vez por mapa e sem mapa aberto. Manual: capítulo 13 novo; documentação técnica: cap. 9.
+- **Verificado:** 41 testes (novo `tests/human.test.ts`); Playwright: 4 partidas num desafio (uma com mapa aberto → não conta), resumo e índice do desafio corretos, comparação com 3 agentes nos mesmos mapas aberta na Análise, sem erros no console.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |

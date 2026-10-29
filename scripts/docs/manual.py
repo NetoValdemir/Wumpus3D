@@ -236,7 +236,7 @@ section('5', 'Painel de configuração: Partida', f'''
 </ul>
 <h2>Quem joga</h2>
 {table(['Opção', 'Como joga'], [
-    ['Você (teclado)', 'Você controla pelo teclado ou pelos botões.'],
+    ['Você (teclado)', 'Você controla pelo teclado ou pelos botões. As partidas que você termina ficam registradas (capítulo 13).'],
     ['Agente aleatório', 'Anda e gira ao acaso. Só pega o ouro se tropeçar nele. Serve como referência mínima.'],
     ['Agente lógico', 'Deduz pelas percepções quais salas são comprovadamente seguras e vai nelas primeiro. Atira quando descobre onde está o Wumpus. Sem sala segura, arrisca a que tem menos indícios de perigo (capítulo 11).'],
     ['Agente probabilístico', 'Faz as mesmas deduções e, sem sala segura, calcula a probabilidade de poço e de Wumpus em cada sala e vai na de menor risco (capítulo 11).'],
@@ -477,7 +477,7 @@ section('12', 'Análise de relatórios', f'''
 <p>A tela <b>📊 Análise de relatórios</b> (botão no painel) serve só para ler dados: importa relatórios exportados e compara os agentes. Feche com <b>Fechar</b> ou {kbd('Esc')}.</p>
 <h2>Carregar relatórios</h2>
 <ul>
-<li><b>Importar relatórios</b>: escolha um ou vários arquivos <code>.html</code> ou <code>.json</code> exportados pela Avaliação, pela Arena ou pela linha de comando (<code>npm run arena -- --relatorio arquivo.html</code>).</li>
+<li><b>Importar relatórios</b>: escolha um ou vários arquivos <code>.html</code> ou <code>.json</code> exportados pela Avaliação, pela Arena, por Minhas partidas (capítulo 13) ou pela linha de comando (<code>npm run arena -- --relatorio arquivo.html</code>).</li>
 <li><b>Abrir na análise</b> (na Avaliação e na Arena): manda o resultado direto para esta tela.</li>
 <li>Cada relatório aparece numa lista com <b>Remover</b>. <b>Limpar tudo</b> esvazia a lista. Os dados ficam só na página e somem ao recarregar.</li>
 <li>Se os relatórios usam mapas diferentes (tamanho, poços, semente ou número de partidas), aparece um aviso: a comparação vale como indicação, não como disputa justa.</li>
@@ -495,7 +495,27 @@ section('12', 'Análise de relatórios', f'''
 {box('tip', 'Comparando dois agentes', '<p>Avalie o primeiro agente com uma semente (por exemplo "turma-a") e 200 partidas, exporte ou abra na análise. Troque de jogador e avalie de novo com a <b>mesma semente e o mesmo número de partidas</b>. Os dois jogaram exatamente os mesmos mapas, e a partida 37 de um é o mesmo mapa da partida 37 do outro.</p>')}
 ''')
 
-section('13', 'Fim da partida', f'''
+section('13', 'Suas partidas: registro, desafios e comparação', f'''
+<p>Quando <b>Você (teclado)</b> está em "Quem joga", o painel mostra a seção <b>Minhas partidas</b>. Toda partida que você <b>termina</b> (vitória, morte ou tempo esgotado) é registrada neste navegador, com o mapa, a pontuação, as ações, o tempo, se pegou o ouro, se matou o Wumpus e as mesmas medidas de raciocínio da Arena (erros de lógica e riscos desnecessários).</p>
+{table(['Campo ou botão', 'O que faz'], [
+    ['Nome do jogador', 'Separa as partidas de cada pessoa no mesmo navegador. O nome aparece nos relatórios. Em branco, vira "Jogador".'],
+    ['Desafio: semente dos mapas', 'Em branco, cada "Novo mapa" é sorteado. Com uma semente (por exemplo "turma-a"), você joga os mapas nº 1, 2, 3... daquela semente, na mesma ordem que qualquer outro jogador que use a mesma semente, o mesmo tamanho e a mesma porcentagem de poços.'],
+    ['Exportar relatório (HTML) / dados (JSON)', 'O mesmo relatório da Avaliação, com as suas partidas.'],
+    ['Abrir na análise', 'Leva o relatório para a tela de Análise.'],
+    ['Comparar com os agentes nos mesmos mapas', 'Os agentes probabilístico, lógico e genético jogam exatamente os mapas que você jogou, e o resultado abre na Análise: você e eles, partida por partida.'],
+    ['Apagar minhas partidas', 'Apaga as partidas do jogador atual (pede confirmação).'],
+])}
+<h2>O que entra no relatório</h2>
+<ul>
+<li>Só a <b>primeira vez</b> que você termina cada mapa. Repetir um mapa que você já conhece daria vantagem sobre os agentes e os outros jogadores.</li>
+<li>Partidas em que você abriu o mapa (botão <b>Mapa</b> ou tecla {kbd('M')}) ficam registradas, mas <b>não contam</b>.</li>
+<li>Partidas abandonadas (Novo mapa ou Reiniciar antes do fim) não são registradas.</li>
+<li>No desafio, o mapa só avança depois que você <b>termina</b> o atual: "Novo mapa" no meio da partida devolve o mesmo mapa. Assim ninguém pula mapas difíceis.</li>
+</ul>
+{box('tip', 'Comparando com outros jogadores', '<p>Combine uma semente, um tamanho e uma porcentagem de poços com a turma. Cada um joga o desafio no próprio navegador, exporta o relatório e envia o arquivo. Na <b>Análise de relatórios</b>, importe todos: como os mapas são os mesmos, o mapa nº 7 de um é o mesmo mapa nº 7 do outro. Para incluir os agentes, use também "Comparar com os agentes nos mesmos mapas".</p>')}
+''')
+
+section('14', 'Fim da partida', f'''
 {img('vitoria.png', 'Tela de vitória. No fim da partida o mapa inteiro é revelado.')}
 <p>Ao terminar, aparece um quadro com o resultado, uma dica e a pontuação final. Se a flecha matou o Wumpus durante a partida, aparece também a linha "Matou o Wumpus com a flecha (+25).", em qualquer resultado. O mapa inteiro é revelado para você ver onde estavam os perigos.</p>
 {table(['Título', 'Texto exibido'], [
@@ -511,7 +531,7 @@ section('13', 'Fim da partida', f'''
 ''')
 
 # ---------------------------------------------------------------- 12
-section('14', 'No celular', f'''
+section('15', 'No celular', f'''
 {img('celular.png', 'O jogo num celular, com o painel fechado.', 'phone')}
 <ul>
 <li>O mapa fica em cima e os botões numa barra logo abaixo dele.</li>
@@ -522,12 +542,13 @@ section('14', 'No celular', f'''
 ''')
 
 # ---------------------------------------------------------------- 13
-section('15', 'Onde ficam seus dados', f'''
+section('16', 'Onde ficam seus dados', f'''
 {table(['O quê', 'Onde fica'], [
     ['Mapas salvos', 'No armazenamento do navegador (localStorage), neste aparelho.'],
     ['Pesos treinados do agente genético', 'Idem.'],
     ['Agentes importados', 'Idem (incluindo o código do agente).'],
     ['Relatórios na Análise', 'Só na página aberta: somem ao recarregar. Para guardar, exporte o relatório.'],
+    ['Suas partidas (Minhas partidas)', 'No armazenamento do navegador, com o mapa de cada partida (as últimas 1000).'],
 ])}
 <ul>
 <li>Nada é enviado para servidores. Outro navegador ou outro aparelho não vê seus dados.</li>
@@ -538,7 +559,7 @@ section('15', 'Onde ficam seus dados', f'''
 ''')
 
 # ---------------------------------------------------------------- 14
-section('16', 'Solução de problemas', table(['Problema', 'O que fazer'], [
+section('17', 'Solução de problemas', table(['Problema', 'O que fazer'], [
     ['A tela do mapa fica preta', 'O navegador está sem WebGL. Atualize o navegador, ative a aceleração de hardware nas configurações ou tente outro navegador.'],
     ['As teclas não funcionam', 'Clique no mapa 3D: o foco provavelmente está num campo de texto ou lista. Feche a Arena se ela estiver aberta.'],
     ['Espaço não atira', 'Quando um agente está selecionado, Espaço serve para jogar/pausar. Troque para "Você (teclado)".'],
@@ -553,7 +574,7 @@ section('16', 'Solução de problemas', table(['Problema', 'O que fazer'], [
 ]))
 
 # ---------------------------------------------------------------- 15
-section('17', 'Referência rápida', f'''
+section('18', 'Referência rápida', f'''
 <div class="quick">
 <div><h3>Objetivo</h3><p>Pegar o ouro ({kbd('G')}) e voltar ao anel azul (1, 1). Voltar sem ouro não encerra.</p></div>
 <div><h3>Perigos</h3><p>Poço e Wumpus vivo matam (−1000). Brisa = poço ao lado. Fedor = Wumpus ao lado.</p></div>

@@ -404,13 +404,14 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
     ['<code>src/report/report.ts</code>', lines_of('src/report/report.ts'), 'Relatórios: modelo de dados, leitura e séries acumuladas.'],
     ['<code>src/report/charts.ts</code>', lines_of('src/report/charts.ts'), 'Gráficos SVG dos relatórios e dicas ao passar o mouse.'],
     ['<code>src/report/html.ts</code>', lines_of('src/report/html.ts'), 'Tabelas e gráficos em HTML; arquivo de relatório exportado.'],
+    ['<code>src/report/human.ts</code>', lines_of('src/report/human.ts'), 'Partidas humanas: o que conta, desafio por semente, relatório e comparação com os agentes.'],
     ['<code>src/report/ui.ts</code>', lines_of('src/report/ui.ts'), 'Tela de Análise de relatórios e downloads.'],
     ['<code>src/storage.ts</code>', lines_of('src/storage.ts'), 'Leitura e escrita no <code>localStorage</code>.'],
     ['<code>scripts/arena.ts</code>', lines_of('scripts/arena.ts'), 'Arena na linha de comando.'],
     ['<code>scripts/treinar.ts</code>, <code>scripts/medir.ts</code>', lines_of('scripts/treinar.ts') + lines_of('scripts/medir.ts'), 'Treino do agente genético e tabela de desempenho na linha de comando.'],
     ['<code>agents/exemplo-cauteloso.js</code>', lines_of('agents/exemplo-cauteloso.js'), 'Agente de exemplo para outros devs.'],
     ['<code>vite.config.ts</code>', lines_of('vite.config.ts'), 'Configuração do build.'],
-    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report', 'genetic']), 'Testes automatizados (Vitest).'],
+    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report', 'genetic', 'human']), 'Testes automatizados (Vitest).'],
     ['<code>scripts/docs/</code>', '—', 'Geradores destes PDFs.'],
     ['<code>CLAUDE.md</code>, <code>.claude/</code>, <code>docs/contexto/</code>', '—', 'Memória do projeto para o Claude (resumo, skills, subagente, histórico e decisões).'],
     ['<code>.github/workflows/*.yml</code>', lines_of('.github/workflows/deploy.yml') + lines_of('.github/workflows/arena.yml'), 'Publicação no GitHub Pages e arena em pull requests.'],
@@ -692,6 +693,14 @@ section('9', 'A Arena de agentes (src/arena/)', f'''
 <li><code>html.ts</code> monta a tabela-resumo, as barras de resultado, quatro gráficos por partida (pontuação média acumulada, vitórias acumuladas, mortes acumuladas e ações por partida) e a tabela partida a partida. <code>renderReportHtml</code> gera um arquivo independente, que abre em qualquer navegador sem internet.</li>
 <li>O HTML exportado leva os dados dentro de <code>&lt;script type="application/json" id="wumpus3d-relatorio"&gt;</code>. A tela de Análise lê tanto esse HTML quanto o JSON puro, e aceita também a exportação antiga da Arena (só totais).</li>
 </ul>
+<h2>Partidas humanas (src/report/human.ts)</h2>
+<p>Com "Você (teclado)" em "Quem joga", <code>main.ts</code> cria um <code>Referee</code> (o árbitro da Arena) para a partida e, quando ela termina, guarda um <code>HumanGame</code> no <code>localStorage</code> (<code>storage.ts</code>, até 1000 partidas). Cada registro leva o <b>mapa inteiro</b>: é isso que permite aos agentes jogarem depois exatamente os mesmos mapas.</p>
+{snip('src/report/human.ts', 'export function countedGames(', '}', label='src/report/human.ts — o que entra no relatório')}
+<ul>
+<li><b>Contam</b> só a primeira vez que o jogador termina cada mapa (<code>layoutKey</code>), e só se ele não abriu o mapa (tecla M).</li>
+<li><b>Desafio:</b> <code>challengeMap(semente, n, ...)</code> usa o mesmo sorteador da Arena (<code>arenaMaps</code>), então jogadores diferentes com a mesma semente recebem os mesmos mapas na mesma ordem. <code>nextChallengeIndex</code> só avança depois de uma partida terminada, para ninguém pular mapas.</li>
+<li><code>compareWithAgents</code> joga os agentes probabilístico, lógico e genético nos mapas que o jogador terminou e monta um relatório com todos; no desafio, o número do mapa é a posição na semente, e relatórios de jogadores diferentes ficam alinhados mapa a mapa na Análise.</li>
+</ul>
 {box('decision', 'Por que um HTML com os dados dentro', '<p>Um arquivo só serve para as duas coisas: qualquer pessoa abre e vê os gráficos, e o jogo importa o mesmo arquivo para comparar com outros. Não há servidor: nada sai do navegador.</p>')}
 {box('tip', 'Comparando de forma justa', '<p>Na Avaliação, use a mesma <b>semente</b> e o mesmo número de partidas para todos os agentes: eles jogam exatamente os mesmos mapas, e o número do mapa (<code>map</code>) bate entre os relatórios. A tela de Análise avisa quando os relatórios usam mapas diferentes.</p>')}
 
@@ -806,6 +815,7 @@ section('13', 'Como o projeto foi verificado', f'''
     ['<code>tests/knowledge.test.ts</code>', 'Deduções: exemplo de 56% do AIMA, poço certo, localização do Wumpus, flecha que erra, Wumpus fora de poço deduzido e P(Wumpus) ponderada.'],
     ['<code>tests/arena.test.ts</code>', 'Arena: mesma semente gera os mesmos mapas, agentes de referência sem erro de lógica, lógico vence o aleatório, decisão inválida vira erro claro.'],
     ['<code>tests/genetic.test.ts</code>', 'Agente genético: pesos que dependem da posição não o fazem andar em círculos; o <code>BAYES_LIKE_GENOME</code> não esgota o tempo.'],
+    ['<code>tests/human.test.ts</code>', 'Partidas humanas: só a primeira vez em cada mapa e sem mapa aberto contam, desafio reproduzível que só avança depois de terminar, agentes jogam os mesmos mapas do jogador.'],
     ['<code>tests/report.test.ts</code>', 'Relatórios: totais batem com as partidas, o HTML exportado é importado de volta igual, exportação antiga da Arena é aceita, arquivos estranhos são recusados.'],
 ])}
 {snip('tests/world.test.ts', "describe('vitória e fim de partida'", lines=14, label='tests/world.test.ts — exemplo')}

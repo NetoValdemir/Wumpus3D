@@ -14,6 +14,9 @@ import { arenaMaps } from './arena/rng';
 import { WorkerSandbox } from './arena/sandbox';
 import { externalAgents, externalById, initArena, openArena } from './arena/ui';
 import { buildReport, type Report } from './report/report';
+import { challengeMap, compareWithAgents, humanReport, humanSummary, nextChallengeIndex, type HumanGame } from './report/human';
+import { Referee } from './arena/referee';
+import { clearHumanGames, loadHumanGames, loadPlayerName, saveHumanGame, savePlayerName } from './storage';
 import { addReportToAnalysis, exportReportHtml, exportReportJson, initAnalysis, openAnalysis } from './report/ui';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
@@ -159,10 +162,63 @@ function updateHud() {
   }
 }
 
+// ---------- Registro das partidas humanas (D20) ----------
+// O mesmo árbitro da Arena acompanha a partida do jogador, para medir erros de lógica e riscos.
+let referee: Referee | null = null;
+let humanStartedAt = 0;
+let revealedThisGame = false;
+let recorded = false;
+let challenge: { seed: string; index: number } | null = null;
+
+const playerName = () => $<HTMLInputElement>('#human-name').value.trim() || 'Jogador';
+const challengeSeed = () => $<HTMLInputElement>('#human-seed').value.trim();
+
+function recordHumanGame() {
+  recorded = true;
+  const game: HumanGame = {
+    date: new Date().toISOString(),
+    player: playerName(),
+    layout: { ...layout, name: mapName ?? layout.name },
+    challenge,
+    outcome: world.status as HumanGame['outcome'],
+    score: world.score,
+    actions: world.actions,
+    gold: world.hasGold,
+    killed: !world.wumpusAlive,
+    shots: referee!.shots,
+    bumps: referee!.bumps,
+    logicErrors: referee!.logicErrors,
+    needlessRisks: referee!.needlessRisks,
+    ms: Math.round(performance.now() - humanStartedAt),
+    revealed: revealedThisGame,
+  };
+  const saved = saveHumanGame(game);
+  log(saved ? (revealedThisGame ? 'Partida registrada (com o mapa aberto: não entra no relatório).' : 'Partida registrada em "Minhas partidas".') : 'Não deu para registrar a partida: o navegador bloqueou o armazenamento.');
+  updateHumanPanel();
+}
+
+function updateHumanPanel() {
+  const games = loadHumanGames();
+  const name = playerName();
+  const s = humanSummary(games, name);
+  $('#human-summary').textContent = s.total
+    ? `${name}: ${s.counted} ${s.counted === 1 ? 'partida conta' : 'partidas contam'} no relatório (${s.wins} vitórias, ${s.deaths} mortes, média ${Math.round(s.avg)} pts)` +
+      (s.ignored ? `; ${s.ignored} não ${s.ignored === 1 ? 'conta' : 'contam'} (mapa repetido ou aberto).` : '.')
+    : `Nenhuma partida de ${name} registrada ainda.`;
+  const seed = challengeSeed();
+  $('#human-challenge').textContent = seed
+    ? `Desafio "${seed}": ${challenge ? `você está no mapa nº ${challenge.index + 1}. ` : ''}Mesma semente, tamanho e porcentagem de poços = mesmos mapas, na mesma ordem, para qualquer jogador. Um mapa só avança depois que você termina o atual.`
+    : 'Sem semente, cada "Novo mapa" é sorteado. Com uma semente, você e outros jogadores enfrentam os mesmos mapas, na mesma ordem.';
+  for (const id of ['#human-html', '#human-json', '#human-analysis', '#human-compare']) $<HTMLButtonElement>(id).disabled = !s.counted;
+}
+
 function act(action: Action) {
+  if (referee) referee.judge(world, action);
   const result = world.step(action);
+  if (referee) referee.observe(world, action === 'shoot');
   if (result.arrow) view.shootArrow(result.arrow.from, result.arrow.to);
   log(result.message);
+  if (referee && world.gameOver && !recorded) recordHumanGame();
   if (world.gameOver) playing = false;
   view.sync();
   view.showBeliefs(visibleBeliefs());
@@ -202,13 +258,28 @@ function restart(newMap = true) {
   stepping = false;
   decision = null;
   controller?.dispose?.();
-  if (newMap || !layout) {
+  const seed = challengeSeed();
+  if (playerId === 'human' && seed && (newMap || !layout)) {
+    // Desafio: o próximo mapa da semente (só avança depois de terminar o atual, então não dá para pular)
+    const size = Number(cfg.size.value);
+    const pits = Number(cfg.pits.value);
+    const index = nextChallengeIndex(loadHumanGames(), playerName(), seed, size, pits);
+    layout = challengeMap(seed, index, size, pits);
+    mapName = layout.name;
+    world = WumpusWorld.fromLayout(layout);
+    challenge = { seed, index };
+  } else if (newMap || !layout) {
     world = new WumpusWorld(Number(cfg.size.value), Number(cfg.pits.value));
     layout = world.toLayout('Mapa sorteado');
     mapName = null;
+    challenge = null;
   } else {
     world = WumpusWorld.fromLayout(layout);
   }
+  referee = playerId === 'human' ? new Referee(world) : null;
+  humanStartedAt = performance.now();
+  revealedThisGame = view.revealAll;
+  recorded = false;
   controller = playerId === 'human' ? null : makeController(playerId, true);
   if (controller) {
     const c = controller;
@@ -219,8 +290,9 @@ function restart(newMap = true) {
   view.load(world);
   view.showBeliefs(visibleBeliefs());
   $('#log').innerHTML = '';
-  log(controller ? `${playerInfo(playerId).label} entrou na caverna. Aperte ▶ Jogar.` : 'Você entrou na caverna. Encontre o ouro e volte vivo!');
+  log(controller ? `${playerInfo(playerId).label} entrou na caverna. Aperte ▶ Jogar.` : challenge ? `Desafio "${challenge.seed}", mapa nº ${challenge.index + 1}. Encontre o ouro e volte vivo!` : 'Você entrou na caverna. Encontre o ouro e volte vivo!');
   updateHud();
+  if (playerId === 'human') updateHumanPanel();
 }
 
 /** Para o agente (se estiver jogando) e volta ao início, no mesmo mapa. */
@@ -243,6 +315,7 @@ function setSetupOpen(open: boolean) {
 
 /** Joga um mapa salvo ou importado. */
 function playLayout(l: MapLayout) {
+  challenge = null;
   layout = l;
   mapName = l.name;
   if ([...cfg.size.options].some((o) => o.value === String(l.size))) cfg.size.value = String(l.size);
@@ -255,6 +328,7 @@ function updateSetup() {
   $('#row-speed').hidden = id === 'human';
   $('#row-beliefs').hidden = id === 'human' || id === 'random';
   $('#bench-section').hidden = id === 'human';
+  $('#human-section').hidden = id !== 'human';
   $('#ga-section').hidden = id !== 'genetic';
   $('#speed-out').textContent = `${cfg.speed.value} passos/s`;
 }
@@ -272,6 +346,7 @@ function toggleCamera() {
 
 function toggleReveal() {
   view.revealAll = !view.revealAll;
+  if (view.revealAll && referee && !world.gameOver) revealedThisGame = true; // espiou: a partida não conta
   view.sync();
 }
 
@@ -633,6 +708,45 @@ $('#bench-json').addEventListener('click', () => {
 });
 $('#bench-analysis').addEventListener('click', () => lastReport && addReportToAnalysis(lastReport));
 $('#open-analysis').addEventListener('click', openAnalysis);
+
+// ---------- Minhas partidas ----------
+
+$<HTMLInputElement>('#human-name').value = loadPlayerName();
+$('#human-name').addEventListener('change', () => {
+  savePlayerName($<HTMLInputElement>('#human-name').value.trim());
+  if (challengeSeed()) restart(); // o progresso no desafio é de cada jogador
+  updateHumanPanel();
+});
+$('#human-seed').addEventListener('change', () => {
+  restart();
+  updateHumanPanel();
+});
+const humanMsg = (text: string) => ($('#human-summary').textContent = text);
+$('#human-html').addEventListener('click', () => {
+  if (!exportReportHtml(humanReport(loadHumanGames(), playerName()))) humanMsg('O navegador bloqueou o download. Use "Abrir na análise".');
+});
+$('#human-json').addEventListener('click', () => {
+  if (!exportReportJson(humanReport(loadHumanGames(), playerName()))) humanMsg('O navegador bloqueou o download. Use "Abrir na análise".');
+});
+$('#human-analysis').addEventListener('click', () => addReportToAnalysis(humanReport(loadHumanGames(), playerName())));
+$('#human-compare').addEventListener('click', async () => {
+  humanMsg('Os agentes estão jogando os seus mapas...');
+  await new Promise((r) => setTimeout(r));
+  addReportToAnalysis(await compareWithAgents(loadHumanGames(), playerName(), genome ?? DEFAULT_GENOME));
+  updateHumanPanel();
+});
+$('#human-clear').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('#human-clear');
+  if (!btn.dataset.confirm) {
+    btn.dataset.confirm = '1';
+    btn.textContent = `Confirmar: apagar as partidas de ${playerName()}?`;
+    return;
+  }
+  delete btn.dataset.confirm;
+  btn.textContent = 'Apagar minhas partidas';
+  clearHumanGames(playerName());
+  updateHumanPanel();
+});
 initAnalysis();
 
 // ---------- Arena ----------
@@ -665,6 +779,7 @@ setSetupOpen(window.innerWidth > 760);
 refreshPlayerOptions();
 updateSetup();
 updatePitHint();
+updateHumanPanel();
 refreshMapList();
 renderWeights();
 drawChart();
