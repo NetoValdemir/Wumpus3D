@@ -180,6 +180,22 @@
               <button id="bench-analysis">Abrir na análise</button>
             </div>
           </section>
+
+          <section id="human-section" hidden>
+            <h3>Minhas partidas</h3>
+            <label>Nome do jogador <input type="text" id="human-name" maxlength="40" placeholder="Jogador" /></label>
+            <label>Desafio: semente dos mapas <input type="text" id="human-seed" maxlength="40" placeholder="vazio = mapas sorteados" /></label>
+            <p id="human-challenge" class="hint"></p>
+            <p id="human-summary" class="hint msg"></p>
+            <div class="inline">
+              <button id="human-html">Exportar relatório (HTML)</button>
+              <button id="human-json">Exportar dados (JSON)</button>
+              <button id="human-analysis">Abrir na análise</button>
+            </div>
+            <button id="human-compare">Comparar com os agentes nos mesmos mapas</button>
+            <button id="human-clear">Apagar minhas partidas</button>
+            <p class="hint">Toda partida que você termina é registrada neste navegador. No relatório entra só a primeira vez que você termina cada mapa, e só se não abriu o mapa (tecla M).</p>
+          </section>
         </div>
       </aside>
     </div>
@@ -282,7 +298,7 @@
           <button id="analysis-close">Fechar</button>
         </header>
         <p class="hint">
-          Compare agentes a partir de relatórios exportados pela Avaliação, pela Arena ou por <code>npm run arena -- --relatorio arquivo.html</code>.
+          Compare agentes e jogadores a partir de relatórios exportados pela Avaliação, pela Arena, por <b>Minhas partidas</b> ou por <code>npm run arena -- --relatorio arquivo.html</code>.
           Aceita os arquivos .html e .json. Os dados ficam só neste navegador e somem ao recarregar a página.
         </p>
         <div class="inline">

@@ -54,6 +54,8 @@ Com **Mostrar raciocínio** ligado, cada sala da fronteira mostra no piso o que 
 
 A Avaliação e a Arena exportam um **relatório**: um arquivo HTML que abre em qualquer navegador (sem internet) com a tabela-resumo, as barras de resultado, os gráficos de pontuação média acumulada, vitórias e mortes acumuladas e ações por partida, e a lista partida a partida. O mesmo arquivo (ou o `.json`) pode ser importado na tela **📊 Análise de relatórios**, que junta vários relatórios para comparar agentes. Na linha de comando: `npm run arena -- --relatorio relatorio.html`.
 
+**Suas partidas:** jogando você mesmo, toda partida terminada fica registrada (seção **Minhas partidas** do painel), com as mesmas medidas dos agentes. Dá para exportar o seu relatório e **comparar com os agentes nos mesmos mapas** que você jogou. Com uma **semente de desafio**, vários jogadores enfrentam os mesmos mapas na mesma ordem e comparam os relatórios na Análise. Só contam a primeira vez em cada mapa e partidas sem o mapa aberto.
+
 ### Agente genético
 
 O genoma é uma lista de 11 pesos, entre −5 e 5:

@@ -104,3 +104,10 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 - **Descartado:** rede neural no lugar da soma (Chellapilla e Fogel) — exige muito mais avaliações com o ruído atual; calibrar parâmetros do AG antes — ganho esperado menor; aprender durante a Arena — mistura treino e avaliação.
 - **Custo:** 11 pesos em vez de 12; pesos treinados salvos no navegador na versão anterior são descartados.
 - **Onde:** `genome.ts`, `GeneticAgent.explore()` (`plan`), `genetic.ts` (`sizes`, `validationMaps`), `scripts/treinar.ts`, `scripts/medir.ts`, `pairedDiff` em `src/report/report.ts`.
+
+## D20 — Registro das partidas humanas e desafios por semente
+- **Por quê:** pedido do dono: comparar jogadores com os agentes e com outros jogadores.
+- **Como:** com "Você (teclado)", o `Referee` da Arena acompanha a partida; ao terminar, um `HumanGame` (com o mapa inteiro) vai para o `localStorage` (últimas 1000). Relatórios usam o formato de D18 (`origin: 'jogador'`). "Comparar com os agentes" faz os agentes jogarem os mapas do jogador (comparação pareada).
+- **Justiça:** contam só a primeira vez em cada mapa (`layoutKey`) e partidas sem o mapa aberto (tecla M); abandonadas não são registradas. Desafio: `challengeMap` usa `arenaMaps("desafio-<semente>")`; o índice só avança depois de terminar (não dá para pular mapas difíceis); progresso por jogador.
+- **Descartado:** registrar partidas de agentes vistas no 3D (a Avaliação já faz isso melhor); servidor/ranking online (sem backend; troca de arquivos basta).
+- **Onde:** `src/report/human.ts`, `storage.ts` (`loadHumanGames`, `saveHumanGame`, `clearHumanGames`, nome), `main.ts` (`recordHumanGame`, `updateHumanPanel`, desafio em `restart()`), seção `#human-section` em `index.html`.

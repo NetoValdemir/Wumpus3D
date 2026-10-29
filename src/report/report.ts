@@ -41,7 +41,7 @@ export interface Report {
   version: 1;
   title: string;
   created: string; // data e hora ISO
-  origin: 'avaliacao' | 'arena' | 'linha-de-comando';
+  origin: 'avaliacao' | 'arena' | 'linha-de-comando' | 'jogador';
   config: ReportConfig;
   agents: ReportAgent[];
   /** Nome do arquivo de onde veio (preenchido ao importar) */
@@ -74,7 +74,8 @@ export function buildReport(opts: {
   title: string;
   origin: Report['origin'];
   config: Omit<ReportConfig, 'pitCount'>;
-  agents: { name: string; author: string; results: EpisodeResult[] }[];
+  /** `maps`: número de cada mapa (padrão 1, 2, 3...), para alinhar partidas de relatórios diferentes */
+  agents: { name: string; author: string; results: EpisodeResult[]; maps?: number[] }[];
 }): Report {
   const { size, pitProbability } = opts.config;
   return {
@@ -88,7 +89,7 @@ export function buildReport(opts: {
       name: a.name,
       author: a.author,
       stats: aggregate(a.name, a.author, a.results),
-      games: a.results.map((r, i) => toRow(r, i + 1)),
+      games: a.results.map((r, i) => toRow(r, a.maps?.[i] ?? i + 1)),
     })),
   };
 }
