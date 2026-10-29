@@ -257,6 +257,12 @@ export class ReasoningAgent implements Agent {
  */
 export class GeneticAgent extends ReasoningAgent {
   private genome: number[];
+  /**
+   * Sala escolhida e quanto o agente sabia ao escolher. Enquanto ele só anda por salas conhecidas,
+   * nada novo é aprendido, então a escolha vale até chegar. Sem isso, pesos que dependem da posição
+   * (distância, giros) faziam o agente trocar de alvo a cada passo e andar em círculos até o tempo esgotar.
+   */
+  private plan: { target: string; known: number; dead: boolean; candidates: number } | null = null;
 
   constructor(size: number, pitProbability: number, genome: number[]) {
     super(size, pitProbability, 'bayes');
@@ -272,6 +278,14 @@ export class GeneticAgent extends ReasoningAgent {
     const walkable = (k: string) => kb.visited.has(k) || kb.safe(k, candidates);
     const beliefs = kb.beliefs();
     const g = this.genome;
+
+    // Mantém o alvo enquanto nada novo foi aprendido (mesmas salas visitadas, mesmo estado do Wumpus)
+    const plan = this.plan;
+    if (plan && plan.known === kb.visited.size && plan.dead === kb.wumpusDead && plan.candidates === candidates.size) {
+      const path = this.frontier(candidates).includes(plan.target) ? this.route(here, new Set([plan.target]), walkable) : null;
+      if (path) return this.walk(s, path, `Seguindo para ${fmt(plan.target)}, escolhida pela fórmula evoluída.`);
+    }
+    this.plan = null;
 
     // Pontua cada sala da fronteira
     let best: { cell: string; path: string[]; score: number; safe: boolean } | null = null;
@@ -312,6 +326,7 @@ export class GeneticAgent extends ReasoningAgent {
     }
 
     if (!best) return this.idle();
+    this.plan = { target: best.cell, known: kb.visited.size, dead: kb.wumpusDead, candidates: candidates.size };
     const risk = riskOf(beliefs.get(best.cell)!);
     return this.walk(
       s,

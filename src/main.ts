@@ -639,6 +639,7 @@ initAnalysis();
 
 initArena({
   genome: () => genome ?? DEFAULT_GENOME,
+  trainedGenome: () => genome !== null,
   savedMaps: loadSavedMaps,
   onAgentsChanged: () => {
     const before = cfg.agent.value;
