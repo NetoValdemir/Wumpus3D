@@ -13,6 +13,8 @@ import { aggregate } from './arena/ranking';
 import { arenaMaps } from './arena/rng';
 import { WorkerSandbox } from './arena/sandbox';
 import { externalAgents, externalById, initArena, openArena } from './arena/ui';
+import { buildReport, type Report } from './report/report';
+import { addReportToAnalysis, exportReportHtml, exportReportJson, initAnalysis, openAnalysis } from './report/ui';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
@@ -581,31 +583,57 @@ $('#ga-reset').addEventListener('click', () => {
 // ---------- Avaliação ----------
 
 let benchmarking = false;
+let lastReport: Report | null = null;
 $('#btn-bench').addEventListener('click', async () => {
   const id = cfg.agent.value;
   if (id === 'human' || benchmarking) return;
   benchmarking = true;
   const onMap = $<HTMLInputElement>('#bench-on-map').checked;
+  const games = Math.min(1000, Math.max(1, Math.round(Number($<HTMLInputElement>('#bench-games').value) || 100)));
+  const seed = $<HTMLInputElement>('#bench-seed').value.trim() || 'avaliacao';
   const out = $('#bench-out');
-  const maps = onMap ? Array.from({ length: 100 }, () => layout) : arenaMaps(String(Math.random()), 100, world.size, world.pitProbability);
+  // Semente fixa: avaliar outro agente com a mesma semente e quantidade repete exatamente os mesmos mapas
+  const maps = onMap ? Array.from({ length: games }, () => layout) : arenaMaps(seed, games, world.size, world.pitProbability);
   const ctrl = makeController(id, false);
   const results: EpisodeResult[] = [];
   for (const m of maps) {
     results.push(await playEpisode(ctrl, m, 3000));
     if (results.length % 10 === 0) {
-      out.textContent = `Jogando: ${results.length} de 100 partidas...`;
+      out.textContent = `Jogando: ${results.length} de ${games} partidas...`;
       await new Promise((r) => setTimeout(r));
     }
   }
   ctrl.dispose?.();
-  const r = aggregate(playerInfo(id).label, '', results);
+  const name = id === 'genetic' && genome ? `${playerInfo(id).label} (pesos treinados)` : playerInfo(id).label;
+  const r = aggregate(name, '', results);
   const deaths = r.deathsPit + r.deathsWumpus;
   out.textContent =
     `${r.name} ${onMap ? `no mapa "${mapName ?? 'atual'}"` : `em mapas ${world.size}×${world.size} sorteados`}: ` +
     `${r.wins} vitórias, ${deaths} mortes${r.timeouts ? `, ${r.timeouts} por tempo esgotado` : ''}${r.errors ? `, ${r.errors} erros (${r.firstError})` : ''}. ` +
     `Pontuação média: ${Math.round(r.avgScore)}.`;
+  lastReport = buildReport({
+    title: `${name} em ${games} partidas`,
+    origin: 'avaliacao',
+    config: {
+      size: world.size,
+      pitProbability: onMap ? layout.pitProbability : world.pitProbability,
+      maps: games,
+      seed: onMap ? `mapa "${mapName ?? 'atual'}"` : seed,
+    },
+    agents: [{ name, author: id.startsWith('ext:') ? (externalById(id.slice(4))?.author ?? '') : 'Wumpus 3D', results }],
+  });
+  $('#bench-actions').hidden = false;
   benchmarking = false;
 });
+$('#bench-html').addEventListener('click', () => {
+  if (lastReport && !exportReportHtml(lastReport)) $('#bench-out').textContent = 'O navegador bloqueou o download. Use "Abrir na análise".';
+});
+$('#bench-json').addEventListener('click', () => {
+  if (lastReport && !exportReportJson(lastReport)) $('#bench-out').textContent = 'O navegador bloqueou o download. Use "Abrir na análise".';
+});
+$('#bench-analysis').addEventListener('click', () => lastReport && addReportToAnalysis(lastReport));
+$('#open-analysis').addEventListener('click', openAnalysis);
+initAnalysis();
 
 // ---------- Arena ----------
 

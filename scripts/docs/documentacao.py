@@ -66,6 +66,33 @@ def table(head, rows, cls=''):
     return f'<table class="{cls}"><thead><tr>{h}</tr></thead><tbody>{b}</tbody></table>'
 
 
+def exemplo_svg():
+    """Situação real (mapa 2 da semente "exemplo"): mesmas pistas, escolhas diferentes."""
+    c, ox, oy = 72, 34, 8  # tamanho da sala e margens
+    cells = {
+        (1, 1): ('vis', ['brisa']), (1, 2): ('vis', ['nada']), (2, 2): ('vis', ['brisa']), (1, 3): ('here', ['brisa', 'agente aqui']),
+        (2, 1): ('pit', ['poço certo', '100%']), (1, 4): ('L', ['P(poço) 56%', 'escolha do', 'LÓGICO']),
+        (2, 3): ('risk', ['P(poço) 56%']), (3, 2): ('B', ['P(poço) 20%', 'escolha do', 'PROBABILÍSTICO']),
+    }
+    fill = {'vis': '#e8e4dc', 'here': '#d9e6f5', 'pit': '#3a3330', 'L': '#fbe3d6', 'risk': '#ffffff', 'B': '#d8efe3'}
+    ink = {'pit': '#ffffff'}
+    out = [f'<svg viewBox="0 0 {ox + 4 * c + 8} {oy + 4 * c + 26}" class="diagram small" role="img" aria-label="Exemplo em que os agentes lógico e probabilístico escolhem salas diferentes">']
+    for x in range(1, 5):
+        for y in range(1, 5):
+            kind, text = cells.get((x, y), ('unk', []))
+            px, py = ox + (x - 1) * c, oy + (4 - y) * c
+            out.append(f'<rect x="{px}" y="{py}" width="{c}" height="{c}" fill="{fill.get(kind, "#f6f4f0")}" stroke="#8a8173" stroke-width="1"/>')
+            for i, t in enumerate(text):
+                weight = ' font-weight="700"' if t in ('LÓGICO', 'PROBABILÍSTICO', 'poço certo') else ''
+                size = 8.5 if t == 'PROBABILÍSTICO' else 10
+                out.append(f'<text x="{px + c / 2}" y="{py + c / 2 - (len(text) - 1) * 6.5 + i * 13 + 4}" text-anchor="middle" font-size="{size}" fill="{ink.get(kind, "#1d1a16")}"{weight}>{t}</text>')
+    for i in range(1, 5):
+        out.append(f'<text x="{ox + (i - 0.5) * c}" y="{oy + 4 * c + 16}" text-anchor="middle" font-size="10" fill="#5e5850">{i}</text>')
+        out.append(f'<text x="{ox - 10}" y="{oy + (4 - i + 0.5) * c + 4}" text-anchor="middle" font-size="10" fill="#5e5850">{i}</text>')
+    out.append('</svg>')
+    return ''.join(out)
+
+
 def lines_of(path):
     return len((ROOT / path).read_text().split('\n')) - 1
 
@@ -374,11 +401,16 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
     ['<code>src/arena/ranking.ts</code>', lines_of('src/arena/ranking.ts'), 'Estatísticas e ordenação.'],
     ['<code>src/arena/rng.ts</code>', lines_of('src/arena/rng.ts'), 'Sorteio reproduzível por semente.'],
     ['<code>src/arena/ui.ts</code>', lines_of('src/arena/ui.ts'), 'Tela da Arena.'],
+    ['<code>src/report/report.ts</code>', lines_of('src/report/report.ts'), 'Relatórios: modelo de dados, leitura e séries acumuladas.'],
+    ['<code>src/report/charts.ts</code>', lines_of('src/report/charts.ts'), 'Gráficos SVG dos relatórios e dicas ao passar o mouse.'],
+    ['<code>src/report/html.ts</code>', lines_of('src/report/html.ts'), 'Tabelas e gráficos em HTML; arquivo de relatório exportado.'],
+    ['<code>src/report/ui.ts</code>', lines_of('src/report/ui.ts'), 'Tela de Análise de relatórios e downloads.'],
     ['<code>src/storage.ts</code>', lines_of('src/storage.ts'), 'Leitura e escrita no <code>localStorage</code>.'],
     ['<code>scripts/arena.ts</code>', lines_of('scripts/arena.ts'), 'Arena na linha de comando.'],
+    ['<code>scripts/treinar.ts</code>, <code>scripts/medir.ts</code>', lines_of('scripts/treinar.ts') + lines_of('scripts/medir.ts'), 'Treino do agente genético e tabela de desempenho na linha de comando.'],
     ['<code>agents/exemplo-cauteloso.js</code>', lines_of('agents/exemplo-cauteloso.js'), 'Agente de exemplo para outros devs.'],
     ['<code>vite.config.ts</code>', lines_of('vite.config.ts'), 'Configuração do build.'],
-    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena']), 'Testes automatizados (Vitest).'],
+    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report']), 'Testes automatizados (Vitest).'],
     ['<code>scripts/docs/</code>', '—', 'Geradores destes PDFs.'],
     ['<code>CLAUDE.md</code>, <code>.claude/</code>, <code>docs/contexto/</code>', '—', 'Memória do projeto para o Claude (resumo, skills, subagente, histórico e decisões).'],
     ['<code>.github/workflows/*.yml</code>', lines_of('.github/workflows/deploy.yml') + lines_of('.github/workflows/arena.yml'), 'Publicação no GitHub Pages e arena em pull requests.'],
@@ -494,7 +526,7 @@ section('7', 'Inteligência — base de conhecimento (src/agents/knowledge.ts)',
 
 <h2>Dedução 2: onde o Wumpus pode estar</h2>
 {snip('src/agents/knowledge.ts', 'wumpusCandidates(): Set<string> {', '/** Salas que com certeza', label='src/agents/knowledge.ts — wumpusCandidates()', exclusive=True)}
-<p>Uma sala só é candidata se for consistente com <b>tudo</b> que foi sentido: não visitada, não limpa por flecha, não vizinha de sala sem fedor, e vizinha de <b>todas</b> as salas com fedor (existe um só Wumpus, então ele precisa explicar todos os fedores). Se sobrar uma única candidata, o agente sabe onde o Wumpus está.</p>
+<p>Uma sala só é candidata se for consistente com <b>tudo</b> que foi sentido: não visitada, não limpa por flecha, não vizinha de sala sem fedor, vizinha de <b>todas</b> as salas com fedor (existe um só Wumpus, então ele precisa explicar todos os fedores) e sem poço deduzido (pela regra do jogo, o Wumpus nunca fica num poço). Se sobrar uma única candidata, o agente sabe onde o Wumpus está.</p>
 
 <h2>Dedução 3: poço certo</h2>
 <p><code>certainPits()</code>: se uma sala tem brisa e só <b>uma</b> vizinha ainda pode ter poço, o poço está nessa vizinha.</p>
@@ -513,7 +545,11 @@ section('7', 'Inteligência — base de conhecimento (src/agents/knowledge.ts)',
 {snip('src/agents/knowledge.ts', 'if (frontier.length <= MAX_ENUMERATION) {', '    } else {')}
 <p>O laço usa <b>máscaras de bits</b>: cada combinação é um número inteiro, e o bit <i>i</i> ligado significa "poço na sala <i>i</i> da fronteira". <code>combo & m</code> testa se alguma sala vizinha da brisa tem poço naquela combinação.</p>
 {box('decision', 'Limite de 16 salas na fronteira', '<p>O número de combinações dobra a cada sala: 16 salas são 65.536 combinações, 25 seriam 33 milhões. Acima de 16 o código usa uma estimativa simples (1 ÷ número de vizinhas desconhecidas de cada brisa). Isso só acontece em mapas grandes e é uma aproximação, não o valor exato.</p>')}
-{box('notdo', 'O que knowledge.ts não faz', '<ul><li>A probabilidade do Wumpus é uniforme entre as candidatas (1 ÷ quantidade): ela não considera que uma sala com poço provavelmente não é a do Wumpus.</li><li>Ela não sabe que o gerador só aceita mapas vencíveis nem quantos poços o mapa tem; supõe poços independentes com a porcentagem configurada.</li><li>Ela não lembra a ordem das visitas, só o resultado.</li></ul>')}
+<h2>Probabilidade do Wumpus e risco da sala</h2>
+<p>O Wumpus é sorteado entre as salas <b>sem poço</b>. Por isso, entre as candidatas, a chance de ele estar numa sala é proporcional à chance de ela <i>não</i> ter poço: P(Wumpus em c) = (1 − P(poço em c)) ÷ soma de (1 − P(poço)) das candidatas. Com as candidatas igualmente arriscadas, isso dá 1 ÷ número de candidatas.</p>
+<p>O risco de entrar numa sala é a chance de morrer lá: <code>riskOf(b) = P(poço) + P(Wumpus)</code>. Os dois eventos se <b>excluem</b> (nunca estão na mesma sala), então as probabilidades se somam.</p>
+{snip('src/agents/knowledge.ts', 'export const riskOf', lines=1)}
+{box('notdo', 'O que knowledge.ts não faz', '<ul><li>A probabilidade do Wumpus usa as probabilidades de poço sala a sala, sem enumerar poços e Wumpus juntos. É uma aproximação: a correlação entre as salas da fronteira não entra nessa conta.</li><li>Ela não sabe que o gerador só aceita mapas vencíveis nem quantos poços o mapa tem; supõe poços independentes com a porcentagem configurada.</li><li>Ela não lembra a ordem das visitas, só o resultado.</li></ul>')}
 ''')
 
 section('8', 'Inteligência — os agentes', f'''
@@ -538,11 +574,41 @@ section('8', 'Inteligência — os agentes', f'''
     ['2', 'Tem o ouro', 'Volta para a entrada pelas salas visitadas (a vitória é automática ao chegar)'],
     ['3', 'Existe sala segura não visitada', 'Vai até a mais próxima'],
     ['4', 'Tem flecha e no máximo 3 candidatas a Wumpus', 'Vai até uma sala alinhada com uma candidata, mira e atira'],
-    ['5', 'Nenhuma sala segura', 'Lógico: a sala da fronteira com menos indícios (brisas e fedores ao lado). Probabilístico: a de menor risco 1−(1−P(poço))(1−P(Wumpus))'],
+    ['5', 'Nenhuma sala segura', 'Lógico: a sala da fronteira com menos indícios (brisas e fedores ao lado). Probabilístico: a de menor risco P(poço) + P(Wumpus). Empate: a mais próxima'],
     ['6', 'Toda a fronteira é perigo certo', 'Gira no lugar até o limite de ações'],
 ])}
 {box('decision', 'Por que o agente lógico também arrisca', '<p>Na versão do livro, o agente lógico desiste e sai da caverna quando não há sala segura. Como aqui não existe sair, ficar parado só levaria ao tempo esgotado. Então ele chuta, mas sem usar probabilidades: só conta indícios. Essa é a diferença que separa os dois agentes nos resultados.</p>')}
 <p>Após um tiro, se não ouvir o grito, o agente marca as salas da linha do tiro como livres de Wumpus (<code>arrowMissed</code>).</p>
+
+<h2>Lógico × probabilístico: fundamentação e diferença</h2>
+<p>Os dois agentes seguem o mesmo roteiro do <b>agente híbrido</b> do capítulo 7 do AIMA: pegar o ouro e voltar; senão, ir para a sala segura mais próxima; senão, tentar matar o Wumpus; senão, arriscar uma sala que não seja perigo comprovado. Eles <b>sabem exatamente as mesmas coisas</b>, porque usam a mesma base de conhecimento. A diferença está só no passo 5, quando nenhuma sala é comprovadamente segura.</p>
+{table(['', 'Agente lógico', 'Agente probabilístico'], [
+    ['Base teórica', 'Lógica proposicional e inferência por verificação de modelos (AIMA, cap. 7).', 'Probabilidade e inferência por enumeração na fronteira (AIMA, cap. 12, seção 12.7), mais a escolha da ação de menor risco.'],
+    ['O que conclui sobre uma sala', 'Três respostas: segura, perigo certo ou "não sei".', 'Um número: a chance de morrer ao entrar.'],
+    ['Passo 5 (sem sala segura)', 'A lógica não ordena as salas "não sei". O agente usa uma regra prática: a sala com menos brisas e fedores ao redor; empate, a mais próxima.', 'A sala de menor P(poço) + P(Wumpus); empate, a mais próxima.'],
+    ['Ponto forte', 'Simples e rápido; nunca entra num perigo comprovado.', 'Usa toda a evidência: percebe quando uma brisa já está "explicada" por outro poço.'],
+    ['Ponto fraco', 'Contar indícios trata todas as brisas como iguais.', 'Supõe poços independentes com a porcentagem configurada, o que é só uma aproximação do sorteio real.'],
+])}
+<p><b>Por que as deduções são completas.</b> As pistas do jogo viram regras de um formato só: "pelo menos uma vizinha desta brisa tem poço" e "nenhuma vizinha desta sala sem brisa tem poço". Com regras assim, uma sala é poço em <b>todos</b> os modelos consistentes só quando é a única vizinha desconhecida de uma brisa, e é livre de poço em todos só quando é vizinha de uma sala sem brisa. As regras de <code>pitFree</code> e <code>certainPits</code> dão, portanto, o mesmo resultado que a verificação de modelos do livro, sem enumerar modelos.</p>
+<h2>Um exemplo real em que eles divergem</h2>
+<p>A situação abaixo aconteceu no mapa 2 da semente <code>exemplo</code> (4×4). O agente visitou (1,1), (1,2), (2,2) e (1,3) e sentiu brisa em (1,1), (2,2) e (1,3). Nenhuma sala desconhecida é segura.</p>
+{exemplo_svg()}
+<ul>
+<li><b>(2,1) é poço certo</b>: a brisa de (1,1) só pode vir dela, porque (1,2) foi visitada.</li>
+<li><b>(1,4) e (2,3)</b>: a brisa de (1,3) precisa de um poço numa delas. Pela enumeração, 56% cada.</li>
+<li><b>(3,2)</b>: é vizinha da brisa de (2,2), mas essa brisa já está <b>explicada</b> pelo poço certo em (2,1). Então (3,2) fica com a chance a priori: 20%.</li>
+<li><b>O agente lógico</b> conta 1 indício para (1,4) e 1 para (3,2), desempata pela distância e vai para (1,4): 56% de risco.</li>
+<li><b>O agente probabilístico</b> vai para (3,2): 20% de risco. Esse efeito de "explicar" uma evidência por outra causa é justamente o que a contagem de indícios não capta.</li>
+</ul>
+<h2>Correções feitas nesta versão</h2>
+{table(['O que mudou', 'Antes', 'Por quê'], [
+    ['O Wumpus nunca é candidato numa sala com poço deduzido', 'Poço certo podia continuar candidato a Wumpus.', 'A regra do jogo (D16) proíbe Wumpus em poço; é uma dedução lógica válida para os dois agentes.'],
+    ['P(Wumpus) proporcional à chance de a sala não ter poço', '1 ÷ número de candidatas, sempre.', 'O Wumpus é sorteado entre as salas sem poço.'],
+    ['Risco = P(poço) + P(Wumpus)', '1 − (1 − P(poço))(1 − P(Wumpus)), que supõe eventos independentes.', 'Os dois eventos se excluem; a fórmula antiga subestimava o risco quando os dois eram altos.'],
+    ['Empate no passo 5 decidido pela sala mais próxima', 'Empate decidido pela ordem fixa das salas.', 'O agente híbrido do livro planeja a rota mais curta; andar menos também custa menos pontos.'],
+    ['Comentário do tiro corrigido', 'Dizia que só o agente lógico atirava sem certeza.', 'Os dois atiram com até 3 candidatas; o comentário estava errado.'],
+])}
+<p>Efeito medido (mesmos mapas, 5000 no 4×4): o lógico passou de 564 para 570 pontos de média e o probabilístico de 635 para 650. No 6×6 (1000 mapas), de 20 para 46 e de 174 para 182.</p>
 
 <h2>Agente genético</h2>
 <p>O <code>GeneticAgent</code> reaproveita a base de conhecimento e as regras 1 e 2, mas troca as regras 3 a 5 por uma <b>fórmula de pontuação</b>. Para cada sala candidata da fronteira, ele calcula 9 características e soma cada uma multiplicada por um peso:</p>
@@ -570,12 +636,12 @@ section('8', 'Inteligência — os agentes', f'''
 <h2>Resultados medidos</h2>
 <p>Mesmos mapas para todos os agentes, 20% de poços (3 no 4×4, 7 no 6×6):</p>
 {table(['Agente', '4×4 (5000 mapas)', '6×6 (1000 mapas)'], [
-    ['Aleatório', '~4% de vitórias, −760 pts', '~1%, −879 pts'],
-    ['Lógico', '63%, 564 pts', '42%, 20 pts'],
-    ['Probabilístico', '66%, 635 pts', '48%, 174 pts'],
+    ['Aleatório', '~4% de vitórias, −767 pts', '~2%, −854 pts'],
+    ['Lógico', '63%, 570 pts', '43%, 46 pts'],
+    ['Probabilístico', '67%, 650 pts', '48%, 182 pts'],
     ['Genético (genoma padrão)', '66%, 637 pts', '51%, 255 pts'],
 ])}
-<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. O genético empata com o probabilístico no 4×4 e fica à frente no 6×6; não houve teste estatístico formal. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
+<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. Depois das correções nos agentes lógico e probabilístico, o probabilístico fica um pouco à frente do genético no 4×4 (650 × 637) e o genético continua à frente no 6×6 (255 × 182); não houve teste estatístico formal. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
 ''')
 
 section('9', 'A Arena de agentes (src/arena/)', f'''
@@ -615,9 +681,22 @@ section('9', 'A Arena de agentes (src/arena/)', f'''
 <p><code>aggregate()</code> junta as partidas de um agente em médias e <code>rank()</code> ordena: pontuação média, depois vitórias, depois menos erros de lógica.</p>
 {img('arena.png', 'Tela da Arena após uma competição de 100 mapas, com o agente de exemplo importado.', 'wide')}
 
+<h2>Relatórios e Análise (src/report/)</h2>
+<p>Um <b>relatório</b> guarda as partidas de um ou mais agentes para comparar depois. Ele é gerado na <b>Avaliação</b> (um agente), na <b>Arena</b> (vários agentes nos mesmos mapas) e por <code>npm run arena -- --relatorio arquivo.html</code>.</p>
+{snip('src/report/report.ts', 'export interface GameRow {', '}', label='src/report/report.ts — uma linha por partida')}
+<ul>
+<li><code>report.ts</code> não usa DOM: monta o relatório (<code>buildReport</code>), lê arquivos (<code>parseReport</code>) e calcula séries (média acumulada, contagem acumulada, média móvel). Por isso funciona no navegador e no Node.</li>
+<li><code>charts.ts</code> gera os gráficos como <b>texto SVG</b>. As cores vêm de variáveis CSS (paleta categórica validada para daltonismo, nos temas claro e escuro), e <code>installChartHover</code> liga a linha vertical e a dica ao passar o mouse.</li>
+<li><code>html.ts</code> monta a tabela-resumo, as barras de resultado, quatro gráficos por partida (pontuação média acumulada, vitórias acumuladas, mortes acumuladas e ações por partida) e a tabela partida a partida. <code>renderReportHtml</code> gera um arquivo independente, que abre em qualquer navegador sem internet.</li>
+<li>O HTML exportado leva os dados dentro de <code>&lt;script type="application/json" id="wumpus3d-relatorio"&gt;</code>. A tela de Análise lê tanto esse HTML quanto o JSON puro, e aceita também a exportação antiga da Arena (só totais).</li>
+</ul>
+{box('decision', 'Por que um HTML com os dados dentro', '<p>Um arquivo só serve para as duas coisas: qualquer pessoa abre e vê os gráficos, e o jogo importa o mesmo arquivo para comparar com outros. Não há servidor: nada sai do navegador.</p>')}
+{box('tip', 'Comparando de forma justa', '<p>Na Avaliação, use a mesma <b>semente</b> e o mesmo número de partidas para todos os agentes: eles jogam exatamente os mesmos mapas, e o número do mapa (<code>map</code>) bate entre os relatórios. A tela de Análise avisa quando os relatórios usam mapas diferentes.</p>')}
+
 <h2>Linha de comando e GitHub Actions</h2>
 {code("""npm run arena -- agents/meu-agente.js --maps 200 --seed treino
-npm run arena -- --maps 500 --ocultar-semente --json public/ranking.json""", 'Exemplos')}
+npm run arena -- --maps 500 --ocultar-semente --json public/ranking.json
+npm run arena -- --maps 200 --seed comparacao --relatorio relatorio.html""", 'Exemplos')}
 <p><code>npm run arena</code> compila <code>scripts/arena.ts</code> com o próprio Vite (modo SSR, para Node) e executa. Não precisa de nenhuma dependência extra.</p>
 <ul>
 <li><code>.github/workflows/arena.yml</code>: em todo pull request que mexe em <code>agents/</code>, roda 200 mapas com uma semente nova e mostra o ranking no resumo da execução.</li>
@@ -722,8 +801,9 @@ section('13', 'Como o projeto foi verificado', f'''
 <p>O repositório tem uma suíte de testes com o Vitest, que roda com <code>npm test</code> (ou <code>npm run check</code>, que também confere os tipos). O GitHub Actions roda os testes antes de publicar o site, e uma falha impede a publicação.</p>
 {table(['Arquivo', 'O que garante'], [
     ['<code>tests/world.test.ts</code>', 'Regras: vitória só com o ouro na entrada, morte, Wumpus morto, limite de ações, custos, fedor depois da morte, mapas sorteados sempre vencíveis, exportar/importar e validação de mapas inválidos.'],
-    ['<code>tests/knowledge.test.ts</code>', 'Deduções: exemplo de 56% do AIMA, poço certo, localização do Wumpus e flecha que erra.'],
+    ['<code>tests/knowledge.test.ts</code>', 'Deduções: exemplo de 56% do AIMA, poço certo, localização do Wumpus, flecha que erra, Wumpus fora de poço deduzido e P(Wumpus) ponderada.'],
     ['<code>tests/arena.test.ts</code>', 'Arena: mesma semente gera os mesmos mapas, agentes de referência sem erro de lógica, lógico vence o aleatório, decisão inválida vira erro claro.'],
+    ['<code>tests/report.test.ts</code>', 'Relatórios: totais batem com as partidas, o HTML exportado é importado de volta igual, exportação antiga da Arena é aceita, arquivos estranhos são recusados.'],
 ])}
 {snip('tests/world.test.ts', "describe('vitória e fim de partida'", lines=14, label='tests/world.test.ts — exemplo')}
 {box('notdo', 'O que os testes não cobrem', '<p>A interface (botões, painel, Arena na tela) e o 3D não têm testes automatizados no repositório. Eles foram verificados com Playwright durante o desenvolvimento, mas esses scripts não foram incluídos.</p>')}
@@ -732,7 +812,8 @@ section('13', 'Como o projeto foi verificado', f'''
 section('14', 'Limitações conhecidas e próximos passos', f'''
 {table(['Limitação', 'Por que existe / o que fazer'], [
     ['Sem testes automatizados de interface', 'As regras, as deduções e a Arena têm testes (capítulo 13); a tela e o 3D não. Testes com Playwright seriam o próximo passo.'],
-    ['Probabilidade do Wumpus uniforme entre candidatas', 'Simplificação. Uma enumeração conjunta de poços e Wumpus seria mais precisa e mais lenta.'],
+    ['Probabilidade do Wumpus calculada sala a sala', 'Usa P(sem poço) de cada candidata, sem enumerar poços e Wumpus juntos. Uma enumeração conjunta seria exata e mais lenta.'],
+    ['O agente probabilístico olha só o risco imediato', 'Escolhe a sala de menor risco agora, sem pesar quanto ela ajuda a achar o ouro ou o valor da informação que traria. Uma decisão por utilidade esperada (teoria da decisão) poderia ir além.'],
     ['Estimativa aproximada com mais de 16 salas na fronteira', 'Para não travar em mapas grandes. Poderia dividir a fronteira em grupos independentes e enumerar cada grupo.'],
     ['Os agentes supõem poços independentes', 'O mapa tem um número fixo de poços (que os agentes não conhecem, por escolha) e o gerador descarta mapas invencíveis; as probabilidades reais diferem um pouco das calculadas.'],
     ['Fedor continua depois que o Wumpus morre', 'Regra do livro. A base de conhecimento já ignora fedor quando <code>wumpusDead</code> é verdadeiro.'],

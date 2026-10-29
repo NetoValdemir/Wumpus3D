@@ -41,8 +41,10 @@ scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
 | `src/agents/agents.ts` | Agentes aleatório, lógico, probabilístico (`ReasoningAgent`) e genético (`GeneticAgent`) |
 | `src/agents/genome.ts` · `genetic.ts` · `ga.worker.ts` | Genes, genoma padrão, algoritmo genético, treino em Web Worker |
 | `src/arena/*` | Contrato de agentes externos, sandbox (Worker), árbitro, runner, ranking, sementes, tela da Arena |
+| `src/report/*` | Relatórios (modelo, gráficos SVG, HTML exportado) e tela de Análise de relatórios |
 | `src/storage.ts` | localStorage: mapas, genoma, agentes importados |
-| `scripts/arena.ts` | Arena no Node (contexto `vm`) |
+| `scripts/arena.ts` | Arena no Node (contexto `vm`); `--relatorio` salva relatório HTML/JSON |
+| `scripts/treinar.ts` · `medir.ts` | Treino do genético e tabela de desempenho na linha de comando |
 | `agents/*.js` | Agentes da competição (`exemplo-cauteloso.js` é o modelo) |
 | `tests/*.test.ts` | Testes Vitest (regras, deduções, arena) |
 | `scripts/docs/` | Geradores dos PDFs (HTML → PDF com Playwright) |

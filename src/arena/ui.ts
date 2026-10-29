@@ -8,6 +8,8 @@ import { aggregate, rank, toMarkdown, type AgentStats, type ArenaMeta } from './
 import { WorkerSandbox } from './sandbox';
 import type { Controller } from './protocol';
 import TEMPLATE from '../../agents/exemplo-cauteloso.js?raw';
+import { buildReport, type Report } from '../report/report';
+import { addReportToAnalysis, exportReportHtml, exportReportJson } from '../report/ui';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
@@ -26,7 +28,7 @@ interface ArenaOptions {
 // Lista em memória: continua funcionando nesta sessão mesmo se o navegador bloquear o armazenamento
 let agents: ExternalAgent[] = loadExternalAgents();
 const selected = new Set<string>([...BUILTINS.filter((b) => b !== 'random'), ...agents.map((a) => `ext:${a.id}`)]);
-let lastRun: { meta: ArenaMeta; ranking: AgentStats[] } | null = null;
+let lastRun: { meta: ArenaMeta; ranking: AgentStats[]; report: Report } | null = null;
 let running = false;
 let cancel = false;
 
@@ -224,7 +226,16 @@ export function initArena(opts: ArenaOptions) {
       date: new Date().toISOString().slice(0, 10),
     };
     const ranking = rank(players.map((p, i) => aggregate(p.name, p.author, results[i])));
-    lastRun = { meta, ranking };
+    // Relatório na ordem do ranking (as cores dos gráficos seguem essa ordem)
+    const order = ranking.map((s) => players.findIndex((p) => p.name === s.name && p.author === s.author));
+    const report = buildReport({
+      title: `Arena: ${players.length} ${players.length === 1 ? 'agente' : 'agentes'} em ${played} mapas`,
+      origin: 'arena',
+      config: { size: meta.size, pitProbability: meta.pitProbability, maps: played, seed: meta.seed },
+      agents: order.map((i) => ({ name: players[i].name, author: players[i].author, results: results[i] })),
+    });
+    if (useSaved && new Set(maps.map((m) => m.size)).size > 1) report.config.size = null;
+    lastRun = { meta, ranking, report };
     renderTable($('#arena-table'), ranking);
     $('#arena-results').hidden = false;
     msg('#arena-status', `${cancel ? 'Competição interrompida' : 'Competição concluída'}: ${played} mapas por agente.${useSaved ? ' (mapas salvos podem ter tamanhos diferentes)' : ''}`);
@@ -243,16 +254,18 @@ export function initArena(opts: ArenaOptions) {
       msg('#arena-status', 'Não deu para copiar automaticamente neste navegador.', true);
     }
   });
+  const blocked = () => msg('#arena-status', 'O navegador bloqueou o download. Use "Copiar ranking" ou "Abrir na análise".', true);
+  $('#arena-html').addEventListener('click', () => {
+    if (!lastRun) return;
+    if (exportReportHtml(lastRun.report)) msg('#arena-status', 'Relatório exportado: abre em qualquer navegador e pode ser importado na Análise de relatórios.');
+    else blocked();
+  });
   $('#arena-export').addEventListener('click', () => {
     if (!lastRun) return;
-    const url = URL.createObjectURL(new Blob([JSON.stringify(lastRun, null, 2)], { type: 'application/json' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: `arena-${lastRun.meta.seed}.json` });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    msg('#arena-status', 'Resultados exportados. Se o download não começar, use "Copiar ranking".');
+    if (exportReportJson(lastRun.report)) msg('#arena-status', 'Dados exportados em JSON (o mesmo conteúdo do relatório, sem os gráficos).');
+    else blocked();
   });
+  $('#arena-analysis').addEventListener('click', () => lastRun && addReportToAnalysis(lastRun.report));
 
   // Ranking oficial: publicado pelo GitHub Actions junto com o site (public/ranking.json)
   fetch('ranking.json')

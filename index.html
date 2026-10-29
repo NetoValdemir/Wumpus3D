@@ -109,6 +109,7 @@
             <p id="agent-desc" class="hint"></p>
             <p class="hint">Trocar de jogador mantém o mesmo mapa, para comparar agentes no mesmo cenário.</p>
           <button id="open-arena">🏆 Arena: importar e comparar agentes</button>
+          <button id="open-analysis">📊 Análise de relatórios</button>
             <label id="row-speed">Velocidade <output id="speed-out"></output>
               <input type="range" id="cfg-speed" min="1" max="20" value="4" />
             </label>
@@ -165,9 +166,19 @@
 
           <section id="bench-section">
             <h3>Avaliação</h3>
+            <div class="grid2 bench-grid">
+              <label>Partidas <input type="number" id="bench-games" min="1" max="1000" value="100" /></label>
+              <label class="span2">Semente dos mapas <input type="text" id="bench-seed" value="avaliacao" maxlength="40" /></label>
+            </div>
             <label class="check"><input type="checkbox" id="bench-on-map" /> Usar só o mapa atual</label>
-            <button id="btn-bench">Avaliar em 100 partidas</button>
+            <button id="btn-bench">Avaliar o jogador escolhido</button>
+            <p class="hint">Mesma semente e mesmo número de partidas = mesmos mapas: assim dá para comparar agentes avaliados em momentos diferentes.</p>
             <p id="bench-out" class="hint msg"></p>
+            <div class="inline" id="bench-actions" hidden>
+              <button id="bench-html">Exportar relatório (HTML)</button>
+              <button id="bench-json">Exportar dados (JSON)</button>
+              <button id="bench-analysis">Abrir na análise</button>
+            </div>
           </section>
         </div>
       </aside>
@@ -248,7 +259,9 @@
           </p>
           <div class="inline">
             <button id="arena-copy-md">Copiar ranking (Markdown)</button>
-            <button id="arena-export">Exportar resultados (JSON)</button>
+            <button id="arena-html">Exportar relatório (HTML)</button>
+            <button id="arena-export">Exportar dados (JSON)</button>
+            <button id="arena-analysis">Abrir na análise</button>
           </div>
         </section>
 
@@ -259,6 +272,26 @@
             <table id="arena-official-table"></table>
           </div>
         </section>
+      </div>
+    </div>
+
+    <div id="analysis" role="dialog" aria-modal="true" aria-labelledby="analysis-title" hidden>
+      <div class="arena-box analysis-box">
+        <header>
+          <h2 id="analysis-title">Análise de relatórios</h2>
+          <button id="analysis-close">Fechar</button>
+        </header>
+        <p class="hint">
+          Compare agentes a partir de relatórios exportados pela Avaliação, pela Arena ou por <code>npm run arena -- --relatorio arquivo.html</code>.
+          Aceita os arquivos .html e .json. Os dados ficam só neste navegador e somem ao recarregar a página.
+        </p>
+        <div class="inline">
+          <label class="file-button">Importar relatórios <input type="file" id="analysis-file" accept=".html,.htm,.json,application/json,text/html" multiple /></label>
+          <button id="analysis-clear">Limpar tudo</button>
+        </div>
+        <p id="analysis-msg" class="hint msg"></p>
+        <ul id="analysis-list" class="players analysis-list"></ul>
+        <div id="analysis-body" class="report-root"></div>
       </div>
     </div>
 

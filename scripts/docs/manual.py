@@ -32,6 +32,33 @@ def img(name, caption, cls='', marks=()):
     return f'<figure class="shot {cls}"><div class="pinwrap"><img src="data:image/png;base64,{data}" alt="{esc(caption)}"/>{pins}</div><figcaption>{caption}</figcaption></figure>'
 
 
+def exemplo_svg():
+    """Situação real (mapa 2 da semente "exemplo"): mesmas pistas, escolhas diferentes."""
+    c, ox, oy = 72, 34, 8  # tamanho da sala e margens
+    cells = {
+        (1, 1): ('vis', ['brisa']), (1, 2): ('vis', ['nada']), (2, 2): ('vis', ['brisa']), (1, 3): ('here', ['brisa', 'agente aqui']),
+        (2, 1): ('pit', ['poço certo', '100%']), (1, 4): ('L', ['P(poço) 56%', 'escolha do', 'LÓGICO']),
+        (2, 3): ('risk', ['P(poço) 56%']), (3, 2): ('B', ['P(poço) 20%', 'escolha do', 'PROBABILÍSTICO']),
+    }
+    fill = {'vis': '#e8e4dc', 'here': '#d9e6f5', 'pit': '#3a3330', 'L': '#fbe3d6', 'risk': '#ffffff', 'B': '#d8efe3'}
+    ink = {'pit': '#ffffff'}
+    out = [f'<svg viewBox="0 0 {ox + 4 * c + 8} {oy + 4 * c + 26}" class="diagram small" role="img" aria-label="Exemplo em que os agentes lógico e probabilístico escolhem salas diferentes">']
+    for x in range(1, 5):
+        for y in range(1, 5):
+            kind, text = cells.get((x, y), ('unk', []))
+            px, py = ox + (x - 1) * c, oy + (4 - y) * c
+            out.append(f'<rect x="{px}" y="{py}" width="{c}" height="{c}" fill="{fill.get(kind, "#f6f4f0")}" stroke="#8a8173" stroke-width="1"/>')
+            for i, t in enumerate(text):
+                weight = ' font-weight="700"' if t in ('LÓGICO', 'PROBABILÍSTICO', 'poço certo') else ''
+                size = 8.5 if t == 'PROBABILÍSTICO' else 10
+                out.append(f'<text x="{px + c / 2}" y="{py + c / 2 - (len(text) - 1) * 6.5 + i * 13 + 4}" text-anchor="middle" font-size="{size}" fill="{ink.get(kind, "#1d1a16")}"{weight}>{t}</text>')
+    for i in range(1, 5):
+        out.append(f'<text x="{ox + (i - 0.5) * c}" y="{oy + 4 * c + 16}" text-anchor="middle" font-size="10" fill="#5e5850">{i}</text>')
+        out.append(f'<text x="{ox - 10}" y="{oy + (4 - i + 0.5) * c + 4}" text-anchor="middle" font-size="10" fill="#5e5850">{i}</text>')
+    out.append('</svg>')
+    return ''.join(out)
+
+
 def kbd(*keys):
     return ' '.join(f'<kbd>{k}</kbd>' for k in keys)
 
@@ -211,14 +238,16 @@ section('5', 'Painel de configuração: Partida', f'''
 {table(['Opção', 'Como joga'], [
     ['Você (teclado)', 'Você controla pelo teclado ou pelos botões.'],
     ['Agente aleatório', 'Anda e gira ao acaso. Só pega o ouro se tropeçar nele. Serve como referência mínima.'],
-    ['Agente lógico', 'Deduz pelas percepções quais salas são comprovadamente seguras e vai nelas primeiro. Atira quando descobre onde está o Wumpus. Sem sala segura, arrisca a que tem menos indícios de perigo.'],
-    ['Agente probabilístico', 'Faz as mesmas deduções e, sem sala segura, calcula a probabilidade de poço e de Wumpus em cada sala e vai na de menor risco.'],
+    ['Agente lógico', 'Deduz pelas percepções quais salas são comprovadamente seguras e vai nelas primeiro. Atira quando descobre onde está o Wumpus. Sem sala segura, arrisca a que tem menos indícios de perigo (capítulo 11).'],
+    ['Agente probabilístico', 'Faz as mesmas deduções e, sem sala segura, calcula a probabilidade de poço e de Wumpus em cada sala e vai na de menor risco (capítulo 11).'],
     ['Agente genético', 'Escolhe a próxima sala com uma fórmula de pesos aprendida por um algoritmo genético (capítulo 8).'],
     ['Agentes importados', 'Aparecem num grupo separado, com o nome do autor, depois de importados na Arena (capítulo 10).'],
 ])}
 <p><b>Trocar de jogador mantém o mesmo mapa</b> e recomeça a partida. Assim você compara agentes no mesmo cenário. A descrição do jogador escolhido aparece logo abaixo da lista.</p>
 <h2>🏆 Arena</h2>
 <p>Abre a tela da Arena, onde você importa agentes e organiza competições (capítulo 10).</p>
+<h2>📊 Análise de relatórios</h2>
+<p>Abre a tela onde você importa relatórios exportados e compara agentes em tabelas e gráficos (capítulo 12).</p>
 <h2>Velocidade</h2>
 <p>De 1 a 20 passos por segundo (padrão: 4). Só aparece quando um agente está jogando. Pode ser mudada durante a partida.</p>
 <h2>Mostrar raciocínio do agente</h2>
@@ -245,7 +274,7 @@ section('6', 'Assistindo agentes', f'''
 {table(['O que você vê', 'O que significa'], [
     ['O agente gira no lugar sem parar', 'Todas as salas que restam são perigo comprovado. Não há jogada possível, e a partida termina por tempo esgotado.'],
     ['"Erro do agente: ..." no histórico', 'O agente (normalmente um importado) deu erro, devolveu uma ação inválida ou demorou mais de 3 segundos para decidir. Ele para de jogar; use Reiniciar ou troque de jogador.'],
-    ['O agente atira sem ter certeza', 'Os agentes lógico e probabilístico atiram quando o Wumpus está restrito a até 3 salas e não há sala segura. Se errar, eles riscam as salas da linha do tiro.'],
+    ['O agente atira sem ter certeza', 'Os agentes lógico e probabilístico atiram quando o Wumpus está restrito a até 3 salas e não há sala segura. Se errar, eles riscam as salas da linha do tiro (capítulo 11).'],
     ['O agente volta para a entrada', 'Ele já tem o ouro e está voltando pelo caminho que conhece.'],
 ])}
 ''')
@@ -326,14 +355,23 @@ section('8', 'Agente genético: pesos e treino', f'''
 ''')
 
 # ---------------------------------------------------------------- 9
-section('9', 'Avaliação em 100 partidas', f'''
-<p>A seção <b>Avaliação</b> aparece quando um agente está selecionado. <b>Avaliar em 100 partidas</b> faz o agente jogar 100 partidas sem animação e mostra o resultado, por exemplo:</p>
-{code('Agente probabilístico em mapas 4×4 sorteados: 72 vitórias, 28 mortes. Pontuação média: 790.')}
-<ul>
-<li>Desligado <b>Usar só o mapa atual</b> (padrão): são 100 mapas sorteados com o tamanho e a porcentagem de poços do mapa atual.</li>
-<li>Ligado: as 100 partidas são no mapa atual. Para agentes que sempre tomam as mesmas decisões (lógico, probabilístico, genético), o resultado se repete 100 vezes; serve mais para o agente aleatório ou agentes importados com sorteio.</li>
-<li>O resultado também mostra partidas por tempo esgotado e erros, quando houver.</li>
-</ul>
+section('9', 'Avaliação e relatório', f'''
+<p>A seção <b>Avaliação</b> aparece quando um agente está selecionado. <b>Avaliar o jogador escolhido</b> faz o agente jogar várias partidas sem animação e mostra o resultado, por exemplo:</p>
+{code('Agente probabilístico em mapas 4×4 sorteados: 30 vitórias, 10 mortes. Pontuação média: 857.')}
+{table(['Campo', 'Padrão', 'O que controla'], [
+    ['Partidas', '100', 'Quantas partidas jogar (1 a 1000).'],
+    ['Semente dos mapas', '"avaliacao"', 'Define quais mapas são sorteados. <b>Mesma semente e mesmo número de partidas = mesmos mapas</b>, para qualquer agente, em qualquer dia. É isso que torna dois relatórios comparáveis.'],
+    ['Usar só o mapa atual', 'desligado', 'Ligado, todas as partidas são no mapa atual. Agentes que sempre decidem igual (lógico, probabilístico, genético) repetem o mesmo resultado; serve mais para o aleatório ou agentes importados com sorteio.'],
+])}
+<p>Os mapas usam o tamanho e a porcentagem de poços do mapa atual. O resultado também mostra partidas por tempo esgotado e erros, quando houver.</p>
+<h2>Exportar o relatório</h2>
+<p>Depois da avaliação aparecem três botões:</p>
+{table(['Botão', 'O que faz'], [
+    ['Exportar relatório (HTML)', 'Baixa um arquivo que abre em qualquer navegador, sem internet, com a tabela-resumo, os gráficos e a lista de partidas. O mesmo arquivo pode ser importado na Análise de relatórios.'],
+    ['Exportar dados (JSON)', 'Baixa só os dados, para planilhas, programas ou a Análise.'],
+    ['Abrir na análise', 'Leva o resultado direto para a tela de Análise, sem baixar nada.'],
+])}
+<p>O relatório traz, para cada partida: resultado (vitória, poço, Wumpus, tempo esgotado ou erro), pontos, ações, se pegou o ouro, se matou o Wumpus, tiros, erros de lógica e riscos desnecessários. O conteúdo dos gráficos está no capítulo 12.</p>
 ''')
 
 # ---------------------------------------------------------------- 10
@@ -383,7 +421,7 @@ section('10', 'Arena de agentes', f'''
     ['Riscos desnecessários', 'Por partida: passos para uma sala incerta quando ainda havia sala comprovadamente segura para explorar.'],
     ['Tiros certeiros', 'Porcentagem de flechas que mataram o Wumpus.'],
 ])}
-<p>Empates em pontos são decididos por mais vitórias e depois por menos erros de lógica. <b>Copiar ranking (Markdown)</b> copia a tabela pronta para colar num chat ou documento. <b>Exportar resultados (JSON)</b> baixa todos os números.</p>
+<p>Empates em pontos são decididos por mais vitórias e depois por menos erros de lógica. <b>Copiar ranking (Markdown)</b> copia a tabela pronta para colar num chat ou documento. <b>Exportar relatório (HTML)</b>, <b>Exportar dados (JSON)</b> e <b>Abrir na análise</b> funcionam como na Avaliação (capítulo 9), com todos os agentes da competição no mesmo relatório.</p>
 <h2>Ranking oficial</h2>
 <p>Quando o jogo é publicado com a competição oficial ativa (pelo GitHub), a Arena mostra também um <b>Ranking oficial</b>, calculado com uma semente secreta. Na versão local ou de demonstração, essa seção não aparece.</p>
 <h2>Criando o seu agente</h2>
@@ -391,7 +429,71 @@ section('10', 'Arena de agentes', f'''
 ''')
 
 # ---------------------------------------------------------------- 11
-section('11', 'Fim da partida', f'''
+section('11', 'Como pensam os agentes lógico e probabilístico', f'''
+<p class="lead">Os dois agentes sabem <b>exatamente as mesmas coisas</b>: só o que sentiram nas salas por onde passaram. A diferença aparece quando nenhuma sala é comprovadamente segura e é preciso arriscar.</p>
+<h2>O que os dois deduzem</h2>
+<ul>
+<li><b>Sala sem poço</b>: a sala onde ele já esteve, e toda vizinha de uma sala onde ele <b>não</b> sentiu brisa.</li>
+<li><b>Poço certo</b>: se uma sala tem brisa e só uma vizinha ainda pode ter poço, o poço está nela.</li>
+<li><b>Onde o Wumpus pode estar</b>: salas vizinhas de <b>todos</b> os fedores sentidos e de nenhuma sala sem fedor, fora das salas por onde uma flecha passou sem acertar e fora de poços certos (o Wumpus nunca fica num poço). Se sobrar uma, ele sabe onde o Wumpus está.</li>
+<li><b>Sala segura</b>: sem poço e sem Wumpus possível.</li>
+</ul>
+<h2>A ordem das decisões (igual nos dois)</h2>
+{table(['#', 'Situação', 'O que o agente faz'], [
+    ['1', 'Sente brilho', 'Pega o ouro.'],
+    ['2', 'Tem o ouro', 'Volta para (1, 1) pelo caminho que já conhece. Chegar lá é a vitória.'],
+    ['3', 'Existe sala segura ainda não visitada', 'Vai até a mais próxima.'],
+    ['4', 'Sem sala segura, com flecha, e o Wumpus restrito a até 3 salas', 'Vai até a linha de uma delas e atira. Errando, risca as salas da linha do tiro.'],
+    ['5', 'Sem sala segura', '<b>Aqui os dois se separam</b> (abaixo).'],
+    ['6', 'Toda sala que resta é perigo certo', 'Gira no lugar até o tempo esgotar.'],
+])}
+<h2>A diferença: o passo 5</h2>
+{table(['', 'Agente lógico', 'Agente probabilístico'], [
+    ['O que pensa de uma sala', '"Segura", "perigo certo" ou "não sei".', 'Um número: a chance de morrer ao entrar.'],
+    ['Como escolhe onde arriscar', 'A sala com <b>menos indícios</b> ao redor (brisas e fedores sentidos nas vizinhas). Empate: a mais próxima.', 'A sala de <b>menor risco</b> = chance de poço + chance de Wumpus. Empate: a mais próxima.'],
+    ['Teoria por trás', 'Lógica: o agente baseado em conhecimento do livro de Russell e Norvig (AIMA), capítulo 7.', 'Probabilidade: inferência bayesiana sobre as combinações de poços possíveis (AIMA, capítulo 12).'],
+])}
+<p>A chance de poço sai de uma conta: o agente lista todas as combinações de poços nas salas da fronteira que explicam as brisas sentidas e vê em quantas (e com que peso) cada sala tem poço. É o número que aparece nos discos do piso, como "Poço 56%".</p>
+<h2>Um exemplo em que eles escolhem diferente</h2>
+<p>Situação real de um mapa 4 × 4. O agente passou por (1,1), (1,2), (2,2) e (1,3) e sentiu brisa em (1,1), (2,2) e (1,3). Nenhuma sala desconhecida é segura.</p>
+{exemplo_svg()}
+<ul>
+<li>(2,1) é <b>poço certo</b>: a brisa de (1,1) só pode vir dela.</li>
+<li>A brisa de (1,3) precisa de um poço em (1,4) ou (2,3): 56% para cada.</li>
+<li>A brisa de (2,2) já está explicada pelo poço em (2,1). Então (3,2) fica só com a chance normal de qualquer sala: 20%.</li>
+<li>O <b>lógico</b> vê 1 indício perto de (1,4) e 1 perto de (3,2), empate, e vai na mais próxima: (1,4), com 56% de risco.</li>
+<li>O <b>probabilístico</b> percebe que a brisa de (2,2) já tem explicação e vai para (3,2), com 20% de risco.</li>
+</ul>
+{box('tip', 'Veja isso no jogo', '<p>Ligue <b>Mostrar raciocínio do agente</b> e assista os dois no mesmo mapa (troque de jogador e use <b>Repetir este mapa</b>). Os números nos discos do piso são as probabilidades que o agente probabilístico usa; o lógico vê as mesmas salas, mas não usa os números.</p>')}
+<h2>Nos números</h2>
+<p>Nos mesmos 5000 mapas 4 × 4 com 20% de poços, o probabilístico vence 66% das partidas (650 pontos de média) e o lógico, 63% (570 pontos). A diferença vem toda das partidas em que é preciso arriscar.</p>
+<h2>E o agente genético?</h2>
+<p>Ele usa as mesmas deduções e as mesmas probabilidades, mas troca as regras 3 a 5 por uma fórmula de pesos aprendida (capítulo 8). Por isso pode, por exemplo, preferir uma sala um pouco mais arriscada se ela estiver bem mais perto.</p>
+''')
+
+section('12', 'Análise de relatórios', f'''
+<p>A tela <b>📊 Análise de relatórios</b> (botão no painel) serve só para ler dados: importa relatórios exportados e compara os agentes. Feche com <b>Fechar</b> ou {kbd('Esc')}.</p>
+<h2>Carregar relatórios</h2>
+<ul>
+<li><b>Importar relatórios</b>: escolha um ou vários arquivos <code>.html</code> ou <code>.json</code> exportados pela Avaliação, pela Arena ou pela linha de comando (<code>npm run arena -- --relatorio arquivo.html</code>).</li>
+<li><b>Abrir na análise</b> (na Avaliação e na Arena): manda o resultado direto para esta tela.</li>
+<li>Cada relatório aparece numa lista com <b>Remover</b>. <b>Limpar tudo</b> esvazia a lista. Os dados ficam só na página e somem ao recarregar.</li>
+<li>Se os relatórios usam mapas diferentes (tamanho, poços, semente ou número de partidas), aparece um aviso: a comparação vale como indicação, não como disputa justa.</li>
+</ul>
+<h2>O que a tela mostra</h2>
+{table(['Parte', 'O que mostra'], [
+    ['Resumo', 'Uma linha por agente: partidas, pontos médios, vitórias, mortes (poço / Wumpus), tempo esgotado, erros, % que pegou o ouro, % que matou o Wumpus, ações por partida e por vitória, erros de lógica e riscos desnecessários.'],
+    ['Resultado das partidas', 'Uma barra por agente dividida em vitória, poço, Wumpus, tempo esgotado e erro.'],
+    ['Pontuação média acumulada', 'Média das partidas jogadas até cada ponto. Mostra se o resultado já estabilizou.'],
+    ['Vitórias acumuladas e mortes acumuladas', 'Quantas vitórias e quantas mortes até cada partida.'],
+    ['Ações por partida', 'Média das últimas 10 partidas; passando o mouse aparece o número exato.'],
+    ['Partida a partida', 'Uma tabela por agente com cada partida (abre ao clicar).'],
+])}
+<p>Passe o mouse sobre um gráfico para ver os valores de todos os agentes naquela partida. Os gráficos mostram até 6 agentes; a tabela de resumo mostra todos.</p>
+{box('tip', 'Comparando dois agentes', '<p>Avalie o primeiro agente com uma semente (por exemplo "turma-a") e 200 partidas, exporte ou abra na análise. Troque de jogador e avalie de novo com a <b>mesma semente e o mesmo número de partidas</b>. Os dois jogaram exatamente os mesmos mapas, e a partida 37 de um é o mesmo mapa da partida 37 do outro.</p>')}
+''')
+
+section('13', 'Fim da partida', f'''
 {img('vitoria.png', 'Tela de vitória. No fim da partida o mapa inteiro é revelado.')}
 <p>Ao terminar, aparece um quadro com o resultado, uma dica e a pontuação final. Se a flecha matou o Wumpus durante a partida, aparece também a linha "Matou o Wumpus com a flecha (+25).", em qualquer resultado. O mapa inteiro é revelado para você ver onde estavam os perigos.</p>
 {table(['Título', 'Texto exibido'], [
@@ -407,7 +509,7 @@ section('11', 'Fim da partida', f'''
 ''')
 
 # ---------------------------------------------------------------- 12
-section('12', 'No celular', f'''
+section('14', 'No celular', f'''
 {img('celular.png', 'O jogo num celular, com o painel fechado.', 'phone')}
 <ul>
 <li>O mapa fica em cima e os botões numa barra logo abaixo dele.</li>
@@ -418,11 +520,12 @@ section('12', 'No celular', f'''
 ''')
 
 # ---------------------------------------------------------------- 13
-section('13', 'Onde ficam seus dados', f'''
+section('15', 'Onde ficam seus dados', f'''
 {table(['O quê', 'Onde fica'], [
     ['Mapas salvos', 'No armazenamento do navegador (localStorage), neste aparelho.'],
     ['Pesos treinados do agente genético', 'Idem.'],
     ['Agentes importados', 'Idem (incluindo o código do agente).'],
+    ['Relatórios na Análise', 'Só na página aberta: somem ao recarregar. Para guardar, exporte o relatório.'],
 ])}
 <ul>
 <li>Nada é enviado para servidores. Outro navegador ou outro aparelho não vê seus dados.</li>
@@ -433,7 +536,7 @@ section('13', 'Onde ficam seus dados', f'''
 ''')
 
 # ---------------------------------------------------------------- 14
-section('14', 'Solução de problemas', table(['Problema', 'O que fazer'], [
+section('16', 'Solução de problemas', table(['Problema', 'O que fazer'], [
     ['A tela do mapa fica preta', 'O navegador está sem WebGL. Atualize o navegador, ative a aceleração de hardware nas configurações ou tente outro navegador.'],
     ['As teclas não funcionam', 'Clique no mapa 3D: o foco provavelmente está num campo de texto ou lista. Feche a Arena se ela estiver aberta.'],
     ['Espaço não atira', 'Quando um agente está selecionado, Espaço serve para jogar/pausar. Troque para "Você (teclado)".'],
@@ -448,7 +551,7 @@ section('14', 'Solução de problemas', table(['Problema', 'O que fazer'], [
 ]))
 
 # ---------------------------------------------------------------- 15
-section('15', 'Referência rápida', f'''
+section('17', 'Referência rápida', f'''
 <div class="quick">
 <div><h3>Objetivo</h3><p>Pegar o ouro ({kbd('G')}) e voltar ao anel azul (1, 1). Voltar sem ouro não encerra.</p></div>
 <div><h3>Perigos</h3><p>Poço e Wumpus vivo matam (−1000). Brisa = poço ao lado. Fedor = Wumpus ao lado.</p></div>

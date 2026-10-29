@@ -42,11 +42,17 @@ No painel **Configurar partida** você escolhe o tamanho do mapa (4×4 a 10×10)
 |---|---|
 | Você (teclado) | Você joga. |
 | Agente aleatório | Age ao acaso. Serve de base de comparação. |
-| Agente lógico | Deduz quais salas são seguras e vai nelas primeiro. Mata o Wumpus quando descobre onde ele está. Sem sala comprovadamente segura, chuta a com menos indícios de perigo (brisa/fedor ao redor). |
-| Agente probabilístico | Faz as mesmas deduções e, quando não há sala segura, calcula P(poço) por inferência bayesiana (enumeração da fronteira, como no cap. 12 do AIMA) e P(Wumpus), e vai na de menor risco. |
+| Agente lógico | Deduz quais salas são seguras e vai nelas primeiro (agente baseado em conhecimento, cap. 7 do AIMA). Mata o Wumpus quando descobre onde ele está. Sem sala comprovadamente segura, chuta a com menos indícios de perigo (brisa/fedor ao redor), e a mais próxima no empate. |
+| Agente probabilístico | Faz as mesmas deduções e, quando não há sala segura, calcula P(poço) por inferência bayesiana (enumeração da fronteira, cap. 12 do AIMA) e P(Wumpus), e vai na de menor risco P(poço) + P(Wumpus). |
+
+**Lógico × probabilístico:** os dois sabem as mesmas coisas e seguem a mesma ordem de decisões; só se separam quando é preciso arriscar. O lógico conta indícios; o probabilístico percebe, por exemplo, quando uma brisa já está explicada por um poço certo e a sala ao lado fica com só 20% de risco. O capítulo 11 do manual e o capítulo 8 da documentação técnica explicam com um exemplo real.
 | Agente genético | Dá uma nota a cada sala candidata somando características com pesos (risco, distância, salas novas ao redor...). Os pesos foram evoluídos por um algoritmo genético. |
 
-Com **Mostrar raciocínio** ligado, cada sala da fronteira mostra no piso o que o agente acredita (verde = segura, amarelo/vermelho = risco). **Avaliar em 100 partidas** joga 100 vezes sem 3D (em mapas sorteados ou só no mapa atual) e mostra vitórias, mortes e a pontuação média.
+Com **Mostrar raciocínio** ligado, cada sala da fronteira mostra no piso o que o agente acredita (verde = segura, amarelo/vermelho = risco). **Avaliação** joga várias partidas sem 3D (100 por padrão, em mapas sorteados por uma semente ou só no mapa atual) e mostra vitórias, mortes e a pontuação média. Mesma semente e mesmo número de partidas = mesmos mapas, para comparar agentes.
+
+### Relatórios e Análise
+
+A Avaliação e a Arena exportam um **relatório**: um arquivo HTML que abre em qualquer navegador (sem internet) com a tabela-resumo, as barras de resultado, os gráficos de pontuação média acumulada, vitórias e mortes acumuladas e ações por partida, e a lista partida a partida. O mesmo arquivo (ou o `.json`) pode ser importado na tela **📊 Análise de relatórios**, que junta vários relatórios para comparar agentes. Na linha de comando: `npm run arena -- --relatorio relatorio.html`.
 
 ### Agente genético
 
@@ -71,12 +77,12 @@ Mesmos mapas para todos os agentes, 20% de poços, ou seja, 3 poços no 4×4 e 7
 
 | Agente | 4×4 | 6×6 |
 |---|---|---|
-| Aleatório | ~4% de vitórias, −760 pts | ~1%, −879 pts |
-| Lógico | 63%, 564 pts | 42%, 20 pts |
-| Probabilístico | 66%, 635 pts | 48%, 174 pts |
+| Aleatório | ~4% de vitórias, −767 pts | ~2%, −854 pts |
+| Lógico | 63%, 570 pts | 43%, 46 pts |
+| Probabilístico | 67%, 650 pts | 48%, 182 pts |
 | Genético (genoma padrão) | 66%, 637 pts | 51%, 255 pts |
 
-O agente genético chega sozinho a um desempenho equivalente ao da inferência bayesiana escrita à mão no 4×4 e fica à frente no 6×6. Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
+O agente genético chega sozinho a um desempenho próximo ao da inferência bayesiana escrita à mão no 4×4 (um pouco abaixo) e fica à frente no 6×6. Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 
@@ -85,7 +91,7 @@ Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts
 Outros devs podem criar seus próprios agentes (um arquivo `.js`), importá-los e competir num ranking. O guia completo está em [AGENTES.md](AGENTES.md).
 
 - **No navegador:** em **⚙ Configurar → 🏆 Arena** você importa agentes, assiste cada um jogando no 3D e roda uma competição. Todos jogam os mesmos mapas (gerados por uma semente), e o resultado é um ranking com pontos, vitórias, eficiência, tempo de decisão e métricas de raciocínio (erros de lógica e riscos desnecessários).
-- **Na linha de comando:** `npm run arena` roda todos os agentes da pasta `agents/` e imprime o ranking em Markdown.
+- **Na linha de comando:** `npm run arena` roda todos os agentes da pasta `agents/` e imprime o ranking em Markdown (`--relatorio arquivo.html` também salva o relatório com gráficos).
 - **Competição oficial:** cada dev envia o agente por pull request. O GitHub Actions avalia o PR e, depois do merge, publica no site o ranking oficial, com 500 mapas de semente secreta.
 
 Os agentes importados rodam isolados (Web Worker no navegador, `vm` no Node) e recebem só as percepções de cada passo, nunca o mapa.

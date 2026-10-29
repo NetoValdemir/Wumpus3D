@@ -81,3 +81,18 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 - **Importação:** `parseLayout()` recusa Wumpus dentro de poço, como já recusava ouro.
 - **Não mudou:** a base de conhecimento continua não usando essa regra (P(Wumpus) uniforme entre candidatas, sem descartar poços certos).
 - **Onde:** construtor de `WumpusWorld` e `parseLayout()` em `world.ts`.
+
+## D17 — Correções nos agentes lógico e probabilístico
+- **Por quê:** revisão pedida pelo dono ao documentar a diferença entre os dois agentes.
+- **O que mudou:** (1) Wumpus nunca é candidato em poço deduzido (regra D16, vale para os dois); (2) P(Wumpus) entre candidatas ∝ 1 − P(poço), em vez de uniforme; (3) risco = P(poço) + P(Wumpus) (`riskOf`), porque os eventos se excluem; antes 1 − (1−P)(1−W) supunha independência; (4) empate no passo 5 decidido pela sala mais próxima, como o agente híbrido do AIMA, cap. 7; (5) comentário errado sobre o tiro corrigido.
+- **Medido (5000 mapas 4×4 / 1000 6×6, `npm run medir`):** lógico 564 → 570 / 20 → 46; probabilístico 635 → 650 / 174 → 182; genético igual (637 / 255).
+- **Descartado:** dar ao lógico alguma forma de probabilidade. A regra prática de contar indícios fica, documentada como regra prática e não como dedução: é o que separa os dois agentes.
+- **Onde:** `riskOf`, `wumpusCandidates()`, `beliefs()` em `knowledge.ts`; `explore()` e `planShot()` em `agents.ts`; `view.ts` usa `riskOf` nos discos.
+
+## D18 — Relatórios em HTML com os dados dentro; tela de Análise só de leitura
+- **Por quê:** pedido do dono: exportar gráficos de pontuação, vitórias, mortes e ações por partida para comparar agentes, e importar relatórios para análise.
+- **Formato:** `wumpus3d-relatorio` v1 (JSON) com uma linha por partida (`GameRow`). O HTML exportado é independente (sem internet), com SVG gerado em `charts.ts`, e leva o JSON em `<script type="application/json" id="wumpus3d-relatorio">`; um arquivo serve para ler e para importar. A Análise também aceita o JSON e a exportação antiga da Arena (`{ meta, ranking }`, só totais).
+- **Comparabilidade:** a Avaliação ganhou semente e número de partidas (antes a semente era aleatória). Mesma semente + mesma quantidade = mesmos mapas.
+- **Cores:** paleta categórica validada (CVD) em claro e escuro; até 6 agentes nos gráficos, a tabela mostra todos. Resultados usam cores de estado (vitória verde, poço/Wumpus vermelhos, tempo amarelo, erro laranja), sempre com legenda.
+- **Descartado:** guardar relatórios no `localStorage` (podem ser grandes; o arquivo exportado já é o armazenamento); biblioteca de gráficos (SVG à mão é pequeno e funciona no Node).
+- **Onde:** `src/report/` (report, charts, html, ui); botões na Avaliação (`main.ts`) e na Arena (`arena/ui.ts`); `--relatorio` em `scripts/arena.ts`.

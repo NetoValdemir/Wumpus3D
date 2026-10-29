@@ -77,17 +77,28 @@ Acrescente novas entradas no fim.
 - **Retreino:** três treinos com as regras novas (`regras16-a/b/c`) ficaram 8–14 pts abaixo do genoma atual em 2000 mapas → genoma mantido (`bonus25-c`).
 - **Medido:** tabela abaixo (5000 mapas 4×4, 1000 6×6). Genético empata com o probabilístico no 4×4 (637 × 635) e fica à frente no 6×6 (255 × 174). Na arena: 200 mapas (`verificacao`) probabilístico 664 × genético 513; 1000 mapas (`verificacao-1000`) 663 × 644; conferido que arena e medição dão números idênticos nos mesmos mapas.
 
+## Sessão 3 — agentes explicados, relatórios e análise (29/10/2026)
+
+### 20. Diferença entre os agentes lógico e probabilístico; correções
+- **Pedido:** documentar como cada agente opera, com fundamentação, e corrigir o que fosse necessário.
+- **Feito:** cinco correções (D17). Manual: capítulo 11 "Como pensam os agentes lógico e probabilístico" com exemplo real (mapa 2 da semente `exemplo`: lógico escolhe sala com 56% de poço, probabilístico com 20%, porque a brisa ao lado já está explicada por poço certo). Documentação técnica: seção "Lógico × probabilístico" no cap. 8 (AIMA cap. 7 e 12; por que as deduções equivalem à verificação de modelos), tabela das correções.
+- **Medido:** lógico 570 / 46 pts, probabilístico 650 / 182 (antes 564 / 20 e 635 / 174), genético igual.
+
+### 21. Relatórios exportáveis e tela de Análise
+- **Feito:** `src/report/` (D18). Avaliação com semente e nº de partidas; botões Exportar relatório (HTML), Exportar dados (JSON) e Abrir na análise na Avaliação e na Arena; `npm run arena -- --relatorio`. Tela 📊 Análise de relatórios: importa vários .html/.json, tabela-resumo, barras de resultado, 4 gráficos com dica ao passar o mouse, partida a partida; avisa quando os mapas diferem. Manual: capítulos 9 e 12; documentação técnica: cap. 9.
+- **Verificado:** 35 testes (novo `tests/report.test.ts`); Playwright: avaliar 2 agentes, baixar HTML, abrir na análise, importar JSON, dica do gráfico, sem erros no console; HTML exportado em claro/escuro e 390 px sem rolagem lateral.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
 |---|---|---|
-| Aleatório | ~4% vitórias, −760 pts | ~1%, −879 pts |
-| Lógico | 63%, 564 pts | 42%, 20 pts |
-| Probabilístico | 66%, 635 pts | 48%, 174 pts |
+| Aleatório | ~4% vitórias, −767 pts | ~2%, −854 pts |
+| Lógico | 63%, 570 pts | 43%, 46 pts |
+| Probabilístico | 67%, 650 pts | 48%, 182 pts |
 | Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 66%, 641 pts | 48%, 178 pts |
 | Genético (`DEFAULT_GENOME`, semente `bonus25-c`) | 66%, 637 pts | 51%, 255 pts |
 
-Regras atuais (D14, D15, D16); 5000 mapas 4×4 e 1000 6×6 das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal. Lotes de 200 a 1000 mapas variam muito: use pelo menos 5000 mapas 4×4 para comparar agentes próximos.
+Regras atuais (D14, D15, D16) e agentes com as correções de D17; 5000 mapas 4×4 e 1000 6×6 das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal. Lotes de 200 a 1000 mapas variam muito: use pelo menos 5000 mapas 4×4 para comparar agentes próximos.
 
 ## Pendências e ideias (não feitas)
 
