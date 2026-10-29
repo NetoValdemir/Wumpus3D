@@ -198,9 +198,63 @@ button.highlight {
 .setup section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding-top: 12px;
   border-top: 1px solid #3a3028;
+}
+
+/* Seções que abrem e fecham (Partida, Salvar mapas, Minhas partidas); começam fechadas */
+.setup details.fold > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.setup details.fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.setup details.fold > summary::before {
+  content: '▸';
+  color: #c9b48a;
+  transition: transform 0.15s;
+}
+
+.setup details.fold[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* Seta à esquerda, título logo ao lado dela */
+.setup details.fold > summary h3 {
+  text-align: left;
+}
+
+.setup details.fold > summary:focus-visible {
+  outline: 2px solid #fc3;
+  outline-offset: 2px;
+}
+
+/* O conteúdo fica num bloco próprio: o navegador não aplica flex/gap direto em <details> */
+.setup .fold-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+/* Mais respiro entre os botões dentro das seções */
+.setup .inline {
+  gap: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setup details.fold > summary::before {
+    transition: none;
+  }
 }
 
 .setup h3 {

@@ -8,6 +8,7 @@ const out = process.argv[2];
   const p = await ctx.newPage();
   await p.addInitScript(() => { let s = 7; Math.random = () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; });
   await p.goto('http://localhost:4173/'); await p.waitForTimeout(900);
+  await p.evaluate(() => document.querySelectorAll('details.fold').forEach((d) => (d.open = true))); // seções começam fechadas
   await p.selectOption('#cfg-size', '6'); await p.selectOption('#cfg-agent', 'bayes'); await p.waitForTimeout(300);
   for (let i = 0; i < 14; i++) { if (await p.isDisabled('#btn-step')) break; await p.click('#btn-step'); await p.waitForTimeout(80); }
   await p.keyboard.press('KeyV'); await p.waitForTimeout(1500);
