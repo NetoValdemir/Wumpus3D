@@ -617,7 +617,8 @@ button:hover {
 
 /* ---------- Arena de agentes (tela própria, por cima de tudo) ---------- */
 
-#arena {
+#arena,
+#analysis {
   position: fixed;
   inset: 0;
   z-index: 20;
@@ -841,4 +842,62 @@ progress {
 .arena-box .file-button {
   font-size: 14px;
   padding: 10px 14px;
+}
+
+/* ---------- Análise de relatórios ---------- */
+
+#analysis {
+  z-index: 25; /* abre por cima da Arena ("Abrir na análise") */
+}
+
+.analysis-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analysis-list:empty {
+  display: none;
+}
+
+/* Cores dos gráficos (tema escuro do jogo): paleta categórica validada e cores de estado */
+.report-root {
+  position: relative;
+  --surface: #14100c;
+  --fg: #eee6d8;
+  --muted: #a99f90;
+  --rule: #3a3028;
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --s4: #c98500;
+  --s5: #d55181;
+  --s6: #008300;
+  --o-won: #0ca30c;
+  --o-dead-pit: #d03b3b;
+  --o-dead-wumpus: #8c2a2a;
+  --o-timeout: #fab219;
+  --o-error: #ec835a;
+}
+
+.report-root section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 18px;
+}
+
+.report-root .report-charts {
+  display: grid;
+}
+
+.report-root .report-table tbody tr td {
+  color: inherit;
+  font-weight: normal;
+  background: none;
+}
+
+.bench-grid {
+  grid-template-columns: 1fr 2fr;
 }

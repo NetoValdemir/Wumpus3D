@@ -17,6 +17,7 @@ export interface EpisodeResult {
   bumps: number;
   shots: number;
   hits: number;
+  gold: boolean; // pegou o ouro em algum momento
   error?: string;
 }
 
@@ -62,6 +63,7 @@ export async function playEpisode(ctrl: Controller, layout: MapLayout, decisionT
     bumps: referee.bumps,
     shots: referee.shots,
     hits: referee.hits,
+    gold: world.hasGold,
     error,
   };
 }

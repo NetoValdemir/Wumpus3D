@@ -7,6 +7,12 @@ export interface CellBelief {
   wumpus: number; // probabilidade de Wumpus (0 a 1)
 }
 
+/**
+ * Chance de morrer ao entrar na sala. O Wumpus nunca fica num poço (D16), então os dois
+ * eventos são excludentes e as probabilidades se somam.
+ */
+export const riskOf = (b: CellBelief) => Math.min(1, b.pit + b.wumpus);
+
 interface Observation {
   breeze: boolean;
   stench: boolean;
@@ -62,15 +68,20 @@ export class Knowledge {
     return this.visited.has(k) || this.neighbors(k).some((n) => this.visited.get(n)?.breeze === false);
   }
 
-  /** Salas onde o Wumpus ainda pode estar, consistentes com todo fedor (e falta de fedor) sentido. */
+  /**
+   * Salas onde o Wumpus ainda pode estar, consistentes com todo fedor (e falta de fedor) sentido.
+   * Poço deduzido também fica de fora: pela regra do jogo, o Wumpus nunca está num poço (D16).
+   */
   wumpusCandidates(): Set<string> {
     if (this.wumpusDead) return new Set();
     const stenchCells = [...this.visited].filter(([, o]) => o.stench).map(([k]) => k);
+    const pits = this.certainPits();
     return new Set(
       this.allCells().filter(
         (k) =>
           !this.visited.has(k) &&
           !this.noWumpus.has(k) &&
+          !pits.has(k) &&
           !this.neighbors(k).some((n) => this.visited.get(n)?.stench === false) &&
           stenchCells.every((s) => this.neighbors(s).includes(k)),
       ),
@@ -126,16 +137,20 @@ export class Knowledge {
     return result;
   }
 
+  /**
+   * Crença sobre cada sala não visitada. O Wumpus é sorteado entre as salas sem poço (D16), então
+   * entre as candidatas P(Wumpus) é proporcional à chance de a sala NÃO ter poço.
+   */
   beliefs(): Map<string, CellBelief> {
     const pits = this.pitProbabilities();
     const candidates = this.wumpusCandidates();
+    const noPit = (k: string) => 1 - (pits.get(k) ?? 0);
+    const total = [...candidates].reduce((s, k) => s + noPit(k), 0);
     const beliefs = new Map<string, CellBelief>();
     for (const k of this.allCells()) {
       if (this.visited.has(k)) continue;
-      beliefs.set(k, {
-        pit: pits.get(k) ?? 0,
-        wumpus: candidates.has(k) ? 1 / candidates.size : 0,
-      });
+      const wumpus = candidates.has(k) ? (total ? noPit(k) / total : 1 / candidates.size) : 0;
+      beliefs.set(k, { pit: pits.get(k) ?? 0, wumpus });
     }
     return beliefs;
   }

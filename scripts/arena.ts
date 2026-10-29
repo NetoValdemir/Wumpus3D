@@ -2,6 +2,7 @@
 //
 //   npm run arena -- [pasta-ou-arquivos...] [--seed texto] [--maps 100] [--size 4] [--pits 0.2]
 //                    [--timeout 1000] [--sem-embutidos] [--ocultar-semente] [--json saida.json] [--md saida.md]
+//                    [--relatorio saida.html|saida.json]   (relatório com gráficos, para a tela de Análise)
 //
 // Cada agente roda num contexto vm separado e só recebe as percepções (nunca o mapa).
 // Atenção: vm não é uma barreira de segurança completa. Revise o código antes de rodar agentes de terceiros.
@@ -13,9 +14,11 @@ import { builtinController, playEpisode, type EpisodeResult } from '../src/arena
 import { aggregate, rank, toMarkdown, type AgentStats } from '../src/arena/ranking';
 import { HARNESS_AFTER, HARNESS_BEFORE, normalizeDecision, type AgentMeta, type Controller } from '../src/arena/protocol';
 import { AGENTS } from '../src/agents/agents';
+import { buildReport } from '../src/report/report';
+import { renderReportHtml } from '../src/report/html';
 
 function parseArgs(argv: string[]) {
-  const opts = { seed: 'wumpus', maps: 100, size: 4, pits: 0.2, timeout: 1000, builtins: true, hideSeed: false, json: '', md: '', paths: [] as string[] };
+  const opts = { seed: 'wumpus', maps: 100, size: 4, pits: 0.2, timeout: 1000, builtins: true, hideSeed: false, json: '', md: '', report: '', paths: [] as string[] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i];
@@ -28,6 +31,7 @@ function parseArgs(argv: string[]) {
     else if (a === '--ocultar-semente') opts.hideSeed = true;
     else if (a === '--json') opts.json = next();
     else if (a === '--md') opts.md = next();
+    else if (a === '--relatorio') opts.report = next();
     else opts.paths.push(a);
   }
   if (!opts.paths.length) opts.paths.push('agents');
@@ -101,6 +105,7 @@ async function main() {
 
   console.log(`Arena: ${participants.length} agentes × ${maps.length} mapas ${opts.size}×${opts.size} (semente ${opts.hideSeed ? 'secreta' : `"${opts.seed}"`})`);
   const stats: AgentStats[] = [];
+  const all: { name: string; author: string; results: EpisodeResult[] }[] = [];
   for (const p of participants) {
     const results: EpisodeResult[] = [];
     for (const layout of maps) {
@@ -108,13 +113,14 @@ async function main() {
       try {
         ctrl = p.make();
       } catch (err) {
-        results.push({ outcome: 'error', score: -1000, actions: 0, decisionMs: 0, logicErrors: 0, needlessRisks: 0, bumps: 0, shots: 0, hits: 0, error: (err as Error).message });
+        results.push({ outcome: 'error', score: -1000, actions: 0, decisionMs: 0, logicErrors: 0, needlessRisks: 0, bumps: 0, shots: 0, hits: 0, gold: false, error: (err as Error).message });
         continue;
       }
       results.push(await playEpisode(ctrl, layout, opts.timeout));
     }
     const s = aggregate(p.name, p.author, results);
     stats.push(s);
+    all.push({ name: p.name, author: p.author, results });
     console.log(`  ${p.name}: média ${Math.round(s.avgScore)}, ${s.wins}/${s.games} vitórias${s.errors ? `, ${s.errors} erros (${s.firstError})` : ''}`);
   }
 
@@ -129,6 +135,17 @@ async function main() {
   };
   if (opts.json) write(opts.json, JSON.stringify({ meta, ranking: ranked }, null, 2));
   if (opts.md) write(opts.md, md + '\n');
+  if (opts.report) {
+    const order = rank(stats).map((s) => all.find((a) => a.name === s.name && a.author === s.author)!);
+    const report = buildReport({
+      title: `Arena: ${all.length} ${all.length === 1 ? 'agente' : 'agentes'} em ${opts.maps} mapas`,
+      origin: 'linha-de-comando',
+      config: { size: opts.size, pitProbability: opts.pits, maps: opts.maps, seed: meta.seed },
+      agents: order,
+    });
+    write(opts.report, opts.report.endsWith('.json') ? JSON.stringify(report, null, 2) : renderReportHtml(report));
+    console.log(`Relatório salvo em ${opts.report}`);
+  }
 }
 
 main();

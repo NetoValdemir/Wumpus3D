@@ -79,7 +79,7 @@ return {
 npm run arena -- agents/meu-agente.js --maps 200 --seed treino
 ```
 
-Opções: `--maps`, `--size`, `--pits`, `--seed`, `--timeout` (ms por decisão), `--sem-embutidos` (tira os agentes de referência), `--json` e `--md` (salvam o ranking).
+Opções: `--maps`, `--size`, `--pits`, `--seed`, `--timeout` (ms por decisão), `--sem-embutidos` (tira os agentes de referência), `--json` e `--md` (salvam o ranking) e `--relatorio arquivo.html` (relatório com gráficos partida a partida; importe-o na tela **📊 Análise de relatórios** do jogo para comparar com outros agentes).
 
 ## Como o ranking é calculado
 

@@ -188,7 +188,7 @@ section('3', 'Fundamentação de cada componente', f'''
 <h2>3.1 O agente baseado em conhecimento</h2>
 <p><b>No jogo:</b> a classe <code>Knowledge</code> deduz salas sem poço, possíveis posições do Wumpus e poços certos, e calcula a probabilidade de poço na fronteira por enumeração.</p>
 <p><b>Base:</b> o mundo de Wumpus como problema de agente lógico (cap. 7) e a sua versão probabilística, em que a probabilidade de poço na fronteira é obtida somando sobre as configurações consistentes com as brisas (seção 12.7) {cite('aima')}.</p>
-<p><b>Adaptação:</b> a probabilidade de o Wumpus estar numa sala é tratada como uniforme entre as salas candidatas (1 dividido pelo número de candidatas). Essa simplificação é minha.</p>
+<p><b>Adaptação:</b> a probabilidade de o Wumpus estar numa sala candidata é proporcional à chance de ela não ter poço (o Wumpus é sorteado entre salas sem poço), calculada sala a sala, sem enumerar poços e Wumpus juntos. Essa aproximação é minha.</p>
 
 <h2>3.2 Decidir por soma ponderada de características</h2>
 <p><b>No jogo:</b> a nota de cada sala é uma combinação linear de características com pesos.</p>
@@ -239,7 +239,7 @@ DEF = [-4.64, -5, 3.42, -0.05, 0.1, -0.35, -1.05, 0.63, -1.02, 0.4, 3.04, -2.35]
 BAY = [-5, -5, 5, -0.5, 0, 0, 0, 0, 0, 0, 2, -5]
 cell_rows = [
     ['f1 · Poço', '<code>b.pit</code>', '0 a 1', 'Probabilidade de poço na sala, calculada por enumeração da fronteira.', f'{LIT} {cite("aima")}', DEF[0], 'Forte rejeição a salas com chance de poço.'],
-    ['f2 · Wumpus', '<code>b.wumpus</code>', '0 a 1', 'Probabilidade de o Wumpus estar na sala: 1 ÷ número de candidatas, ou 0.', f'{MIX} (uniforme é simplificação)', DEF[1], 'Rejeição a salas onde o Wumpus pode estar.'],
+    ['f2 · Wumpus', '<code>b.wumpus</code>', '0 a 1', 'Probabilidade de o Wumpus estar na sala: proporcional a 1 − P(poço) entre as candidatas, ou 0.', f'{MIX} (aproximação sala a sala)', DEF[1], 'Rejeição a salas onde o Wumpus pode estar.'],
     ['f3 · Segura', '<code>safe ? 1 : 0</code>', '0 ou 1', '1 se a dedução lógica prova que não há poço nem Wumpus.', f'{LIT} {cite("aima")}', DEF[2], 'Forte preferência por salas seguras.'],
     ['f4 · Distância', '<code>(path.length − 1) / size</code>', '≥ 0', 'Passos até a sala pelo caminho conhecido, dividido pelo tamanho do mapa.', OWN, DEF[3], 'Prefere salas próximas (cada passo custa 1 ponto).'],
     ['f5 · Novidade', '<code>vizinhas não visitadas / 4</code>', '0 a 1', 'Quantas vizinhas da sala ainda são desconhecidas.', OWN, DEF[4], 'Leve preferência por salas que abrem mais área.'],
@@ -313,14 +313,14 @@ section('4', 'Cada variável do agente', f'''
 section('5', 'Resultados obtidos e o que eles significam', f'''
 <p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços (3 no 4×4, 7 no 6×6).</p>
 {table(['Agente', '4×4 (5000 mapas)', '6×6 (1000 mapas)'], [
-    ['Lógico', '63% de vitórias, 564 pts', '42%, 20 pts'],
-    ['Probabilístico', '66%, 635 pts', '48%, 174 pts'],
+    ['Lógico', '63% de vitórias, 570 pts', '43%, 46 pts'],
+    ['Probabilístico', '67%, 650 pts', '48%, 182 pts'],
     ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '66%, 641 pts', '48%, 178 pts'],
     ['<code>DEFAULT_GENOME</code> (evoluído)', '66%, 637 pts', '51%, 255 pts'],
 ])}
 <p>Regras atuais: bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus nunca num poço. Os mapas são sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>.</p>
 <ul>
-<li>No 4×4 o genoma evoluído <b>empata</b> com o agente probabilístico e com o ponto de partida. No 6×6, mapa em que ele não foi treinado, fica <b>à frente</b> (+81 pts sobre o probabilístico). Não foi feito um teste estatístico formal.</li>
+<li>No 4×4 o genoma evoluído empata com o ponto de partida e fica um pouco <b>abaixo</b> do agente probabilístico (637 × 650; o probabilístico ganhou 15 pts com as correções da base de conhecimento, que o genético usa só em parte). No 6×6, mapa em que ele não foi treinado, fica <b>à frente</b> (255 × 182). Não foi feito um teste estatístico formal.</li>
 <li>Lotes menores enganam: em 1000 mapas 4×4 de outra semente o genético ficou 19 pts abaixo do probabilístico, e em 200 mapas, 151 pts abaixo. Como todos jogam os mesmos mapas, um lote difícil derruba todos juntos, mas a ordem entre agentes próximos muda de lote para lote.</li>
 <li>O bônus de +25 não fez o agente atirar às cegas: com o bônus, a fração de partidas com tiro ficou igual entre o genoma treinado antes e depois dele.</li>
 <li>Depois da mudança para número fixo de poços e Wumpus fora dos poços, três novos treinos (sementes <code>regras16-a</code>, <code>-b</code> e <code>-c</code>) ficaram de 8 a 14 pts abaixo do genoma atual em 2000 mapas, e por isso o genoma foi mantido.</li>
@@ -336,7 +336,7 @@ section('6', 'Limitações da fundamentação', f'''
 <li><b>Características escolhidas à mão.</b> O conjunto de genes reflete intuições sobre o problema; não segue nenhum método publicado de seleção de características.</li>
 <li><b>Sem análise estatística formal.</b> As comparações do capítulo 5 são médias em muitos mapas, sem intervalos de confiança ou testes de hipótese.</li>
 <li><b>Mudanças na medida de desempenho.</b> A aptidão segue o AIMA com três alterações (divisão do bônus, vitória automática, limite de ações), então os números não são diretamente comparáveis com outros trabalhos sobre o mundo de Wumpus.</li>
-<li><b>Modelo do Wumpus simplificado.</b> A probabilidade uniforme entre candidatas ignora a correlação entre poços e Wumpus.</li>
+<li><b>Modelo do Wumpus simplificado.</b> A probabilidade do Wumpus usa a chance de poço de cada sala separadamente e ignora a correlação entre as salas da fronteira.</li>
 </ul>
 ''')
 

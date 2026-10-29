@@ -1,7 +1,7 @@
 // Agentes que jogam sozinhos. Cada um recebe só o que um jogador real saberia:
 // as percepções da sala atual, a própria posição/direção e o que carrega.
 import { key, type Action, type Cell, type Dir, type Percepts, type WumpusWorld } from '../game/world';
-import { Knowledge, type CellBelief } from './knowledge';
+import { Knowledge, riskOf, type CellBelief } from './knowledge';
 import { DEFAULT_GENOME, GENES } from './genome';
 
 export interface Senses {
@@ -140,25 +140,24 @@ export class ReasoningAgent implements Agent {
     // 5. Sem sala segura e sem como desistir: precisa arriscar uma sala da fronteira.
     const options = this.frontier(candidates);
     if (!options.length) return this.idle();
+    // Distância pelas salas já visitadas: desempate entre opções de mesmo risco (vai na mais perto)
+    const paths = new Map(options.map((k) => [k, this.route(here, new Set([k]), (c) => kb.visited.has(c))!]));
+    const dist = (k: string) => paths.get(k)!.length;
     if (this.mode === 'bayes') {
       const beliefs = kb.beliefs();
-      const risk = (k: string) => {
-        const b = beliefs.get(k)!;
-        return 1 - (1 - b.pit) * (1 - b.wumpus);
-      };
-      const target = options.sort((a, b) => risk(a) - risk(b))[0];
-      const path = this.route(here, new Set([target]), (k) => kb.visited.has(k))!;
-      return this.walk(s, path, `Nenhuma sala é garantida. ${fmt(target)} tem o menor risco (${pct(risk(target))}), arriscando.`);
+      const risk = (k: string) => riskOf(beliefs.get(k)!);
+      const target = options.sort((a, b) => risk(a) - risk(b) || dist(a) - dist(b))[0];
+      return this.walk(s, paths.get(target)!, `Nenhuma sala é garantida. ${fmt(target)} tem o menor risco (${pct(risk(target))}), arriscando.`);
     }
-    // Agente lógico não usa probabilidades: conta os indícios (brisa/fedor) ao redor de cada sala
+    // Agente lógico não usa probabilidades. A lógica só diz que estas salas "não são perigo certo";
+    // para escolher entre elas, conta os indícios (brisas e fedores) ao redor, uma regra prática.
     const evidence = (k: string) =>
       kb.neighbors(k).reduce((n, v) => {
         const o = kb.visited.get(v);
         return n + (o?.breeze ? 1 : 0) + (o?.stench && !kb.wumpusDead ? 1 : 0);
       }, 0);
-    const target = options.sort((a, b) => evidence(a) - evidence(b))[0];
-    const path = this.route(here, new Set([target]), (k) => kb.visited.has(k))!;
-    return this.walk(s, path, `Nenhuma sala é comprovadamente segura. Chutando ${fmt(target)}, a com menos indícios de perigo.`);
+    const target = options.sort((a, b) => evidence(a) - evidence(b) || dist(a) - dist(b))[0];
+    return this.walk(s, paths.get(target)!, `Nenhuma sala é comprovadamente segura. Chutando ${fmt(target)}, a com menos indícios de perigo.`);
   }
 
   /** Salas da fronteira que não são perigo certo (poço deduzido ou Wumpus localizado). */
@@ -179,7 +178,8 @@ export class ReasoningAgent implements Agent {
   protected planShot(s: Senses, candidates: Set<string>, walkable: (k: string) => boolean): Action | null {
     const kb = this.kb;
     const here = key(s.x, s.y);
-    // Só atira se souber exatamente onde ele está, ou (agente lógico) se estiver travado
+    // Chega aqui só sem sala segura para explorar. Atira se souber onde ele está ou se restarem
+    // até 3 salas possíveis: mesmo errando, a falta do grito limpa a linha do tiro.
     const targets = candidates.size === 1 ? [...candidates] : candidates.size <= 3 ? [...candidates] : [];
     for (const target of targets) {
       const [tx, ty] = target.split(',').map(Number);
@@ -312,8 +312,7 @@ export class GeneticAgent extends ReasoningAgent {
     }
 
     if (!best) return this.idle();
-    const b = beliefs.get(best.cell)!;
-    const risk = 1 - (1 - b.pit) * (1 - b.wumpus);
+    const risk = riskOf(beliefs.get(best.cell)!);
     return this.walk(
       s,
       best.path,

@@ -1,7 +1,7 @@
 // Camada 3D: lê o estado do WumpusWorld e desenha a caverna com Three.js.
 import * as THREE from 'three';
 import { DIR_VEC, type Cell, type WumpusWorld } from '../game/world';
-import type { CellBelief } from '../agents/knowledge';
+import { riskOf, type CellBelief } from '../agents/knowledge';
 
 const TILE = 2; // tamanho de cada sala em unidades 3D
 
@@ -168,7 +168,7 @@ export class WorldView {
     const discGeo = new THREE.CircleGeometry(0.75, 32);
     for (const [k, b] of beliefs) {
       const [x, y] = k.split(',').map(Number);
-      const risk = 1 - (1 - b.pit) * (1 - b.wumpus);
+      const risk = riskOf(b);
       const color = new THREE.Color(0x3ddc84).lerp(new THREE.Color(0xffc93d), Math.min(risk * 2, 1));
       if (risk > 0.5) color.lerp(new THREE.Color(0xff3d3d), (risk - 0.5) * 2);
       const disc = new THREE.Mesh(
