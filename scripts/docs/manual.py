@@ -219,7 +219,7 @@ section('4', 'O que se vê no mapa 3D', f'''
 # ---------------------------------------------------------------- 5
 section('5', 'Painel de configuração: Partida', f'''
 <p>O painel fica à direita do mapa no computador e embaixo dele no celular. Ele nunca cobre o mapa: quando está aberto, o mapa encolhe. Feche com <b>Fechar</b> ou {kbd('C')}; reabra com <b>⚙ Configurar</b> ou {kbd('C')}. No computador ele começa aberto; em telas de até 760 px de largura, começa fechado.</p>
-<p>De cima para baixo, o painel tem: <b>Partida</b>, o botão <b>🏆 Arena</b>, <b>Minhas partidas</b> (quando você joga) ou <b>Agente genético</b> e <b>Avaliação</b> (quando um agente joga), <b>Salvar mapas</b> e, no fim, o botão <b>📊 Análise de relatórios</b>.</p>
+<p>De cima para baixo, o painel tem: <b>Partida</b>, <b>Minhas partidas</b> (quando você joga) ou <b>Agente genético</b> e <b>Avaliação</b> (quando um agente joga), <b>Salvar mapas</b> e, no fim, os botões <b>🏆 Arena</b> e <b>📊 Análise de relatórios</b>.</p>
 <p>As seções <b>Partida</b>, <b>Minhas partidas</b> e <b>Salvar mapas</b> começam <b>fechadas</b>, mostrando só o título. Clique na linha do título (ou use {kbd('Tab')} e {kbd('Enter')}) para abrir; clique de novo para fechar. A seta à esquerda mostra se a seção está aberta (▾) ou fechada (▸).</p>
 {img('painel.png', 'Parte de cima do painel, com as seções abertas.', 'narrow')}
 <h2>Tamanho do mapa</h2>

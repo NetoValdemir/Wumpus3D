@@ -102,7 +102,7 @@ Acrescente novas entradas no fim.
 
 ### 24. Painel: seções que abrem e fecham
 - **Pedido:** renomear "Mapas" para "Salvar mapas" e deixar Partida, Salvar mapas e Minhas partidas expansíveis, começando fechadas.
-- **Feito:** `<details class="fold">` nas três seções (seta ▸/▾ à esquerda com o título ao lado, conteúdo em `.fold-body` com 12 px entre itens e 10 px entre botões, foco visível, sem animação com redução de movimento); ordem: Partida, Arena, Minhas partidas, (Agente genético, Avaliação), Salvar mapas e, no fim do painel, Análise de relatórios; exportar mapa abre a seção para mostrar o JSON. Manual (cap. 5 e 7), README e capturas atualizados.
+- **Feito:** `<details class="fold">` nas três seções (seta ▸/▾ à esquerda com o título ao lado, conteúdo em `.fold-body` com 12 px entre itens e 10 px entre botões, foco visível, sem animação com redução de movimento); ordem: Partida, Minhas partidas, (Agente genético, Avaliação), Salvar mapas e, no fim do painel, os botões Arena e Análise de relatórios; exportar mapa abre a seção para mostrar o JSON. Manual (cap. 5 e 7), README e capturas atualizados.
 - **Verificado:** Playwright: as três começam fechadas, abrem e fecham, títulos em maiúsculas, sem erros no console; 41 testes.
 
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
