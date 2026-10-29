@@ -7,6 +7,7 @@ const out = process.argv[2];
   const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
   const p = await ctx.newPage();
   await p.goto('http://localhost:4173/'); await p.waitForTimeout(800);
+  await p.evaluate(() => document.querySelectorAll('details.fold').forEach((d) => (d.open = true))); // seções começam fechadas
   // procura um mapa em que a primeira sala à frente seja segura e haja caminho até o ouro
   let moves = null;
   for (let tries = 0; tries < 30 && !moves; tries++) {

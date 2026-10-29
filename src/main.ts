@@ -445,7 +445,9 @@ function exportLayout(l: MapLayout) {
   } catch {
     // download indisponível: o JSON continua na caixa de texto
   }
-  $<HTMLDetailsElement>('details.paste').open = true;
+  const paste = $<HTMLDetailsElement>('details.paste');
+  paste.open = true;
+  paste.closest<HTMLDetailsElement>('details.fold')!.open = true; // a seção Salvar mapas pode estar fechada
   mapMsg(`"${l.name}" exportado como ${fileName(l)}. O JSON também está na caixa abaixo para copiar.`);
 }
 

@@ -100,6 +100,11 @@ Acrescente novas entradas no fim.
 - **Feito (D20):** seção "Minhas partidas" (nome do jogador, semente de desafio, resumo, exportar HTML/JSON, abrir na análise, comparar com os agentes nos mesmos mapas, apagar). Árbitro acompanha a partida humana (erros de lógica, riscos). Só contam primeira vez por mapa e sem mapa aberto. Manual: capítulo 13 novo; documentação técnica: cap. 9.
 - **Verificado:** 41 testes (novo `tests/human.test.ts`); Playwright: 4 partidas num desafio (uma com mapa aberto → não conta), resumo e índice do desafio corretos, comparação com 3 agentes nos mesmos mapas aberta na Análise, sem erros no console.
 
+### 24. Painel: seções que abrem e fecham
+- **Pedido:** renomear "Mapas" para "Salvar mapas" e deixar Partida, Salvar mapas e Minhas partidas expansíveis, começando fechadas.
+- **Feito:** `<details class="fold">` nas três seções (seta ▸/▾, foco visível, sem animação com redução de movimento); Arena e Análise ficam fora da dobra, sempre visíveis; exportar mapa abre a seção para mostrar o JSON. Manual (cap. 5 e 7), README e capturas atualizados.
+- **Verificado:** Playwright: as três começam fechadas, abrem e fecham, títulos em maiúsculas, sem erros no console; 41 testes.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |

@@ -203,6 +203,48 @@ button.highlight {
   border-top: 1px solid #3a3028;
 }
 
+/* Seções que abrem e fecham (Partida, Salvar mapas, Minhas partidas); começam fechadas */
+.setup details.fold > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.setup details.fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.setup details.fold > summary::after {
+  content: '▸';
+  color: #c9b48a;
+  transition: transform 0.15s;
+}
+
+.setup details.fold[open] > summary::after {
+  transform: rotate(90deg);
+}
+
+.setup details.fold > summary:focus-visible {
+  outline: 2px solid #fc3;
+  outline-offset: 2px;
+}
+
+.setup details.fold[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setup details.fold > summary::after {
+    transition: none;
+  }
+}
+
 .setup h3 {
   margin: 0;
   font-size: 11px;

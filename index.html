@@ -82,7 +82,8 @@
         </header>
         <div class="fields">
           <section>
-            <h3>Partida</h3>
+            <details class="fold">
+              <summary><h3>Partida</h3></summary>
             <label>Tamanho do mapa
               <select id="cfg-size">
                 <option value="4" selected>4 × 4</option>
@@ -108,16 +109,20 @@
             </label>
             <p id="agent-desc" class="hint"></p>
             <p class="hint">Trocar de jogador mantém o mesmo mapa, para comparar agentes no mesmo cenário.</p>
-          <button id="open-arena">🏆 Arena: importar e comparar agentes</button>
-          <button id="open-analysis">📊 Análise de relatórios</button>
             <label id="row-speed">Velocidade <output id="speed-out"></output>
               <input type="range" id="cfg-speed" min="1" max="20" value="4" />
             </label>
             <label class="check" id="row-beliefs"><input type="checkbox" id="cfg-beliefs" checked /> Mostrar raciocínio do agente</label>
+            </details>
+            <div class="inline">
+              <button id="open-arena">🏆 Arena: importar e comparar agentes</button>
+              <button id="open-analysis">📊 Análise de relatórios</button>
+            </div>
           </section>
 
           <section>
-            <h3>Mapas</h3>
+            <details class="fold">
+              <summary><h3>Salvar mapas</h3></summary>
             <p class="hint">Mapa atual: <b id="map-current">sorteado</b></p>
             <div class="inline">
               <input type="text" id="map-name" placeholder="Nome do mapa" maxlength="60" aria-label="Nome do mapa" />
@@ -144,6 +149,7 @@
               </div>
             </details>
             <p id="map-msg" class="hint msg"></p>
+            </details>
           </section>
 
           <section id="ga-section" hidden>
@@ -182,7 +188,8 @@
           </section>
 
           <section id="human-section" hidden>
-            <h3>Minhas partidas</h3>
+            <details class="fold">
+              <summary><h3>Minhas partidas</h3></summary>
             <label>Nome do jogador <input type="text" id="human-name" maxlength="40" placeholder="Jogador" /></label>
             <label>Desafio: semente dos mapas <input type="text" id="human-seed" maxlength="40" placeholder="vazio = mapas sorteados" /></label>
             <p id="human-challenge" class="hint"></p>
@@ -195,6 +202,7 @@
             <button id="human-compare">Comparar com os agentes nos mesmos mapas</button>
             <button id="human-clear">Apagar minhas partidas</button>
             <p class="hint">Toda partida que você termina é registrada neste navegador. No relatório entra só a primeira vez que você termina cada mapa, e só se não abriu o mapa (tecla M).</p>
+            </details>
           </section>
         </div>
       </aside>

@@ -219,7 +219,8 @@ section('4', 'O que se vê no mapa 3D', f'''
 # ---------------------------------------------------------------- 5
 section('5', 'Painel de configuração: Partida', f'''
 <p>O painel fica à direita do mapa no computador e embaixo dele no celular. Ele nunca cobre o mapa: quando está aberto, o mapa encolhe. Feche com <b>Fechar</b> ou {kbd('C')}; reabra com <b>⚙ Configurar</b> ou {kbd('C')}. No computador ele começa aberto; em telas de até 760 px de largura, começa fechado.</p>
-{img('painel.png', 'Parte de cima do painel: seções Partida e Mapas.', 'narrow')}
+<p>As seções <b>Partida</b>, <b>Salvar mapas</b> e <b>Minhas partidas</b> começam <b>fechadas</b>, mostrando só o título. Clique no título (ou use {kbd('Tab')} e {kbd('Enter')}) para abrir; clique de novo para fechar. A seta ao lado do título mostra se a seção está aberta (▾) ou fechada (▸). Os botões <b>🏆 Arena</b> e <b>📊 Análise de relatórios</b> ficam sempre à vista, logo abaixo de Partida.</p>
+{img('painel.png', 'Parte de cima do painel, com as seções Partida e Salvar mapas abertas.', 'narrow')}
 <h2>Tamanho do mapa</h2>
 <p>Opções: 4 × 4 (clássico), 5 × 5, 6 × 6, 7 × 7, 8 × 8 e 10 × 10.</p>
 <ul>
@@ -281,7 +282,7 @@ section('6', 'Assistindo agentes', f'''
 
 # ---------------------------------------------------------------- 7
 section('7', 'Mapas: salvar, repetir, exportar e importar', f'''
-<p>Toda partida tem um <b>mapa</b>: posição dos poços, do Wumpus e do ouro. A seção <b>Mapas</b> do painel guarda e transporta mapas. "Mapa atual" mostra o nome do mapa em uso, ou "sorteado".</p>
+<p>Toda partida tem um <b>mapa</b>: posição dos poços, do Wumpus e do ouro. A seção <b>Salvar mapas</b> do painel guarda e transporta mapas (clique no título para abrir). "Mapa atual" mostra o nome do mapa em uso, ou "sorteado".</p>
 <h2>Salvar o mapa atual</h2>
 <ol>
 <li>Digite um nome no campo <b>Nome do mapa</b> (até 60 caracteres). É opcional: em branco, o nome vira algo como "Mapa 4×4 — 28/10/2026, 14:30:00".</li>

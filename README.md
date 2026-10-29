@@ -100,7 +100,7 @@ Os agentes importados rodam isolados (Web Worker no navegador, `vm` no Node) e r
 
 ## Mapas: salvar, exportar e importar
 
-Na seção **Mapas** do painel:
+Na seção **Salvar mapas** do painel (as seções Partida, Salvar mapas e Minhas partidas começam fechadas; clique no título para abrir):
 
 - **Salvar** guarda o mapa atual neste navegador, com um nome.
 - **Jogar** carrega um mapa salvo, para testá-lo com outro agente quando quiser.
