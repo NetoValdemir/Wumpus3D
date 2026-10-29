@@ -25,7 +25,8 @@ npm run check        # tipos (tsc) + testes (vitest) — rode antes de todo comm
 npm test             # só os testes
 npm run build        # build de produção em dist/
 npm run arena -- --maps 200 --seed treino   # competição de agentes na linha de comando
-npm run treinar -- --seed bonus25-c         # treino do agente genético (reproduz o DEFAULT_GENOME)
+npm run treinar -- --seed utilidade-a --pop 20 --geracoes 20 --mapas 500 --tamanhos 4,6 --validacao 2000
+                                            # treino do agente genético (reproduz o DEFAULT_GENOME, ~15 min)
 npm run medir                               # tabela de desempenho (5000 mapas 4×4, 1000 6×6)
 scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
 ```
