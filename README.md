@@ -56,9 +56,9 @@ A Avaliação e a Arena exportam um **relatório**: um arquivo HTML que abre em 
 
 ### Agente genético
 
-O genoma é uma lista de 12 pesos, entre −5 e 5:
+O genoma é uma lista de 11 pesos, entre −5 e 5:
 
-- 9 pesos dão a nota de cada sala candidata: probabilidade de poço, probabilidade de Wumpus, se é segura, distância, vizinhas desconhecidas, distância da entrada, giros necessários, brisas ao lado e fedores ao lado. O agente vai para a sala de maior nota.
+- 8 pesos dão a nota de cada sala candidata: **risco de morte** (P(poço) + P(Wumpus)), **distância**, se é segura, vizinhas desconhecidas, distância da entrada, giros necessários, brisas ao lado e fedores ao lado. Risco e distância são os dois termos da pontuação (a morte custa 1000, cada passo 1), como numa utilidade esperada; com só esses dois, a fórmula já reproduz o agente probabilístico. O agente vai para a sala de maior nota.
 - 3 pesos dão a nota da opção "atirar no Wumpus": viés, certeza sobre o alvo e se ainda há sala segura. Se ela superar a melhor sala, o agente atira.
 
 O algoritmo genético (`src/agents/genetic.ts`) funciona assim:

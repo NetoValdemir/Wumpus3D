@@ -251,7 +251,7 @@ SVG_GA = '''
     </g>
     <g font-weight="700" fill="#4b2a22"><text x="70" y="86">População</text><text x="215" y="86">Avaliação</text><text x="360" y="86">Seleção</text><text x="505" y="86">Reprodução</text><text x="650" y="86" fill="#22472b">Validação</text></g>
     <g font-size="10" fill="#66413b">
-      <text x="70" y="104">N genomas</text><text x="70" y="117">(12 pesos cada)</text>
+      <text x="70" y="104">N genomas</text><text x="70" y="117">(11 pesos cada)</text>
       <text x="215" y="104">todos jogam os</text><text x="215" y="117">mesmos M mapas</text>
       <text x="360" y="104">2 melhores passam;</text><text x="360" y="117">torneio de 3</text>
       <text x="505" y="104">cruzamento +</text><text x="505" y="117">mutação gaussiana</text>
@@ -611,14 +611,15 @@ section('8', 'Inteligência — os agentes', f'''
 <p>Efeito medido (mesmos mapas, 5000 no 4×4): o lógico passou de 564 para 570 pontos de média e o probabilístico de 635 para 650. No 6×6 (1000 mapas), de 20 para 46 e de 174 para 182.</p>
 
 <h2>Agente genético</h2>
-<p>O <code>GeneticAgent</code> reaproveita a base de conhecimento e as regras 1 e 2, mas troca as regras 3 a 5 por uma <b>fórmula de pontuação</b>. Para cada sala candidata da fronteira, ele calcula 9 características e soma cada uma multiplicada por um peso:</p>
+<p>O <code>GeneticAgent</code> reaproveita a base de conhecimento e as regras 1 e 2, mas troca as regras 3 a 5 por uma <b>fórmula de pontuação</b>. Para cada sala candidata da fronteira, ele calcula 8 características e soma cada uma multiplicada por um peso. As duas primeiras são os termos da pontuação, como numa utilidade esperada: o risco de morrer (custa 1000) e a distância (cada passo custa 1).</p>
 {snip('src/agents/agents.ts', 'const features = [', '];')}
-<p>O agente vai para a sala de maior nota. Uma segunda fórmula, com 3 pesos (viés, certeza sobre o alvo e "ainda existe sala segura"), dá nota à opção de atirar. Os 12 pesos formam o <b>genoma</b>.</p>
+<p>O agente vai para a sala de maior nota. Uma segunda fórmula, com 3 pesos (viés, certeza sobre o alvo e "ainda existe sala segura"), dá nota à opção de atirar. Os 11 pesos formam o <b>genoma</b>.</p>
+{box('decision', 'Por que risco e distância como características (D19)', '<p>Na versão anterior, o genético pesava P(poço) e P(Wumpus) separadamente e precisava acertar a proporção entre os pesos para chegar à regra do probabilístico. Com o risco pronto, o <code>BAYES_LIKE_GENOME</code> (risco −5, distância −0,01) já se comporta como o probabilístico, e o treino parte desse nível para ajustar o resto.</p>')}
 {box('decision', 'Por que evoluir pesos e não uma sequência de ações', '<p>Um algoritmo genético poderia evoluir uma lista fixa de ações ("frente, frente, esquerda...") para um mapa. Mas essa lista só funciona naquele mapa e, na prática, "decora" a resposta. Evoluindo os pesos de uma estratégia, o agente generaliza: joga qualquer mapa sem nunca vê-lo, só pelas percepções, igual aos outros agentes.</p>')}
 
 <h2>O algoritmo genético (src/agents/genetic.ts)</h2>
 {SVG_GA}
-{img('genetico.png', 'Painel do agente genético: os 12 pesos do genoma padrão (verde = positivo, vermelho = negativo) e os controles de treino.', 'narrow')}
+{img('genetico.png', 'Painel do agente genético: os pesos do genoma (verde = positivo, vermelho = negativo) e os controles de treino. Captura da versão anterior, com 12 pesos.', 'narrow')}
 <ol>
 <li><b>População</b>: N genomas com pesos aleatórios entre −5 e 5. O genoma atual entra na primeira posição, para o treino continuar de onde parou.</li>
 <li><b>Avaliação</b>: cada genoma joga os <b>mesmos</b> M mapas sorteados naquela geração. A <b>aptidão</b> (fitness) é a pontuação média.</li>
@@ -819,7 +820,7 @@ section('14', 'Limitações conhecidas e próximos passos', f'''
     ['Fedor continua depois que o Wumpus morre', 'Regra do livro. A base de conhecimento já ignora fedor quando <code>wumpusDead</code> é verdadeiro.'],
     ['Memória de vídeo não é liberada ao recomeçar', '<code>level.clear()</code> remove objetos, mas não chama <code>dispose()</code> nas geometrias e materiais. Em sessões muito longas a memória cresce. Corrija percorrendo a cena e chamando <code>dispose()</code>.'],
     ['Pacote de ~600 KB (160 KB compactado)', '<code>import * as THREE</code> traz a biblioteca inteira. Importar só as classes usadas pode reduzir.'],
-    ['O agente genético não supera o probabilístico', 'Os 12 genes descrevem estratégias parecidas com a bayesiana. Novas características (por exemplo, distância até o ouro provável) poderiam mudar isso.'],
+    ['O genético ganha pouco do probabilístico no 4×4', 'Com as mesmas informações, a regra "menor risco" já está perto do melhor possível em mapas pequenos. Novas características (por exemplo, valor da informação ou distância até o ouro provável) poderiam mudar isso.'],
     ['O <code>vm</code> do Node não é uma barreira de segurança', 'Revise o código dos agentes antes do merge. Para mais isolamento, rode a arena num contêiner sem rede.'],
     ['Agentes externos com o mesmo nome e autor se substituem', 'O id é derivado de autor/nome. Use um id explícito se precisar de versões lado a lado.'],
     ['Dados só no navegador', 'O <code>localStorage</code> não sincroniza. Um backend seria necessário para contas e ranking em tempo real.'],

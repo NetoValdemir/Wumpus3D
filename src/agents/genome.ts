@@ -6,12 +6,15 @@ export interface Gene {
   description: string;
 }
 
-/** Características de cada sala candidata (o agente vai para a de maior pontuação). */
+/**
+ * Características de cada sala candidata (o agente vai para a de maior pontuação).
+ * As duas primeiras estão nas unidades da pontuação: risco de morte (−1000) e passos (−1 cada),
+ * como numa utilidade esperada (D19). As outras deixam o treino corrigir o que essa conta não vê.
+ */
 export const CELL_GENES: Gene[] = [
-  { name: 'Poço', description: 'Probabilidade de poço na sala' },
-  { name: 'Wumpus', description: 'Probabilidade de o Wumpus estar na sala' },
-  { name: 'Segura', description: '1 se a sala é comprovadamente segura' },
+  { name: 'Risco', description: 'Chance de morrer na sala: P(poço) + P(Wumpus)' },
   { name: 'Distância', description: 'Passos até a sala (dividido pelo tamanho do mapa)' },
+  { name: 'Segura', description: '1 se a sala é comprovadamente segura' },
   { name: 'Novidade', description: 'Vizinhas ainda desconhecidas (de 0 a 1)' },
   { name: 'Longe da entrada', description: 'Distância da sala até (1, 1)' },
   { name: 'Giros', description: 'Quanto precisa girar antes do primeiro passo' },
@@ -29,12 +32,11 @@ export const SHOOT_GENES: Gene[] = [
 export const GENES = [...CELL_GENES, ...SHOOT_GENES];
 export const GENE_LIMIT = 5; // cada peso fica entre -5 e 5
 
-/** Genoma inicial que imita o agente probabilístico: foge do risco, prefere salas seguras e próximas. */
-export const BAYES_LIKE_GENOME: number[] = [-5, -5, 5, -0.5, 0, 0, 0, 0, 0, 0, 2, -5];
-
 /**
- * Genoma pré-treinado: evoluído a partir do BAYES_LIKE_GENOME em mapas 4×4 com 20% de poços
- * (população 24, 20 gerações, 120 mapas por geração, validação final em 360 mapas novos),
- * já com o bônus de +25 por matar o Wumpus. Reproduzir: npm run treinar -- --seed bonus25-c
+ * Genoma que reproduz o agente probabilístico: o menor risco decide, a distância só desempata,
+ * e o tiro só acontece sem sala segura (como os passos 3 a 5 do ReasoningAgent).
  */
-export const DEFAULT_GENOME: number[] = [-4.64, -5, 3.42, -0.05, 0.1, -0.35, -1.05, 0.63, -1.02, 0.4, 3.04, -2.35];
+export const BAYES_LIKE_GENOME: number[] = [-5, -0.01, 0, 0, 0, 0, 0, 0, 0, 2, -5];
+
+/** Genoma pré-treinado (provisório: igual ao BAYES_LIKE_GENOME até o treino terminar). */
+export const DEFAULT_GENOME: number[] = [...BAYES_LIKE_GENOME];

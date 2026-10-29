@@ -2,7 +2,7 @@
 // as percepções da sala atual, a própria posição/direção e o que carrega.
 import { key, type Action, type Cell, type Dir, type Percepts, type WumpusWorld } from '../game/world';
 import { Knowledge, riskOf, type CellBelief } from './knowledge';
-import { DEFAULT_GENOME, GENES } from './genome';
+import { CELL_GENES, DEFAULT_GENOME, GENES } from './genome';
 
 export interface Senses {
   x: number;
@@ -288,10 +288,9 @@ export class GeneticAgent extends ReasoningAgent {
       const diff = (this.dirTo(s.x, s.y, nx, ny) - s.dir + 4) % 4;
       const turns = diff === 0 ? 0 : diff === 2 ? 1 : 0.5;
       const features = [
-        b.pit,
-        b.wumpus,
-        safe ? 1 : 0,
+        riskOf(b),
         (path.length - 1) / size,
+        safe ? 1 : 0,
         neighbors.filter((n) => !kb.visited.has(n)).length / 4,
         (cx + cy) / (2 * size),
         turns,
@@ -304,7 +303,8 @@ export class GeneticAgent extends ReasoningAgent {
 
     // Pontua a opção de atirar
     if (s.hasArrow && candidates.size > 0 && candidates.size <= 3) {
-      const shootScore = g[9] + g[10] * (1 / candidates.size) + g[11] * (anySafe ? 1 : 0);
+      const [bias, certainty, safeLeft] = g.slice(CELL_GENES.length);
+      const shootScore = bias + certainty * (1 / candidates.size) + safeLeft * (anySafe ? 1 : 0);
       if (!best || shootScore > best.score) {
         const shot = this.planShot(s, candidates, walkable);
         if (shot) return shot;

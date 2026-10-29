@@ -175,3 +175,16 @@ export const movingAverage = (values: number[], window: number) =>
 /** Nome de arquivo seguro a partir do título. */
 export const reportFileName = (r: Report, ext: 'html' | 'json') =>
   `relatorio-${r.title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'wumpus'}.${ext}`;
+
+/**
+ * Diferença pareada (a − b) partida a partida, com intervalo de 95% pela aproximação normal.
+ * Pareada porque os dois jogaram os mesmos mapas: a sorte do mapa se cancela na diferença.
+ */
+export function pairedDiff(a: number[], b: number[]) {
+  const d = a.map((v, i) => v - b[i]);
+  const n = d.length;
+  const mean = d.reduce((s, v) => s + v, 0) / n;
+  const sd = n > 1 ? Math.sqrt(d.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1)) : 0;
+  const half = (1.96 * sd) / Math.sqrt(n);
+  return { mean, low: mean - half, high: mean + half, sd };
+}

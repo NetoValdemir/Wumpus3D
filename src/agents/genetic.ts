@@ -13,10 +13,14 @@ import { GENES, GENE_LIMIT } from './genome';
 
 export interface TrainingOptions {
   size: number;
+  /** Treina em vários tamanhos ao mesmo tempo (os mapas de cada geração são divididos entre eles) */
+  sizes?: number[];
   pitProbability: number;
   population: number;
   generations: number;
   mapsPerGeneration: number;
+  /** Mapas da validação final (padrão: 3 × mapsPerGeneration) */
+  validationMaps?: number;
   /** Treina só neste mapa (o agente se especializa nele) */
   layout?: MapLayout | null;
   /** Indivíduo inicial opcional (ex.: o genoma atual), para continuar um treino */
@@ -76,10 +80,12 @@ export function* train(opts: TrainingOptions): Generator<GenerationReport> {
   let population = Array.from({ length: opts.population }, () => randomGenome(rng));
   if (opts.seed) population[0] = [...opts.seed];
 
+  // Vários tamanhos: a aptidão vira a média em mapas de todos eles, para o agente generalizar (D19)
+  const sizes = opts.sizes?.length ? opts.sizes : [opts.size];
   const sampleMaps = (count: number) =>
     opts.layout
       ? [opts.layout]
-      : Array.from({ length: count }, () => new WumpusWorld(opts.size, opts.pitProbability, rng).toLayout('treino'));
+      : Array.from({ length: count }, (_, i) => new WumpusWorld(sizes[i % sizes.length], opts.pitProbability, rng).toLayout('treino'));
 
   for (let gen = 1; gen <= opts.generations; gen++) {
     // Todos os indivíduos jogam os mesmos mapas nesta geração (comparação justa)
@@ -97,7 +103,7 @@ export function* train(opts: TrainingOptions): Generator<GenerationReport> {
 
     if (gen === opts.generations) {
       // Validação: os finalistas jogam mapas que nunca viram
-      const validation = sampleMaps(opts.mapsPerGeneration * 3);
+      const validation = sampleMaps(opts.validationMaps ?? opts.mapsPerGeneration * 3);
       const finalists = scored
         .slice(0, FINALISTS)
         .map((x) => ({ genome: x.genome, fit: fitness(x.genome, validation) }))
