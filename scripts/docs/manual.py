@@ -334,9 +334,9 @@ section('7', 'Mapas: salvar, repetir, exportar e importar', f'''
 # ---------------------------------------------------------------- 8
 section('8', 'Agente genético: pesos e treino', f'''
 <p>Quando <b>Agente genético</b> está selecionado em "Quem joga", aparece a seção <b>Agente genético</b> no painel.</p>
-{img('genetico.png', 'Seção do agente genético: os 12 pesos em barras e os controles de treino.', 'narrow')}
+{img('genetico.png', 'Seção do agente genético: os pesos em barras e os controles de treino.', 'narrow')}
 <h2>Os pesos</h2>
-<p>O agente decide com uma fórmula de 12 pesos. Cada barra mostra um peso: verde para a direita (positivo, a característica <b>aumenta</b> a vontade de ir para uma sala) ou vermelha para a esquerda (negativo, <b>diminui</b>). "Pesos em uso" diz se são os pesos padrão (pré-treinados) ou treinados por você. Passe o mouse sobre um peso para ver a descrição.</p>
+<p>O agente decide com uma fórmula de 11 pesos. Os dois primeiros são os mais importantes: <b>Risco</b> (a chance de morrer na sala) e <b>Distância</b> (quantos passos até ela), os mesmos termos da pontuação. Cada barra mostra um peso: verde para a direita (positivo, a característica <b>aumenta</b> a vontade de ir para uma sala) ou vermelha para a esquerda (negativo, <b>diminui</b>). "Pesos em uso" diz se são os pesos padrão (pré-treinados) ou treinados por você. Passe o mouse sobre um peso para ver a descrição.</p>
 <h2>Treinar</h2>
 {table(['Campo', 'Faixa', 'Padrão', 'O que controla'], [
     ['Gerações', '1 a 200', '15', 'Quantas rodadas de evolução. Mais gerações = mais tempo e, em geral, pesos melhores.'],
@@ -348,9 +348,11 @@ section('8', 'Agente genético: pesos e treino', f'''
 <li>O treino usa o <b>tamanho e a porcentagem de poços do mapa atual</b>.</li>
 <li>Clique em <b>Treinar</b>. O gráfico mostra, por geração, a melhor pontuação (amarelo) e a média (cinza). A tela continua utilizável durante o treino.</li>
 <li>No fim, as 5 melhores versões jogam mapas novos, e a vencedora passa a ser usada. Os pesos ficam salvos neste navegador.</li>
+<li>Pesos salvos de uma versão anterior do jogo (com outro número de pesos) são ignorados, e o agente volta aos pesos padrão.</li>
 <li><b>Parar treino</b> interrompe e usa a melhor versão da última geração completa.</li>
 <li><b>Usar pesos padrão</b> volta aos pesos que vêm com o jogo. Fica desativado se eles já estão em uso.</li>
 </ul>
+{box('trap', 'Treinos curtos dão pesos pouco confiáveis', '<p>Com 20 mapas por geração, a sorte dos mapas pesa mais que a qualidade dos pesos: o "melhor" pode só ter pegado mapas fáceis. Os pesos padrão foram treinados com 500 mapas por geração, em 4 × 4 e 6 × 6, e validados em 2000 mapas. Se o seu treino piorar o agente, use <b>Usar pesos padrão</b>. Os pesos treinados também passam a valer na Avaliação e na Arena, onde o agente aparece como "Agente genético (pesos treinados)".</p>')}
 {box('tip', 'Quanto tempo demora', '<p>O custo é gerações × população × mapas por geração partidas. Com os valores padrão (15 × 20 × 20 = 6.000 partidas, mais a validação final), leva por volta de 15 segundos num 4 × 4 num computador comum. Num 8 × 8 cada partida custa cerca de 15 vezes mais, então o mesmo treino passa de alguns minutos.</p>')}
 ''')
 
