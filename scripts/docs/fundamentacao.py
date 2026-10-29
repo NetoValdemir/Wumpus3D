@@ -126,7 +126,7 @@ SVG_FLOW = '''
     </g>
     <g font-weight="700" fill="#3b2f22">
       <text x="68" y="46">Percepções</text><text x="220" y="46">Base de conhecimento</text>
-      <text x="377" y="46">9 características</text><text x="524" y="46">Soma ponderada</text><text x="659" y="46">Ação</text>
+      <text x="377" y="46">8 características</text><text x="524" y="46">Soma ponderada</text><text x="659" y="46">Ação</text>
       <text x="448" y="152">Algoritmo genético (fora da partida)</text>
     </g>
     <g font-size="10" fill="#5b4c3b">
@@ -135,7 +135,7 @@ SVG_FLOW = '''
       <text x="377" y="64">por sala candidata</text><text x="377" y="77">+ 3 da opção de tiro</text>
       <text x="524" y="64">nota = Σ peso × caract.</text><text x="524" y="77">(Samuel 1959)</text>
       <text x="659" y="64">ir à sala de</text><text x="659" y="77">maior nota ou atirar</text>
-      <text x="448" y="170">escolhe os 12 pesos jogando milhares de partidas</text>
+      <text x="448" y="170">escolhe os 11 pesos jogando milhares de partidas</text>
       <text x="448" y="183">(Holland 1992; Goldberg 1989; Eiben e Smith 2015)</text>
     </g>
     <g stroke="#3b2f22" stroke-width="1.3" fill="none" marker-end="url(#f)">
@@ -160,7 +160,7 @@ section('1', 'Resposta direta', f'''
 
 <h2>O que foi escolha de projeto, sem fundamentação específica</h2>
 <ul>
-<li>Quais 12 características (genes) existem e como cada uma é calculada e normalizada.</li>
+<li>Quais características (genes) existem e como cada uma é calculada e normalizada. Na versão atual, as duas principais (risco de morte e distância) foram escolhidas para corresponder aos termos da pontuação, inspiradas na utilidade esperada do AIMA; as demais são intuição.</li>
 <li>Os valores dos parâmetros: taxa e tamanho da mutação, tamanho do torneio, número de elites, limites dos pesos, número de finalistas e tamanho da validação. Eles <b>não</b> foram tirados de nenhuma recomendação publicada nem calibrados por um estudo sistemático. Foram escolhidos por julgamento e conferidos só pelo resultado final.</li>
 <li>O genoma inicial que imita o agente probabilístico e o protocolo de pré-treino.</li>
 </ul>
@@ -174,11 +174,11 @@ section('2', 'Como o agente funciona', f'''
 <p>O agente genético herda do agente probabilístico a <b>base de conhecimento</b> e duas regras fixas: pegar o ouro quando sente brilho e voltar para a entrada quando já tem o ouro. Só a parte de <b>exploração</b> (para onde ir quando ainda não achou o ouro, e se deve atirar) é decidida pela fórmula com pesos evoluídos.</p>
 <p>A cada passo, para cada sala da fronteira que não é perigo comprovado:</p>
 <ol>
-<li>calcula 9 números (as características <i>f</i><sub>1</sub>…<i>f</i><sub>9</sub>);</li>
-<li>dá uma nota: <code>nota = w1·f1 + w2·f2 + … + w9·f9</code>;</li>
+<li>calcula 8 números (as características <i>f</i><sub>1</sub>…<i>f</i><sub>8</sub>);</li>
+<li>dá uma nota: <code>nota = w1·f1 + w2·f2 + … + w8·f8</code>;</li>
 <li>escolhe a sala de maior nota.</li>
 </ol>
-<p>Se ainda tem flecha e o Wumpus está restrito a até 3 salas, calcula também a nota da opção "atirar" com outros 3 pesos. Se ela for maior que a da melhor sala, vai atirar. Os 12 pesos formam o <b>genoma</b>, e o algoritmo genético procura os pesos que dão a maior pontuação média.</p>
+<p>Se ainda tem flecha e o Wumpus está restrito a até 3 salas, calcula também a nota da opção "atirar" com outros 3 pesos. Se ela for maior que a da melhor sala, vai atirar. Os 11 pesos formam o <b>genoma</b>, e o algoritmo genético procura os pesos que dão a maior pontuação média.</p>
 {snip('src/agents/agents.ts', 'const features = [', lines=13, label='src/agents/agents.ts — características e nota de cada sala')}
 {snip('src/agents/agents.ts', 'if (s.hasArrow && candidates.size > 0 && candidates.size <= 3) {', lines=7, label='src/agents/agents.ts — nota da opção de tiro')}
 ''')
@@ -194,6 +194,7 @@ section('3', 'Fundamentação de cada componente', f'''
 <p><b>No jogo:</b> a nota de cada sala é uma combinação linear de características com pesos.</p>
 <p><b>Base:</b> Samuel usou, no programa de damas, um polinômio de avaliação formado por termos (características do tabuleiro) com coeficientes ajustados automaticamente pelo próprio programa {cite('samuel')}. A ideia de função de avaliação como soma ponderada de características também é apresentada no AIMA, no capítulo sobre jogos {cite('aima')}. Chellapilla e Fogel evoluíram funções de avaliação para damas com computação evolutiva, usando redes neurais em vez de uma soma linear {cite('chellapilla')}.</p>
 <p><b>Diferença:</b> aqui a soma é usada para escolher a próxima sala a explorar, não para avaliar posições de um jogo de dois jogadores. Essa transposição é uma adaptação minha.</p>
+<p><b>Características em unidades de utilidade (versão 2, D19).</b> O AIMA define o agente racional como o que escolhe a ação de <b>maior utilidade esperada</b> {cite('aima')}. Na pontuação do jogo, entrar numa sala custa, em média, cerca de 1000 × P(morrer lá) pela morte e 1 ponto por passo do caminho. Por isso as duas primeiras características passaram a ser exatamente esses termos: o <b>risco</b> P(poço) + P(Wumpus) e a <b>distância</b>. Uma soma linear com pesos nessas duas já reproduz a regra do agente probabilístico (menor risco, desempate pela distância), e os outros genes permitem ao treino corrigir o que essa conta não vê, como o valor de abrir área nova. Na versão 1 o genético pesava P(poço) e P(Wumpus) separadamente e precisava acertar a proporção entre os dois pesos para chegar ao mesmo resultado. A escolha das características é {OWN}; a ideia de utilidade esperada é da literatura.</p>
 
 <h2>3.3 Algoritmo genético</h2>
 <p><b>No jogo:</b> <code>train()</code> mantém uma população de genomas, avalia, seleciona, cruza e muta por várias gerações.</p>
@@ -225,53 +226,64 @@ section('3', 'Fundamentação de cada componente', f'''
 <h2>3.9 Aptidão ruidosa: os mesmos mapas para todos</h2>
 <p><b>No jogo:</b> a aptidão é a pontuação média em M mapas sorteados, e <b>todos os genomas da mesma geração jogam os mesmos M mapas</b>. A cada geração, novos mapas são sorteados.</p>
 <p><b>Base:</b> como os mapas são aleatórios, a aptidão é uma medida com ruído. Esse é um dos tipos de incerteza revisados por Jin e Branke, que discutem formas de lidar com ele, como avaliar várias vezes e usar médias {cite('jin')}. Usar os mesmos cenários aleatórios para comparar alternativas corresponde à técnica de <b>números aleatórios comuns</b>, um método de redução de variância em simulação {cite('ross')}.</p>
-<p><b>Adaptação:</b> a combinação "mesmos mapas dentro da geração, mapas novos entre gerações" é uma {MIX} minha dessas ideias.</p>
+<p><b>Adaptação:</b> a combinação "mesmos mapas dentro da geração, mapas novos entre gerações" é uma {MIX} minha dessas ideias. Como todos os genomas da geração jogam os mesmos mapas, comparar as médias é o mesmo que comparar a diferença mapa a mapa: a seleção já é <b>pareada</b>.</p>
+<p><b>Quanto ruído sobra.</b> Medido nos mesmos mapas, a diferença de pontuação entre o agente probabilístico e um genoma que o imita tem desvio padrão de cerca de 640 pontos por partida: quando duas estratégias parecidas divergem num mapa, uma pode vencer (+1500) e a outra morrer (−1000). Com M mapas, a incerteza da diferença média é de cerca de 1,96 × 640 ÷ √M: ±56 pontos com 500 mapas, ±28 com 2000 e ±18 com 5000. Por isso o pré-treino da versão 2 usa 500 mapas por geração (antes 120) e a validação final usa 2000 mapas (antes 360). É a <b>média explícita</b> discutida por Jin e Branke {cite('jin')}, com os tamanhos escolhidos por mim a partir dessa conta.</p>
 
 <h2>3.10 Validação final em mapas novos</h2>
 <p><b>No jogo:</b> na última geração, os 5 melhores jogam 3 × M mapas que nunca viram, e o vencedor dessa rodada é o resultado do treino.</p>
 {snip('src/agents/genetic.ts', 'if (gen === opts.generations) {', lines=10)}
 <p><b>Base:</b> avaliar o modelo escolhido em dados que não foram usados para escolhê-lo, para estimar o desempenho sem o viés da seleção {cite('hastie')}; e reavaliar soluções promissoras para reduzir o efeito do ruído na aptidão {cite('jin')}.</p>
-<p><b>Motivo prático:</b> sem essa etapa, o genoma evoluído chegou a ficar <b>pior</b> que o escrito à mão (725 contra 760 pontos de média nos mesmos mapas), porque o "melhor" da última geração podia ter tido apenas mapas fáceis. O procedimento específico (5 finalistas, 3 × M mapas) é {OWN}.</p>
+<p><b>Motivo prático:</b> sem essa etapa, o genoma evoluído chegou a ficar <b>pior</b> que o escrito à mão (725 contra 760 pontos de média nos mesmos mapas), porque o "melhor" da última geração podia ter tido apenas mapas fáceis. O procedimento específico (5 finalistas, 3 × M mapas na tela, 2000 mapas no pré-treino) é {OWN}.</p>
+
+<h2>3.11 Treino em vários tamanhos de mapa</h2>
+<p><b>No jogo:</b> no pré-treino da versão 2, os mapas de cada geração (e da validação) são divididos entre 4×4 e 6×6, e a aptidão é a média em todos eles.</p>
+<p><b>Base:</b> um modelo ajustado a um único tipo de dado tende a generalizar pior para outros; a avaliação deve usar dados representativos de onde o modelo será usado {cite('hastie')}. O genoma da versão 1 foi treinado só em 4×4 e já era melhor no 6×6, sinal de que distância e informação pesam mais em mapas grandes; treinar nos dois tamanhos expõe isso à seleção.</p>
+<p><b>Adaptação:</b> a divisão meio a meio entre 4×4 e 6×6 é {OWN}.</p>
+
+<h2>3.12 Comparação final pareada, com intervalo de confiança</h2>
+<p><b>No jogo:</b> <code>npm run medir</code> e <code>npm run treinar</code> comparam agentes nos mesmos mapas e mostram a diferença média por partida com um intervalo de 95% (média ± 1,96 × desvio ÷ √n, aproximação normal). Um genoma só substitui o padrão se a comparação não indicar perda.</p>
+<p><b>Base:</b> comparar alternativas nos mesmos cenários e analisar a diferença é o uso dos números aleatórios comuns em simulação {cite('ross')}; a separação entre os mapas de treino, os de seleção e os da medição final segue {cite('hastie')}.</p>
+<p><b>Adaptação:</b> o critério de troca é {OWN}.</p>
 ''')
 
 # ---------------------------------------------------------------- 4
-DEF = [-4.64, -5, 3.42, -0.05, 0.1, -0.35, -1.05, 0.63, -1.02, 0.4, 3.04, -2.35]
-BAY = [-5, -5, 5, -0.5, 0, 0, 0, 0, 0, 0, 2, -5]
+DEF = [-4.75, -0.14, 1, -0.08, -1.44, -0.83, -1.24, -0.41, -1.1, 1.58, -3.19]
+BAY = [-5, -0.01, 0, 0, 0, 0, 0, 0, 0, 2, -5]
 cell_rows = [
-    ['f1 · Poço', '<code>b.pit</code>', '0 a 1', 'Probabilidade de poço na sala, calculada por enumeração da fronteira.', f'{LIT} {cite("aima")}', DEF[0], 'Forte rejeição a salas com chance de poço.'],
-    ['f2 · Wumpus', '<code>b.wumpus</code>', '0 a 1', 'Probabilidade de o Wumpus estar na sala: proporcional a 1 − P(poço) entre as candidatas, ou 0.', f'{MIX} (aproximação sala a sala)', DEF[1], 'Rejeição a salas onde o Wumpus pode estar.'],
-    ['f3 · Segura', '<code>safe ? 1 : 0</code>', '0 ou 1', '1 se a dedução lógica prova que não há poço nem Wumpus.', f'{LIT} {cite("aima")}', DEF[2], 'Forte preferência por salas seguras.'],
-    ['f4 · Distância', '<code>(path.length − 1) / size</code>', '≥ 0', 'Passos até a sala pelo caminho conhecido, dividido pelo tamanho do mapa.', OWN, DEF[3], 'Prefere salas próximas (cada passo custa 1 ponto).'],
-    ['f5 · Novidade', '<code>vizinhas não visitadas / 4</code>', '0 a 1', 'Quantas vizinhas da sala ainda são desconhecidas.', OWN, DEF[4], 'Leve preferência por salas que abrem mais área.'],
-    ['f6 · Longe da entrada', '<code>(x + y) / (2·size)</code>', '0 a 1', 'Distância de Manhattan da sala até a entrada, normalizada.', OWN, DEF[5], 'Quase neutro; leve tendência a se afastar.'],
-    ['f7 · Giros', '<code>0, 0,5 ou 1</code>', '0 a 1', 'Giro antes do 1º passo: 0 nenhum, 0,5 um giro de 90°, 1 meia-volta.', OWN, DEF[6], 'Leve preferência por seguir em frente.'],
-    ['f8 · Brisas ao lado', '<code>vizinhas visitadas com brisa / 4</code>', '0 a 1', 'Indício direto de poço por perto.', OWN, DEF[7], 'Evita salas cercadas de brisa.'],
-    ['f9 · Fedores ao lado', '<code>vizinhas visitadas com fedor / 4</code>', '0 a 1', 'Indício direto de Wumpus por perto.', OWN, DEF[8], 'Evita salas cercadas de fedor.'],
+    ['f1 · Risco', '<code>riskOf(b)</code> = P(poço) + P(Wumpus)', '0 a 1', 'Chance de morrer ao entrar na sala. Poço e Wumpus nunca dividem a sala, então as chances se somam.', f'{MIX} {cite("aima")} (utilidade esperada)', DEF[0], 'Forte rejeição ao risco: é o que mais pesa.'],
+    ['f2 · Distância', '<code>(path.length − 1) / size</code>', '≥ 0', 'Passos até a sala pelo caminho conhecido, dividido pelo tamanho do mapa. Cada passo custa 1 ponto.', f'{MIX} {cite("aima")} (utilidade esperada)', DEF[1], 'Leve preferência por salas próximas.'],
+    ['f3 · Segura', '<code>safe ? 1 : 0</code>', '0 ou 1', '1 se a dedução lógica prova que não há poço nem Wumpus.', f'{LIT} {cite("aima")}', DEF[2], 'Preferência extra por salas seguras.'],
+    ['f4 · Novidade', '<code>vizinhas não visitadas / 4</code>', '0 a 1', 'Quantas vizinhas da sala ainda são desconhecidas.', OWN, DEF[3], 'Quase neutro.'],
+    ['f5 · Longe da entrada', '<code>(x + y) / (2·size)</code>', '0 a 1', 'Distância de Manhattan da sala até a entrada, normalizada.', OWN, DEF[4], 'Prefere salas mais perto da entrada (a volta com o ouro fica mais curta).'],
+    ['f6 · Giros', '<code>0, 0,5 ou 1</code>', '0 a 1', 'Giro antes do 1º passo: 0 nenhum, 0,5 um giro de 90°, 1 meia-volta.', OWN, DEF[5], 'Evita girar (cada giro custa 1 ponto).'],
+    ['f7 · Brisas ao lado', '<code>vizinhas visitadas com brisa / 4</code>', '0 a 1', 'Indício direto de poço por perto.', OWN, DEF[6], 'Evita salas cercadas de brisa, além do que o risco já mede.'],
+    ['f8 · Fedores ao lado', '<code>vizinhas visitadas com fedor / 4</code>', '0 a 1', 'Indício direto de Wumpus por perto.', OWN, DEF[7], 'Leve rejeição a salas com fedor ao lado.'],
 ]
 shoot_rows = [
-    ['s1 · Tiro: viés', '<code>1</code>', '1', 'Termo constante: vontade de atirar independente do resto.', OWN, DEF[9], 'Quase neutro.'],
-    ['s2 · Tiro: certeza', '<code>1 / candidatas</code>', '1/3 a 1', 'Chance de o alvo ser o Wumpus (1 se ele foi localizado).', f'{MIX} {cite("aima")}', DEF[10], 'Atira mais quando tem certeza.'],
-    ['s3 · Tiro: há sala segura', '<code>anySafe ? 1 : 0</code>', '0 ou 1', '1 se ainda existe sala segura para explorar.', OWN, DEF[11], 'Não gasta a flecha enquanto houver caminho seguro.'],
+    ['s1 · Tiro: viés', '<code>1</code>', '1', 'Termo constante: vontade de atirar independente do resto.', OWN, DEF[8], 'Resistência a gastar a flecha.'],
+    ['s2 · Tiro: certeza', '<code>1 / candidatas</code>', '1/3 a 1', 'Chance de o alvo ser o Wumpus (1 se ele foi localizado).', f'{MIX} {cite("aima")}', DEF[9], 'Atira mais quando tem certeza.'],
+    ['s3 · Tiro: há sala segura', '<code>anySafe ? 1 : 0</code>', '0 ou 1', '1 se ainda existe sala segura para explorar.', OWN, DEF[10], 'Não gasta a flecha enquanto houver caminho seguro.'],
 ]
 
 section('4', 'Cada variável do agente', f'''
 <p>Legenda da coluna "Origem": {LIT} = conceito tirado da referência indicada; {MIX} = conceito da literatura modificado por mim; {OWN} = criado por mim, sem fundamentação teórica específica.</p>
 
-<h2>4.1 Características de cada sala candidata (genes 1 a 9)</h2>
+<h2>4.1 Características de cada sala candidata (genes 1 a 8)</h2>
 <p>A coluna "Peso padrão" é o valor no genoma que vem com o jogo (<code>DEFAULT_GENOME</code>). Peso negativo significa que a característica <i>diminui</i> a nota da sala.</p>
 {table(['Gene', 'Cálculo no código', 'Faixa', 'O que mede', 'Origem', 'Peso padrão', 'Leitura do peso'], cell_rows, 'vars')}
-{box('trap', 'Redundâncias conhecidas', '<p>Algumas características se sobrepõem: uma sala "segura" (f3 = 1) sempre tem f1 = f2 = 0, e as brisas e fedores ao lado (f8, f9) já influenciam as probabilidades f1 e f2. Elas foram mantidas porque permitem ao algoritmo genético pesar o mesmo tipo de informação de formas diferentes, mas isso não foi testado contra uma versão sem redundância.</p>')}
+{box('trap', 'Redundâncias conhecidas', '<p>Algumas características se sobrepõem: uma sala "segura" (f3 = 1) sempre tem risco f1 = 0, e as brisas e fedores ao lado (f7, f8) já influenciam o risco. Elas foram mantidas porque permitem ao algoritmo genético pesar o mesmo tipo de informação de formas diferentes, mas isso não foi testado contra uma versão sem redundância.</p>')}
 
-<h2>4.2 Características da opção de tiro (genes 10 a 12)</h2>
+<h2>4.2 Características da opção de tiro (genes 9 a 11)</h2>
 <p>A opção só é considerada se o agente tem a flecha e o Wumpus está restrito a no máximo 3 salas (o limite 3 é {OWN}). A nota é <code>s1 + s2·(1 ÷ candidatas) + s3·(há sala segura)</code> e é comparada com a nota da melhor sala.</p>
 {table(['Gene', 'Cálculo no código', 'Faixa', 'O que mede', 'Origem', 'Peso padrão', 'Leitura do peso'], shoot_rows, 'vars')}
 
 <h2>4.3 Parâmetros do algoritmo genético</h2>
 {table(['Variável', 'Valor', 'Papel', 'Origem'], [
     ['<code>GENE_LIMIT</code>', '5', 'Cada peso fica entre −5 e 5 (inicialização e mutação).', f'{OWN}; representação real {cite("eiben")}'],
-    ['<code>population</code>', '20 na tela; 24 no pré-treino', 'Quantos genomas existem em cada geração.', OWN],
+    ['<code>population</code>', '20 na tela e no pré-treino', 'Quantos genomas existem em cada geração.', OWN],
     ['<code>generations</code>', '15 na tela; 20 no pré-treino', 'Quantas gerações o treino dura.', OWN],
-    ['<code>mapsPerGeneration</code>', '20 na tela; 120 no pré-treino', 'Quantos mapas cada genoma joga por geração (o M do texto).', f'{OWN}; ver 3.9 {cite("jin")}'],
+    ['<code>mapsPerGeneration</code>', '20 na tela; 500 no pré-treino', 'Quantos mapas cada genoma joga por geração (o M do texto).', f'{OWN}; ver 3.9 {cite("jin")}'],
+    ['<code>sizes</code>', 'tamanho atual na tela; 4×4 e 6×6 no pré-treino', 'Tamanhos dos mapas de treino, divididos igualmente.', f'{OWN}; ver 3.11 {cite("hastie")}'],
     ['<code>randomGenome()</code>', 'uniforme em [−5, 5]', 'Como os genomas iniciais são sorteados.', f'{LIT} {cite("eiben")}'],
     ['<code>seed</code>', 'genoma atual', 'O genoma em uso entra na posição 0 da população inicial, para o treino continuar de onde parou.', OWN],
     ['<code>TOURNAMENT</code>', '3', 'Tamanho do torneio de seleção dos pais.', f'{LIT} {cite("goldbergdeb", "miller")}; valor: {OWN}'],
@@ -280,7 +292,7 @@ section('4', 'Cada variável do agente', f'''
     ['<code>MUTATION_RATE</code>', '0,2', 'Chance de cada peso sofrer mutação.', f'{LIT} {cite("eiben")}; valor: {OWN}'],
     ['<code>MUTATION_SIZE</code>', '0,8', 'Desvio padrão do ruído da mutação.', f'{LIT} {cite("eiben", "boxmuller")}; valor: {OWN}'],
     ['<code>FINALISTS</code>', '5', 'Quantos melhores vão para a validação final.', f'{MIX} {cite("jin", "hastie")}; valor: {OWN}'],
-    ['validação', '3 × M mapas novos', 'Tamanho da rodada de validação final.', OWN],
+    ['<code>validationMaps</code>', '3 × M na tela; 2000 no pré-treino', 'Tamanho da rodada de validação final.', f'{OWN}; ver 3.9'],
     ['<code>layout</code>', 'opcional', '"Treinar só no mapa atual": todos os genomas jogam um único mapa fixo. O agente se especializa nele e deixa de generalizar.', OWN],
     ['<code>rng</code>', '<code>Math.random</code>', 'Fonte dos sorteios do treino (mapas, pais, mutação).', '—'],
 ], 'vars')}
@@ -290,15 +302,15 @@ section('4', 'Cada variável do agente', f'''
 <p>No livro, os +1000 são ganhos ao sair da caverna com o ouro. Neste jogo eles foram divididos em +1000 ao pegar o ouro e +500 ao voltar com ele à entrada, foi criado um limite de ações por partida e matar o Wumpus passou a valer +25 (pequeno o bastante para que atirar às cegas continue dando prejuízo em média). Essas quatro mudanças são {OWN} e alteram a aptidão em relação à medida original.</p>
 
 <h2>4.5 Os genomas prontos</h2>
-{table(['Gene'] + [f'{i + 1}' for i in range(12)], [
+{table(['Gene'] + [f'{i + 1}' for i in range(11)], [
     ['<code>BAYES_LIKE_GENOME</code>'] + [str(v) for v in BAY],
     ['<code>DEFAULT_GENOME</code>'] + [str(v) for v in DEF],
 ], 'genome')}
 <ul>
-<li><b><code>BAYES_LIKE_GENOME</code></b> ({OWN}): escrito à mão para imitar o agente probabilístico. Penaliza muito o risco (−5), premia a sala segura (+5), prefere a mais próxima (−0,5) e só atira quando não há sala segura (−5 em s3). Serve de ponto de partida do treino.</li>
-<li><b><code>DEFAULT_GENOME</code></b>: resultado de um treino a partir do <code>BAYES_LIKE_GENOME</code> em mapas 4×4 com 20% de poços, com população 24, 20 gerações, 120 mapas por geração e validação final em 360 mapas novos, já com o bônus de +25 por matar o Wumpus. Foram feitos três treinos (sementes <code>bonus25-a</code>, <code>-b</code> e <code>-c</code>) e o escolhido foi o melhor em 3000 mapas 4×4 e 600 mapas 6×6 de seleção, separados dos mapas da medição final (seção 5). Para reproduzir: <code>npm run treinar -- --seed bonus25-c</code>.</li>
+<li><b><code>BAYES_LIKE_GENOME</code></b> ({OWN}): escrito à mão para reproduzir o agente probabilístico. Risco −5 (decide), distância −0,01 (só desempata), demais características em 0, e atira só quando não há sala segura (−5 em s3) e com certeza suficiente (+2 em s2). Serve de ponto de partida do treino.</li>
+<li><b><code>DEFAULT_GENOME</code></b> (versão 2): resultado de um treino a partir do <code>BAYES_LIKE_GENOME</code> em mapas 4×4 e 6×6 com 20% de poços, com população 20, 20 gerações, 500 mapas por geração (metade de cada tamanho) e validação final em 2000 mapas novos. Foram feitos três treinos (sementes <code>utilidade-a</code>, <code>-b</code> e <code>-c</code>); o escolhido foi o melhor em 4000 mapas 4×4 e 800 mapas 6×6 de seleção, separados dos mapas da medição final (seção 5). Para reproduzir: <code>npm run treinar -- --seed utilidade-a --pop 20 --geracoes 20 --mapas 500 --tamanhos 4,6 --validacao 2000</code>.</li>
 </ul>
-<p>Os pesos evoluídos mantiveram a estrutura do ponto de partida: forte rejeição a poço (−4,64) e ao Wumpus (−5), preferência por salas seguras (+3,42) e cautela para atirar havendo sala segura (−2,35). As mudanças maiores foram mais peso na certeza do tiro (+3,04, contra +2 no ponto de partida) e pesos pequenos nas características que começaram em zero.</p>
+<p>Os pesos evoluídos mantiveram o risco como critério principal (−4,75) e a cautela para atirar havendo sala segura (−3,19). O treino acrescentou três preferências que a regra do probabilístico não tem: ficar <b>perto da entrada</b> (−1,44, encurta a volta com o ouro), <b>evitar giros</b> (−0,83) e <b>evitar salas cercadas de brisa</b> (−1,24) além do que o risco já mede. São justamente correções de custo e de cautela que fazem mais diferença em mapas grandes.</p>
 
 <h2>4.6 O que não é evoluído</h2>
 <ul>
@@ -311,21 +323,25 @@ section('4', 'Cada variável do agente', f'''
 
 # ---------------------------------------------------------------- 5
 section('5', 'Resultados obtidos e o que eles significam', f'''
-<p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços (3 no 4×4, 7 no 6×6).</p>
+<p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços (3 no 4×4, 7 no 6×6), sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>, que não foram usadas nem no treino nem na escolha do genoma.</p>
 {table(['Agente', '4×4 (5000 mapas)', '6×6 (1000 mapas)'], [
     ['Lógico', '63% de vitórias, 570 pts', '43%, 46 pts'],
     ['Probabilístico', '67%, 650 pts', '48%, 182 pts'],
-    ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '66%, 641 pts', '48%, 178 pts'],
-    ['<code>DEFAULT_GENOME</code> (evoluído)', '66%, 637 pts', '51%, 255 pts'],
+    ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '66%, 642 pts', '49%, 188 pts'],
+    ['<code>DEFAULT_GENOME</code> (evoluído, versão 2)', '66%, 638 pts', '51%, 242 pts'],
 ])}
-<p>Regras atuais: bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus nunca num poço. Os mapas são sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>.</p>
+<h2>Comparação pareada com o agente probabilístico</h2>
+{table(['', '4×4', '6×6'], [
+    ['Diferença média por partida (genético − probabilístico)', '−12 pts', '+60 pts'],
+    ['Intervalo de 95%', '−49 a +25', '−18 a +138'],
+    ['Conclusão', 'sem diferença comprovada', 'sem diferença comprovada, com tendência a favor do genético'],
+])}
 <ul>
-<li>No 4×4 o genoma evoluído empata com o ponto de partida e fica um pouco <b>abaixo</b> do agente probabilístico (637 × 650; o probabilístico ganhou 15 pts com as correções da base de conhecimento, que o genético usa só em parte). No 6×6, mapa em que ele não foi treinado, fica <b>à frente</b> (255 × 182). Não foi feito um teste estatístico formal.</li>
-<li>Lotes menores enganam: em 1000 mapas 4×4 de outra semente o genético ficou 19 pts abaixo do probabilístico, e em 200 mapas, 151 pts abaixo. Como todos jogam os mesmos mapas, um lote difícil derruba todos juntos, mas a ordem entre agentes próximos muda de lote para lote.</li>
-<li>O bônus de +25 não fez o agente atirar às cegas: com o bônus, a fração de partidas com tiro ficou igual entre o genoma treinado antes e depois dele.</li>
-<li>Depois da mudança para número fixo de poços e Wumpus fora dos poços, três novos treinos (sementes <code>regras16-a</code>, <code>-b</code> e <code>-c</code>) ficaram de 8 a 14 pts abaixo do genoma atual em 2000 mapas, e por isso o genoma foi mantido.</li>
-<li>O algoritmo genético, portanto, encontrou uma estratégia <b>equivalente</b> à inferência bayesiana escrita à mão. Isso é coerente com o fato de as 12 características descreverem essencialmente as mesmas informações que o agente probabilístico já usa.</li>
-<li>Em mapas maiores o ganho relativo foi um pouco melhor, mas o genoma foi treinado só em 4×4. A generalização para outros tamanhos não foi estudada a fundo.</li>
+<li>O <code>BAYES_LIKE_GENOME</code>, só com risco e distância, joga praticamente igual ao agente probabilístico nos dois tamanhos (diferença de −7 e +6 pts, ambas dentro do ruído). Isso confirma a ideia da seção 3.2: com as características em unidades de utilidade, a regra do probabilístico é um caso particular da fórmula.</li>
+<li>O genoma evoluído empata no 4×4 e tende a ganhar no 6×6. A vantagem em mapas maiores é coerente com os pesos aprendidos (perto da entrada, poucos giros), que só importam quando os caminhos são longos.</li>
+<li>Mesmo com 5000 mapas, a margem de erro da diferença é de cerca de ±37 pts no 4×4: os dois agentes divergem raramente, mas quando divergem um pode vencer e o outro morrer. Ganhos menores que isso não podem ser comprovados com essa quantidade de mapas.</li>
+<li>A versão 1 do genoma (características separadas de poço e Wumpus, treino só em 4×4 com 120 mapas por geração) tinha números parecidos (637 e 255 pts), mas sem compromisso com o alvo: pesos treinados na tela podiam fazê-lo andar em círculos até o tempo esgotar (53% de tempo esgotado numa Arena 6×6). A versão 2 corrige isso e torna o treino reproduzível e medido com intervalo de confiança.</li>
+<li>O bônus de +25 por matar o Wumpus não fez o agente atirar às cegas: a fração de partidas com tiro é praticamente a mesma do probabilístico (39% no 4×4, 33% no 6×6).</li>
 </ul>
 ''')
 
@@ -334,7 +350,7 @@ section('6', 'Limitações da fundamentação', f'''
 <ul>
 <li><b>Sem calibração de parâmetros.</b> Nenhum parâmetro (taxa e tamanho da mutação, torneio, elites, população, gerações, mapas, limites dos pesos) foi escolhido por um estudo de sensibilidade. Com outros valores o resultado pode ser melhor ou pior.</li>
 <li><b>Características escolhidas à mão.</b> O conjunto de genes reflete intuições sobre o problema; não segue nenhum método publicado de seleção de características.</li>
-<li><b>Sem análise estatística formal.</b> As comparações do capítulo 5 são médias em muitos mapas, sem intervalos de confiança ou testes de hipótese.</li>
+<li><b>Análise estatística simples.</b> A comparação do capítulo 5 usa diferença pareada com intervalo de 95% pela aproximação normal; não houve correção para várias comparações nem outros testes.</li>
 <li><b>Mudanças na medida de desempenho.</b> A aptidão segue o AIMA com três alterações (divisão do bônus, vitória automática, limite de ações), então os números não são diretamente comparáveis com outros trabalhos sobre o mundo de Wumpus.</li>
 <li><b>Modelo do Wumpus simplificado.</b> A probabilidade do Wumpus usa a chance de poço de cada sala separadamente e ignora a correlação entre as salas da fronteira.</li>
 </ul>

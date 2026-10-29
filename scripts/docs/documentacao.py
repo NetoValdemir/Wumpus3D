@@ -251,7 +251,7 @@ SVG_GA = '''
     </g>
     <g font-weight="700" fill="#4b2a22"><text x="70" y="86">População</text><text x="215" y="86">Avaliação</text><text x="360" y="86">Seleção</text><text x="505" y="86">Reprodução</text><text x="650" y="86" fill="#22472b">Validação</text></g>
     <g font-size="10" fill="#66413b">
-      <text x="70" y="104">N genomas</text><text x="70" y="117">(12 pesos cada)</text>
+      <text x="70" y="104">N genomas</text><text x="70" y="117">(11 pesos cada)</text>
       <text x="215" y="104">todos jogam os</text><text x="215" y="117">mesmos M mapas</text>
       <text x="360" y="104">2 melhores passam;</text><text x="360" y="117">torneio de 3</text>
       <text x="505" y="104">cruzamento +</text><text x="505" y="117">mutação gaussiana</text>
@@ -410,7 +410,7 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
     ['<code>scripts/treinar.ts</code>, <code>scripts/medir.ts</code>', lines_of('scripts/treinar.ts') + lines_of('scripts/medir.ts'), 'Treino do agente genético e tabela de desempenho na linha de comando.'],
     ['<code>agents/exemplo-cauteloso.js</code>', lines_of('agents/exemplo-cauteloso.js'), 'Agente de exemplo para outros devs.'],
     ['<code>vite.config.ts</code>', lines_of('vite.config.ts'), 'Configuração do build.'],
-    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report']), 'Testes automatizados (Vitest).'],
+    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report', 'genetic']), 'Testes automatizados (Vitest).'],
     ['<code>scripts/docs/</code>', '—', 'Geradores destes PDFs.'],
     ['<code>CLAUDE.md</code>, <code>.claude/</code>, <code>docs/contexto/</code>', '—', 'Memória do projeto para o Claude (resumo, skills, subagente, histórico e decisões).'],
     ['<code>.github/workflows/*.yml</code>', lines_of('.github/workflows/deploy.yml') + lines_of('.github/workflows/arena.yml'), 'Publicação no GitHub Pages e arena em pull requests.'],
@@ -611,14 +611,16 @@ section('8', 'Inteligência — os agentes', f'''
 <p>Efeito medido (mesmos mapas, 5000 no 4×4): o lógico passou de 564 para 570 pontos de média e o probabilístico de 635 para 650. No 6×6 (1000 mapas), de 20 para 46 e de 174 para 182.</p>
 
 <h2>Agente genético</h2>
-<p>O <code>GeneticAgent</code> reaproveita a base de conhecimento e as regras 1 e 2, mas troca as regras 3 a 5 por uma <b>fórmula de pontuação</b>. Para cada sala candidata da fronteira, ele calcula 9 características e soma cada uma multiplicada por um peso:</p>
+<p>O <code>GeneticAgent</code> reaproveita a base de conhecimento e as regras 1 e 2, mas troca as regras 3 a 5 por uma <b>fórmula de pontuação</b>. Para cada sala candidata da fronteira, ele calcula 8 características e soma cada uma multiplicada por um peso. As duas primeiras são os termos da pontuação, como numa utilidade esperada: o risco de morrer (custa 1000) e a distância (cada passo custa 1).</p>
 {snip('src/agents/agents.ts', 'const features = [', '];')}
-<p>O agente vai para a sala de maior nota. Uma segunda fórmula, com 3 pesos (viés, certeza sobre o alvo e "ainda existe sala segura"), dá nota à opção de atirar. Os 12 pesos formam o <b>genoma</b>.</p>
+<p>O agente vai para a sala de maior nota. Uma segunda fórmula, com 3 pesos (viés, certeza sobre o alvo e "ainda existe sala segura"), dá nota à opção de atirar. Os 11 pesos formam o <b>genoma</b>.</p>
+{box('decision', 'Por que risco e distância como características (D19)', '<p>Na versão anterior, o genético pesava P(poço) e P(Wumpus) separadamente e precisava acertar a proporção entre os pesos para chegar à regra do probabilístico. Com o risco pronto, o <code>BAYES_LIKE_GENOME</code> (risco −5, distância −0,01) já se comporta como o probabilístico, e o treino parte desse nível para ajustar o resto.</p>')}
+<p><b>Compromisso com o alvo.</b> Depois de escolher uma sala, o agente vai até ela e só refaz a escolha quando aprende algo novo: entrou numa sala nova, ouviu o grito ou errou o tiro. Sem isso, pesos que dependem da posição (distância, giros) mudavam a nota das salas a cada passo, e o agente trocava de alvo, voltava e trocava de novo, até o tempo esgotar. Com pesos treinados assim, uma Arena 6×6 chegou a 53% de tempo esgotado; o teste <code>tests/genetic.test.ts</code> garante que isso não volta.</p>
 {box('decision', 'Por que evoluir pesos e não uma sequência de ações', '<p>Um algoritmo genético poderia evoluir uma lista fixa de ações ("frente, frente, esquerda...") para um mapa. Mas essa lista só funciona naquele mapa e, na prática, "decora" a resposta. Evoluindo os pesos de uma estratégia, o agente generaliza: joga qualquer mapa sem nunca vê-lo, só pelas percepções, igual aos outros agentes.</p>')}
 
 <h2>O algoritmo genético (src/agents/genetic.ts)</h2>
 {SVG_GA}
-{img('genetico.png', 'Painel do agente genético: os 12 pesos do genoma padrão (verde = positivo, vermelho = negativo) e os controles de treino.', 'narrow')}
+{img('genetico.png', 'Painel do agente genético: os 11 pesos do genoma padrão (verde = positivo, vermelho = negativo) e os controles de treino.', 'narrow')}
 <ol>
 <li><b>População</b>: N genomas com pesos aleatórios entre −5 e 5. O genoma atual entra na primeira posição, para o treino continuar de onde parou.</li>
 <li><b>Avaliação</b>: cada genoma joga os <b>mesmos</b> M mapas sorteados naquela geração. A <b>aptidão</b> (fitness) é a pontuação média.</li>
@@ -639,9 +641,9 @@ section('8', 'Inteligência — os agentes', f'''
     ['Aleatório', '~4% de vitórias, −767 pts', '~2%, −854 pts'],
     ['Lógico', '63%, 570 pts', '43%, 46 pts'],
     ['Probabilístico', '67%, 650 pts', '48%, 182 pts'],
-    ['Genético (genoma padrão)', '66%, 637 pts', '51%, 255 pts'],
+    ['Genético (genoma padrão)', '66%, 638 pts', '51%, 242 pts'],
 ])}
-<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. Depois das correções nos agentes lógico e probabilístico, o probabilístico fica um pouco à frente do genético no 4×4 (650 × 637) e o genético continua à frente no 6×6 (255 × 182); não houve teste estatístico formal. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
+<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. O genético empata com o probabilístico no 4×4 (diferença pareada de −12 pts, intervalo de 95% de −49 a +25) e tende a ficar à frente no 6×6 (+60 pts, intervalo de −18 a +138); nenhuma das diferenças é estatisticamente comprovada. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
 ''')
 
 section('9', 'A Arena de agentes (src/arena/)', f'''
@@ -803,6 +805,7 @@ section('13', 'Como o projeto foi verificado', f'''
     ['<code>tests/world.test.ts</code>', 'Regras: vitória só com o ouro na entrada, morte, Wumpus morto, limite de ações, custos, fedor depois da morte, mapas sorteados sempre vencíveis, exportar/importar e validação de mapas inválidos.'],
     ['<code>tests/knowledge.test.ts</code>', 'Deduções: exemplo de 56% do AIMA, poço certo, localização do Wumpus, flecha que erra, Wumpus fora de poço deduzido e P(Wumpus) ponderada.'],
     ['<code>tests/arena.test.ts</code>', 'Arena: mesma semente gera os mesmos mapas, agentes de referência sem erro de lógica, lógico vence o aleatório, decisão inválida vira erro claro.'],
+    ['<code>tests/genetic.test.ts</code>', 'Agente genético: pesos que dependem da posição não o fazem andar em círculos; o <code>BAYES_LIKE_GENOME</code> não esgota o tempo.'],
     ['<code>tests/report.test.ts</code>', 'Relatórios: totais batem com as partidas, o HTML exportado é importado de volta igual, exportação antiga da Arena é aceita, arquivos estranhos são recusados.'],
 ])}
 {snip('tests/world.test.ts', "describe('vitória e fim de partida'", lines=14, label='tests/world.test.ts — exemplo')}
@@ -819,7 +822,7 @@ section('14', 'Limitações conhecidas e próximos passos', f'''
     ['Fedor continua depois que o Wumpus morre', 'Regra do livro. A base de conhecimento já ignora fedor quando <code>wumpusDead</code> é verdadeiro.'],
     ['Memória de vídeo não é liberada ao recomeçar', '<code>level.clear()</code> remove objetos, mas não chama <code>dispose()</code> nas geometrias e materiais. Em sessões muito longas a memória cresce. Corrija percorrendo a cena e chamando <code>dispose()</code>.'],
     ['Pacote de ~600 KB (160 KB compactado)', '<code>import * as THREE</code> traz a biblioteca inteira. Importar só as classes usadas pode reduzir.'],
-    ['O agente genético não supera o probabilístico', 'Os 12 genes descrevem estratégias parecidas com a bayesiana. Novas características (por exemplo, distância até o ouro provável) poderiam mudar isso.'],
+    ['O genético ganha pouco do probabilístico no 4×4', 'Com as mesmas informações, a regra "menor risco" já está perto do melhor possível em mapas pequenos. Novas características (por exemplo, valor da informação ou distância até o ouro provável) poderiam mudar isso.'],
     ['O <code>vm</code> do Node não é uma barreira de segurança', 'Revise o código dos agentes antes do merge. Para mais isolamento, rode a arena num contêiner sem rede.'],
     ['Agentes externos com o mesmo nome e autor se substituem', 'O id é derivado de autor/nome. Use um id explícito se precisar de versões lado a lado.'],
     ['Dados só no navegador', 'O <code>localStorage</code> não sincroniza. Um backend seria necessário para contas e ranking em tempo real.'],

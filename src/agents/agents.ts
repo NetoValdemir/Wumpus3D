@@ -2,7 +2,7 @@
 // as percepções da sala atual, a própria posição/direção e o que carrega.
 import { key, type Action, type Cell, type Dir, type Percepts, type WumpusWorld } from '../game/world';
 import { Knowledge, riskOf, type CellBelief } from './knowledge';
-import { DEFAULT_GENOME, GENES } from './genome';
+import { CELL_GENES, DEFAULT_GENOME, GENES } from './genome';
 
 export interface Senses {
   x: number;
@@ -257,6 +257,12 @@ export class ReasoningAgent implements Agent {
  */
 export class GeneticAgent extends ReasoningAgent {
   private genome: number[];
+  /**
+   * Sala escolhida e quanto o agente sabia ao escolher. Enquanto ele só anda por salas conhecidas,
+   * nada novo é aprendido, então a escolha vale até chegar. Sem isso, pesos que dependem da posição
+   * (distância, giros) faziam o agente trocar de alvo a cada passo e andar em círculos até o tempo esgotar.
+   */
+  private plan: { target: string; known: number; dead: boolean; candidates: number } | null = null;
 
   constructor(size: number, pitProbability: number, genome: number[]) {
     super(size, pitProbability, 'bayes');
@@ -273,6 +279,14 @@ export class GeneticAgent extends ReasoningAgent {
     const beliefs = kb.beliefs();
     const g = this.genome;
 
+    // Mantém o alvo enquanto nada novo foi aprendido (mesmas salas visitadas, mesmo estado do Wumpus)
+    const plan = this.plan;
+    if (plan && plan.known === kb.visited.size && plan.dead === kb.wumpusDead && plan.candidates === candidates.size) {
+      const path = this.frontier(candidates).includes(plan.target) ? this.route(here, new Set([plan.target]), walkable) : null;
+      if (path) return this.walk(s, path, `Seguindo para ${fmt(plan.target)}, escolhida pela fórmula evoluída.`);
+    }
+    this.plan = null;
+
     // Pontua cada sala da fronteira
     let best: { cell: string; path: string[]; score: number; safe: boolean } | null = null;
     let anySafe = false;
@@ -288,10 +302,9 @@ export class GeneticAgent extends ReasoningAgent {
       const diff = (this.dirTo(s.x, s.y, nx, ny) - s.dir + 4) % 4;
       const turns = diff === 0 ? 0 : diff === 2 ? 1 : 0.5;
       const features = [
-        b.pit,
-        b.wumpus,
-        safe ? 1 : 0,
+        riskOf(b),
         (path.length - 1) / size,
+        safe ? 1 : 0,
         neighbors.filter((n) => !kb.visited.has(n)).length / 4,
         (cx + cy) / (2 * size),
         turns,
@@ -304,7 +317,8 @@ export class GeneticAgent extends ReasoningAgent {
 
     // Pontua a opção de atirar
     if (s.hasArrow && candidates.size > 0 && candidates.size <= 3) {
-      const shootScore = g[9] + g[10] * (1 / candidates.size) + g[11] * (anySafe ? 1 : 0);
+      const [bias, certainty, safeLeft] = g.slice(CELL_GENES.length);
+      const shootScore = bias + certainty * (1 / candidates.size) + safeLeft * (anySafe ? 1 : 0);
       if (!best || shootScore > best.score) {
         const shot = this.planShot(s, candidates, walkable);
         if (shot) return shot;
@@ -312,6 +326,7 @@ export class GeneticAgent extends ReasoningAgent {
     }
 
     if (!best) return this.idle();
+    this.plan = { target: best.cell, known: kb.visited.size, dead: kb.wumpusDead, candidates: candidates.size };
     const risk = riskOf(beliefs.get(best.cell)!);
     return this.walk(
       s,

@@ -18,6 +18,8 @@ const BUILTINS: BuiltinId[] = ['random', 'logic', 'bayes', 'genetic'];
 
 interface ArenaOptions {
   genome: () => number[];
+  /** true quando o genético usa pesos treinados neste navegador (não os padrão) */
+  trainedGenome: () => boolean;
   savedMaps: () => MapLayout[];
   /** Avisado quando a lista de agentes importados muda (para atualizar o seletor "Quem joga") */
   onAgentsChanged: () => void;
@@ -57,7 +59,10 @@ async function inspect(code: string): Promise<ExternalAgent> {
   }
 }
 
+let refreshPlayers = () => {};
+
 export function openArena() {
+  refreshPlayers(); // os pesos do genético podem ter mudado desde a última vez
   $('#arena').hidden = false;
   $('#arena-close').focus();
 }
@@ -159,7 +164,7 @@ export function initArena(opts: ArenaOptions) {
       }
       box.append(div);
     };
-    for (const id of BUILTINS) row(id, AGENTS[id].label, 'referência');
+    for (const id of BUILTINS) row(id, AGENTS[id].label, id === 'genetic' && opts.trainedGenome() ? 'pesos treinados neste navegador' : 'referência');
     for (const a of agents) row(`ext:${a.id}`, a.name, `por ${a.author}`, a);
     if (!agents.length) {
       const p = document.createElement('p');
@@ -180,7 +185,9 @@ export function initArena(opts: ArenaOptions) {
           const a = externalById(id.slice(4));
           return a && { name: a.name, author: a.author, external: a };
         }
-        return { name: AGENTS[id as BuiltinId].label, author: 'Wumpus 3D', builtin: id as BuiltinId };
+        // Pesos treinados mudam o agente: o nome avisa, para o ranking não ser confundido com o padrão
+        const trained = id === 'genetic' && opts.trainedGenome();
+        return { name: `${AGENTS[id as BuiltinId].label}${trained ? ' (pesos treinados)' : ''}`, author: 'Wumpus 3D', builtin: id as BuiltinId };
       })
       .filter((p): p is NonNullable<typeof p> => !!p);
     if (!players.length) return msg('#arena-status', 'Marque pelo menos um participante.', true);
@@ -282,6 +289,7 @@ export function initArena(opts: ArenaOptions) {
     });
 
   renderPlayers();
+  refreshPlayers = renderPlayers;
 }
 
 function renderTable(table: HTMLElement, ranking: AgentStats[]) {

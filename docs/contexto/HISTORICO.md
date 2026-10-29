@@ -88,6 +88,13 @@ Acrescente novas entradas no fim.
 - **Feito:** `src/report/` (D18). Avaliação com semente e nº de partidas; botões Exportar relatório (HTML), Exportar dados (JSON) e Abrir na análise na Avaliação e na Arena; `npm run arena -- --relatorio`. Tela 📊 Análise de relatórios: importa vários .html/.json, tabela-resumo, barras de resultado, 4 gráficos com dica ao passar o mouse, partida a partida; avisa quando os mapas diferem. Manual: capítulos 9 e 12; documentação técnica: cap. 9.
 - **Verificado:** 35 testes (novo `tests/report.test.ts`); Playwright: avaliar 2 agentes, baixar HTML, abrir na análise, importar JSON, dica do gráfico, sem erros no console; HTML exportado em claro/escuro e 390 px sem rolagem lateral.
 
+### 22. Genético v2: características de utilidade, treino com menos ruído, sem laços
+- **Pedido:** mudar o genético com base na fundamentação (porque perdia do probabilístico no 4×4).
+- **Feito (D19):** genes "Risco" (P(poço) + P(Wumpus)) e "Distância" no lugar de P(poço) e P(Wumpus) separados (11 pesos; pesos salvos antigos são descartados); `BAYES_LIKE_GENOME` novo reproduz o probabilístico; treino em vários tamanhos (`sizes`), validação configurável (`validationMaps`); `npm run treinar` com `--tamanhos`/`--validacao` e `npm run medir` com diferença pareada e IC 95% (`pairedDiff` em `report.ts`).
+- **Defeito encontrado pelo dono:** na prévia, pesos treinados na tela fizeram o genético esgotar o tempo em 53% de uma Arena 6×6 (oscilava entre alvos). Corrigido com compromisso com o alvo (só reavalia ao aprender algo novo); `tests/genetic.test.ts`. A Arena mostra "(pesos treinados)".
+- **Treino:** 3 sementes (`utilidade-a/b/c`), pop. 20, 20 gerações, 500 mapas/geração (4×4 + 6×6), validação 2000. Seleção em 4000 mapas 4×4 + 800 6×6 (`selecao-v2-*`): A +4 / +85 sobre o probabilístico, B +1 / +76, C +6 / +76 → A.
+- **Medido (mapas de medição):** 4×4 638 × 650 (−12; IC −49 a +25); 6×6 242 × 182 (+60; IC −18 a +138). Sem diferença comprovada; tendência a favor no 6×6. Desvio pareado ~640 pts/partida: com 5000 mapas a margem ainda é ±37.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
@@ -95,10 +102,10 @@ Acrescente novas entradas no fim.
 | Aleatório | ~4% vitórias, −767 pts | ~2%, −854 pts |
 | Lógico | 63%, 570 pts | 43%, 46 pts |
 | Probabilístico | 67%, 650 pts | 48%, 182 pts |
-| Genético (`BAYES_LIKE_GENOME`, ponto de partida) | 66%, 641 pts | 48%, 178 pts |
-| Genético (`DEFAULT_GENOME`, semente `bonus25-c`) | 66%, 637 pts | 51%, 255 pts |
+| Genético (`BAYES_LIKE_GENOME` v2, ponto de partida) | 66%, 642 pts | 49%, 188 pts |
+| Genético (`DEFAULT_GENOME` v2, semente `utilidade-a`) | 66%, 638 pts | 51%, 242 pts |
 
-Regras atuais (D14, D15, D16) e agentes com as correções de D17; 5000 mapas 4×4 e 1000 6×6 das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal. Lotes de 200 a 1000 mapas variam muito: use pelo menos 5000 mapas 4×4 para comparar agentes próximos.
+Regras atuais (D14, D15, D16), agentes com as correções de D17 e genético v2 (D19); 5000 mapas 4×4 e 1000 6×6 das sementes `medicao-4x4` e `medicao-6x6` (`arenaMaps`). Sem teste estatístico formal. Lotes de 200 a 1000 mapas variam muito: use pelo menos 5000 mapas 4×4 para comparar agentes próximos.
 
 ## Pendências e ideias (não feitas)
 
