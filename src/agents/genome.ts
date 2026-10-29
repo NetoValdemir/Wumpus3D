@@ -38,5 +38,10 @@ export const GENE_LIMIT = 5; // cada peso fica entre -5 e 5
  */
 export const BAYES_LIKE_GENOME: number[] = [-5, -0.01, 0, 0, 0, 0, 0, 0, 0, 2, -5];
 
-/** Genoma pré-treinado (provisório: igual ao BAYES_LIKE_GENOME até o treino terminar). */
-export const DEFAULT_GENOME: number[] = [...BAYES_LIKE_GENOME];
+/**
+ * Genoma pré-treinado: evoluído a partir do BAYES_LIKE_GENOME em mapas 4×4 e 6×6 com 20% de poços
+ * (população 20, 20 gerações, 500 mapas por geração, validação final em 2000 mapas novos).
+ * Escolhido entre 3 treinos pelos mapas de seleção (D19). Reproduzir:
+ * npm run treinar -- --seed utilidade-a --pop 20 --geracoes 20 --mapas 500 --tamanhos 4,6 --validacao 2000
+ */
+export const DEFAULT_GENOME: number[] = [-4.75, -0.14, 1, -0.08, -1.44, -0.83, -1.24, -0.41, -1.1, 1.58, -3.19];

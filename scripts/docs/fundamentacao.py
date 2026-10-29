@@ -247,23 +247,22 @@ section('3', 'Fundamentação de cada componente', f'''
 ''')
 
 # ---------------------------------------------------------------- 4
-DEF = [-4.64, -5, 3.42, -0.05, 0.1, -0.35, -1.05, 0.63, -1.02, 0.4, 3.04, -2.35]
-BAY = [-5, -5, 5, -0.5, 0, 0, 0, 0, 0, 0, 2, -5]
+DEF = [-4.75, -0.14, 1, -0.08, -1.44, -0.83, -1.24, -0.41, -1.1, 1.58, -3.19]
+BAY = [-5, -0.01, 0, 0, 0, 0, 0, 0, 0, 2, -5]
 cell_rows = [
-    ['f1 · Poço', '<code>b.pit</code>', '0 a 1', 'Probabilidade de poço na sala, calculada por enumeração da fronteira.', f'{LIT} {cite("aima")}', DEF[0], 'Forte rejeição a salas com chance de poço.'],
-    ['f2 · Wumpus', '<code>b.wumpus</code>', '0 a 1', 'Probabilidade de o Wumpus estar na sala: proporcional a 1 − P(poço) entre as candidatas, ou 0.', f'{MIX} (aproximação sala a sala)', DEF[1], 'Rejeição a salas onde o Wumpus pode estar.'],
-    ['f3 · Segura', '<code>safe ? 1 : 0</code>', '0 ou 1', '1 se a dedução lógica prova que não há poço nem Wumpus.', f'{LIT} {cite("aima")}', DEF[2], 'Forte preferência por salas seguras.'],
-    ['f4 · Distância', '<code>(path.length − 1) / size</code>', '≥ 0', 'Passos até a sala pelo caminho conhecido, dividido pelo tamanho do mapa.', OWN, DEF[3], 'Prefere salas próximas (cada passo custa 1 ponto).'],
-    ['f5 · Novidade', '<code>vizinhas não visitadas / 4</code>', '0 a 1', 'Quantas vizinhas da sala ainda são desconhecidas.', OWN, DEF[4], 'Leve preferência por salas que abrem mais área.'],
-    ['f6 · Longe da entrada', '<code>(x + y) / (2·size)</code>', '0 a 1', 'Distância de Manhattan da sala até a entrada, normalizada.', OWN, DEF[5], 'Quase neutro; leve tendência a se afastar.'],
-    ['f7 · Giros', '<code>0, 0,5 ou 1</code>', '0 a 1', 'Giro antes do 1º passo: 0 nenhum, 0,5 um giro de 90°, 1 meia-volta.', OWN, DEF[6], 'Leve preferência por seguir em frente.'],
-    ['f8 · Brisas ao lado', '<code>vizinhas visitadas com brisa / 4</code>', '0 a 1', 'Indício direto de poço por perto.', OWN, DEF[7], 'Evita salas cercadas de brisa.'],
-    ['f9 · Fedores ao lado', '<code>vizinhas visitadas com fedor / 4</code>', '0 a 1', 'Indício direto de Wumpus por perto.', OWN, DEF[8], 'Evita salas cercadas de fedor.'],
+    ['f1 · Risco', '<code>riskOf(b)</code> = P(poço) + P(Wumpus)', '0 a 1', 'Chance de morrer ao entrar na sala. Poço e Wumpus nunca dividem a sala, então as chances se somam.', f'{MIX} {cite("aima")} (utilidade esperada)', DEF[0], 'Forte rejeição ao risco: é o que mais pesa.'],
+    ['f2 · Distância', '<code>(path.length − 1) / size</code>', '≥ 0', 'Passos até a sala pelo caminho conhecido, dividido pelo tamanho do mapa. Cada passo custa 1 ponto.', f'{MIX} {cite("aima")} (utilidade esperada)', DEF[1], 'Leve preferência por salas próximas.'],
+    ['f3 · Segura', '<code>safe ? 1 : 0</code>', '0 ou 1', '1 se a dedução lógica prova que não há poço nem Wumpus.', f'{LIT} {cite("aima")}', DEF[2], 'Preferência extra por salas seguras.'],
+    ['f4 · Novidade', '<code>vizinhas não visitadas / 4</code>', '0 a 1', 'Quantas vizinhas da sala ainda são desconhecidas.', OWN, DEF[3], 'Quase neutro.'],
+    ['f5 · Longe da entrada', '<code>(x + y) / (2·size)</code>', '0 a 1', 'Distância de Manhattan da sala até a entrada, normalizada.', OWN, DEF[4], 'Prefere salas mais perto da entrada (a volta com o ouro fica mais curta).'],
+    ['f6 · Giros', '<code>0, 0,5 ou 1</code>', '0 a 1', 'Giro antes do 1º passo: 0 nenhum, 0,5 um giro de 90°, 1 meia-volta.', OWN, DEF[5], 'Evita girar (cada giro custa 1 ponto).'],
+    ['f7 · Brisas ao lado', '<code>vizinhas visitadas com brisa / 4</code>', '0 a 1', 'Indício direto de poço por perto.', OWN, DEF[6], 'Evita salas cercadas de brisa, além do que o risco já mede.'],
+    ['f8 · Fedores ao lado', '<code>vizinhas visitadas com fedor / 4</code>', '0 a 1', 'Indício direto de Wumpus por perto.', OWN, DEF[7], 'Leve rejeição a salas com fedor ao lado.'],
 ]
 shoot_rows = [
-    ['s1 · Tiro: viés', '<code>1</code>', '1', 'Termo constante: vontade de atirar independente do resto.', OWN, DEF[9], 'Quase neutro.'],
-    ['s2 · Tiro: certeza', '<code>1 / candidatas</code>', '1/3 a 1', 'Chance de o alvo ser o Wumpus (1 se ele foi localizado).', f'{MIX} {cite("aima")}', DEF[10], 'Atira mais quando tem certeza.'],
-    ['s3 · Tiro: há sala segura', '<code>anySafe ? 1 : 0</code>', '0 ou 1', '1 se ainda existe sala segura para explorar.', OWN, DEF[11], 'Não gasta a flecha enquanto houver caminho seguro.'],
+    ['s1 · Tiro: viés', '<code>1</code>', '1', 'Termo constante: vontade de atirar independente do resto.', OWN, DEF[8], 'Resistência a gastar a flecha.'],
+    ['s2 · Tiro: certeza', '<code>1 / candidatas</code>', '1/3 a 1', 'Chance de o alvo ser o Wumpus (1 se ele foi localizado).', f'{MIX} {cite("aima")}', DEF[9], 'Atira mais quando tem certeza.'],
+    ['s3 · Tiro: há sala segura', '<code>anySafe ? 1 : 0</code>', '0 ou 1', '1 se ainda existe sala segura para explorar.', OWN, DEF[10], 'Não gasta a flecha enquanto houver caminho seguro.'],
 ]
 
 section('4', 'Cada variável do agente', f'''
@@ -309,9 +308,9 @@ section('4', 'Cada variável do agente', f'''
 ], 'genome')}
 <ul>
 <li><b><code>BAYES_LIKE_GENOME</code></b> ({OWN}): escrito à mão para reproduzir o agente probabilístico. Risco −5 (decide), distância −0,01 (só desempata), demais características em 0, e atira só quando não há sala segura (−5 em s3) e com certeza suficiente (+2 em s2). Serve de ponto de partida do treino.</li>
-<li><b><code>DEFAULT_GENOME</code></b>: resultado de um treino a partir do <code>BAYES_LIKE_GENOME</code> em mapas 4×4 com 20% de poços, com população 24, 20 gerações, 120 mapas por geração e validação final em 360 mapas novos, já com o bônus de +25 por matar o Wumpus. Foram feitos três treinos (sementes <code>bonus25-a</code>, <code>-b</code> e <code>-c</code>) e o escolhido foi o melhor em 3000 mapas 4×4 e 600 mapas 6×6 de seleção, separados dos mapas da medição final (seção 5). Para reproduzir: <code>npm run treinar -- --seed bonus25-c</code>.</li>
+<li><b><code>DEFAULT_GENOME</code></b> (versão 2): resultado de um treino a partir do <code>BAYES_LIKE_GENOME</code> em mapas 4×4 e 6×6 com 20% de poços, com população 20, 20 gerações, 500 mapas por geração (metade de cada tamanho) e validação final em 2000 mapas novos. Foram feitos três treinos (sementes <code>utilidade-a</code>, <code>-b</code> e <code>-c</code>); o escolhido foi o melhor em 4000 mapas 4×4 e 800 mapas 6×6 de seleção, separados dos mapas da medição final (seção 5). Para reproduzir: <code>npm run treinar -- --seed utilidade-a --pop 20 --geracoes 20 --mapas 500 --tamanhos 4,6 --validacao 2000</code>.</li>
 </ul>
-<p>Os pesos evoluídos mantiveram a estrutura do ponto de partida: forte rejeição a poço (−4,64) e ao Wumpus (−5), preferência por salas seguras (+3,42) e cautela para atirar havendo sala segura (−2,35). As mudanças maiores foram mais peso na certeza do tiro (+3,04, contra +2 no ponto de partida) e pesos pequenos nas características que começaram em zero.</p>
+<p>Os pesos evoluídos mantiveram o risco como critério principal (−4,75) e a cautela para atirar havendo sala segura (−3,19). O treino acrescentou três preferências que a regra do probabilístico não tem: ficar <b>perto da entrada</b> (−1,44, encurta a volta com o ouro), <b>evitar giros</b> (−0,83) e <b>evitar salas cercadas de brisa</b> (−1,24) além do que o risco já mede. São justamente correções de custo e de cautela que fazem mais diferença em mapas grandes.</p>
 
 <h2>4.6 O que não é evoluído</h2>
 <ul>
@@ -324,21 +323,25 @@ section('4', 'Cada variável do agente', f'''
 
 # ---------------------------------------------------------------- 5
 section('5', 'Resultados obtidos e o que eles significam', f'''
-<p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços (3 no 4×4, 7 no 6×6).</p>
+<p>Estes números são experimentos feitos durante o desenvolvimento, não resultados da literatura. Todos os agentes jogaram exatamente os mesmos mapas, com 20% de poços (3 no 4×4, 7 no 6×6), sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>, que não foram usadas nem no treino nem na escolha do genoma.</p>
 {table(['Agente', '4×4 (5000 mapas)', '6×6 (1000 mapas)'], [
     ['Lógico', '63% de vitórias, 570 pts', '43%, 46 pts'],
     ['Probabilístico', '67%, 650 pts', '48%, 182 pts'],
-    ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '66%, 641 pts', '48%, 178 pts'],
-    ['<code>DEFAULT_GENOME</code> (evoluído)', '66%, 637 pts', '51%, 255 pts'],
+    ['<code>BAYES_LIKE_GENOME</code> (ponto de partida)', '66%, 642 pts', '49%, 188 pts'],
+    ['<code>DEFAULT_GENOME</code> (evoluído, versão 2)', '66%, 638 pts', '51%, 242 pts'],
 ])}
-<p>Regras atuais: bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus nunca num poço. Os mapas são sorteados pelas sementes <code>medicao-4x4</code> e <code>medicao-6x6</code>.</p>
+<h2>Comparação pareada com o agente probabilístico</h2>
+{table(['', '4×4', '6×6'], [
+    ['Diferença média por partida (genético − probabilístico)', '−12 pts', '+60 pts'],
+    ['Intervalo de 95%', '−49 a +25', '−18 a +138'],
+    ['Conclusão', 'sem diferença comprovada', 'sem diferença comprovada, com tendência a favor do genético'],
+])}
 <ul>
-<li>No 4×4 o genoma evoluído empata com o ponto de partida e fica um pouco <b>abaixo</b> do agente probabilístico (637 × 650; o probabilístico ganhou 15 pts com as correções da base de conhecimento, que o genético usa só em parte). No 6×6, mapa em que ele não foi treinado, fica <b>à frente</b> (255 × 182). Não foi feito um teste estatístico formal.</li>
-<li>Lotes menores enganam: em 1000 mapas 4×4 de outra semente o genético ficou 19 pts abaixo do probabilístico, e em 200 mapas, 151 pts abaixo. Como todos jogam os mesmos mapas, um lote difícil derruba todos juntos, mas a ordem entre agentes próximos muda de lote para lote.</li>
-<li>O bônus de +25 não fez o agente atirar às cegas: com o bônus, a fração de partidas com tiro ficou igual entre o genoma treinado antes e depois dele.</li>
-<li>Depois da mudança para número fixo de poços e Wumpus fora dos poços, três novos treinos (sementes <code>regras16-a</code>, <code>-b</code> e <code>-c</code>) ficaram de 8 a 14 pts abaixo do genoma atual em 2000 mapas, e por isso o genoma foi mantido.</li>
-<li>O algoritmo genético, portanto, encontrou uma estratégia <b>equivalente</b> à inferência bayesiana escrita à mão. Isso é coerente com o fato de as 12 características descreverem essencialmente as mesmas informações que o agente probabilístico já usa.</li>
-<li>Em mapas maiores o ganho relativo foi um pouco melhor, mas o genoma foi treinado só em 4×4. A generalização para outros tamanhos não foi estudada a fundo.</li>
+<li>O <code>BAYES_LIKE_GENOME</code>, só com risco e distância, joga praticamente igual ao agente probabilístico nos dois tamanhos (diferença de −7 e +6 pts, ambas dentro do ruído). Isso confirma a ideia da seção 3.2: com as características em unidades de utilidade, a regra do probabilístico é um caso particular da fórmula.</li>
+<li>O genoma evoluído empata no 4×4 e tende a ganhar no 6×6. A vantagem em mapas maiores é coerente com os pesos aprendidos (perto da entrada, poucos giros), que só importam quando os caminhos são longos.</li>
+<li>Mesmo com 5000 mapas, a margem de erro da diferença é de cerca de ±37 pts no 4×4: os dois agentes divergem raramente, mas quando divergem um pode vencer e o outro morrer. Ganhos menores que isso não podem ser comprovados com essa quantidade de mapas.</li>
+<li>A versão 1 do genoma (características separadas de poço e Wumpus, treino só em 4×4 com 120 mapas por geração) tinha números parecidos (637 e 255 pts), mas sem compromisso com o alvo: pesos treinados na tela podiam fazê-lo andar em círculos até o tempo esgotar (53% de tempo esgotado numa Arena 6×6). A versão 2 corrige isso e torna o treino reproduzível e medido com intervalo de confiança.</li>
+<li>O bônus de +25 por matar o Wumpus não fez o agente atirar às cegas: a fração de partidas com tiro é praticamente a mesma do probabilístico (39% no 4×4, 33% no 6×6).</li>
 </ul>
 ''')
 

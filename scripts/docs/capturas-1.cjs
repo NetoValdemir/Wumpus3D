@@ -22,7 +22,7 @@ const out = process.argv[2];
   await p.fill('#arena-maps', '100'); await p.click('#arena-run');
   await p.waitForFunction(() => /concluída/.test(document.querySelector('#arena-status').textContent), null, { timeout: 180000 });
   await p.locator('#arena-results').scrollIntoViewIfNeeded(); await p.waitForTimeout(300);
-  await p.locator('.arena-box').screenshot({ path: out + '/arena.png' });
+  await p.locator('#arena .arena-box').screenshot({ path: out + '/arena.png' });
   const rows = await p.$$eval('#arena-table tbody tr', trs => trs.map(tr => [...tr.children].map(td => td.textContent.trim()).join(' | ')));
   console.log(rows.join('\n'));
   await p.click('#arena-close');

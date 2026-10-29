@@ -410,7 +410,7 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
     ['<code>scripts/treinar.ts</code>, <code>scripts/medir.ts</code>', lines_of('scripts/treinar.ts') + lines_of('scripts/medir.ts'), 'Treino do agente genético e tabela de desempenho na linha de comando.'],
     ['<code>agents/exemplo-cauteloso.js</code>', lines_of('agents/exemplo-cauteloso.js'), 'Agente de exemplo para outros devs.'],
     ['<code>vite.config.ts</code>', lines_of('vite.config.ts'), 'Configuração do build.'],
-    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report']), 'Testes automatizados (Vitest).'],
+    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report', 'genetic']), 'Testes automatizados (Vitest).'],
     ['<code>scripts/docs/</code>', '—', 'Geradores destes PDFs.'],
     ['<code>CLAUDE.md</code>, <code>.claude/</code>, <code>docs/contexto/</code>', '—', 'Memória do projeto para o Claude (resumo, skills, subagente, histórico e decisões).'],
     ['<code>.github/workflows/*.yml</code>', lines_of('.github/workflows/deploy.yml') + lines_of('.github/workflows/arena.yml'), 'Publicação no GitHub Pages e arena em pull requests.'],
@@ -620,7 +620,7 @@ section('8', 'Inteligência — os agentes', f'''
 
 <h2>O algoritmo genético (src/agents/genetic.ts)</h2>
 {SVG_GA}
-{img('genetico.png', 'Painel do agente genético: os pesos do genoma (verde = positivo, vermelho = negativo) e os controles de treino. Captura da versão anterior, com 12 pesos.', 'narrow')}
+{img('genetico.png', 'Painel do agente genético: os 11 pesos do genoma padrão (verde = positivo, vermelho = negativo) e os controles de treino.', 'narrow')}
 <ol>
 <li><b>População</b>: N genomas com pesos aleatórios entre −5 e 5. O genoma atual entra na primeira posição, para o treino continuar de onde parou.</li>
 <li><b>Avaliação</b>: cada genoma joga os <b>mesmos</b> M mapas sorteados naquela geração. A <b>aptidão</b> (fitness) é a pontuação média.</li>
@@ -641,9 +641,9 @@ section('8', 'Inteligência — os agentes', f'''
     ['Aleatório', '~4% de vitórias, −767 pts', '~2%, −854 pts'],
     ['Lógico', '63%, 570 pts', '43%, 46 pts'],
     ['Probabilístico', '67%, 650 pts', '48%, 182 pts'],
-    ['Genético (genoma padrão)', '66%, 637 pts', '51%, 255 pts'],
+    ['Genético (genoma padrão)', '66%, 638 pts', '51%, 242 pts'],
 ])}
-<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. Depois das correções nos agentes lógico e probabilístico, o probabilístico fica um pouco à frente do genético no 4×4 (650 × 637) e o genético continua à frente no 6×6 (255 × 182); não houve teste estatístico formal. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
+<p>Medido com o bônus de +25 por matar o Wumpus, número fixo de poços e o Wumpus fora dos poços. O genético empata com o probabilístico no 4×4 (diferença pareada de −12 pts, intervalo de 95% de −49 a +25) e tende a ficar à frente no 6×6 (+60 pts, intervalo de −18 a +138); nenhuma das diferenças é estatisticamente comprovada. Lotes de 200 a 1000 mapas variam bastante (todos os agentes ficam melhores ou piores juntos), por isso a tabela usa mais mapas.</p>
 ''')
 
 section('9', 'A Arena de agentes (src/arena/)', f'''
@@ -805,6 +805,7 @@ section('13', 'Como o projeto foi verificado', f'''
     ['<code>tests/world.test.ts</code>', 'Regras: vitória só com o ouro na entrada, morte, Wumpus morto, limite de ações, custos, fedor depois da morte, mapas sorteados sempre vencíveis, exportar/importar e validação de mapas inválidos.'],
     ['<code>tests/knowledge.test.ts</code>', 'Deduções: exemplo de 56% do AIMA, poço certo, localização do Wumpus, flecha que erra, Wumpus fora de poço deduzido e P(Wumpus) ponderada.'],
     ['<code>tests/arena.test.ts</code>', 'Arena: mesma semente gera os mesmos mapas, agentes de referência sem erro de lógica, lógico vence o aleatório, decisão inválida vira erro claro.'],
+    ['<code>tests/genetic.test.ts</code>', 'Agente genético: pesos que dependem da posição não o fazem andar em círculos; o <code>BAYES_LIKE_GENOME</code> não esgota o tempo.'],
     ['<code>tests/report.test.ts</code>', 'Relatórios: totais batem com as partidas, o HTML exportado é importado de volta igual, exportação antiga da Arena é aceita, arquivos estranhos são recusados.'],
 ])}
 {snip('tests/world.test.ts', "describe('vitória e fim de partida'", lines=14, label='tests/world.test.ts — exemplo')}

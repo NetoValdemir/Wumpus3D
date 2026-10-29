@@ -80,9 +80,9 @@ Mesmos mapas para todos os agentes, 20% de poços, ou seja, 3 poços no 4×4 e 7
 | Aleatório | ~4% de vitórias, −767 pts | ~2%, −854 pts |
 | Lógico | 63%, 570 pts | 43%, 46 pts |
 | Probabilístico | 67%, 650 pts | 48%, 182 pts |
-| Genético (genoma padrão) | 66%, 637 pts | 51%, 255 pts |
+| Genético (genoma padrão) | 66%, 638 pts | 51%, 242 pts |
 
-O agente genético chega sozinho a um desempenho próximo ao da inferência bayesiana escrita à mão no 4×4 (um pouco abaixo) e fica à frente no 6×6. Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
+O agente genético empata com o probabilístico no 4×4 e tende a ficar à frente no 6×6 (+60 pts por partida, intervalo de 95% de −18 a +138, ou seja, ainda sem comprovação estatística). `npm run medir` mostra essa comparação pareada. Como não dá para desistir, todos precisam arriscar quando ficam sem sala segura, e parte das partidas termina em morte.
 
 Para criar o seu agente, implemente a interface `Agent` em `src/agents/agents.ts` (o método `decide(sentidos)` devolve uma ação) e registre em `AGENTS`/`createAgent`.
 

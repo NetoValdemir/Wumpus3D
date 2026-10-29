@@ -96,3 +96,11 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 - **Cores:** paleta categórica validada (CVD) em claro e escuro; até 6 agentes nos gráficos, a tabela mostra todos. Resultados usam cores de estado (vitória verde, poço/Wumpus vermelhos, tempo amarelo, erro laranja), sempre com legenda.
 - **Descartado:** guardar relatórios no `localStorage` (podem ser grandes; o arquivo exportado já é o armazenamento); biblioteca de gráficos (SVG à mão é pequeno e funciona no Node).
 - **Onde:** `src/report/` (report, charts, html, ui); botões na Avaliação (`main.ts`) e na Arena (`arena/ui.ts`); `--relatorio` em `scripts/arena.ts`.
+
+## D19 — Genético v2: risco e distância como características; compromisso com o alvo
+- **Por quê:** pedido do dono, com base na fundamentação. (1) O AIMA define o agente racional pela utilidade esperada; na pontuação, entrar numa sala custa ~1000 × P(morte) + passos. Com "Risco" e "Distância" como genes, a regra do probabilístico vira caso particular (`BAYES_LIKE_GENOME` = risco −5, distância −0,01) e o treino parte desse nível. (2) Aptidão ruidosa: desvio pareado ~640 pts/partida → 500 mapas por geração e validação em 2000 (média explícita, Jin e Branke). (3) Treino em 4×4 e 6×6 (generalização, Hastie et al.). (4) Comparação final pareada com IC 95%.
+- **Compromisso com o alvo:** o genético mantém a sala escolhida até aprender algo novo (sala nova, grito, tiro errado). Sem isso, pesos dependentes da posição faziam o agente oscilar até o tempo esgotar (visto pelo dono: 53% de tempo esgotado na Arena 6×6 com pesos treinados na tela).
+- **Resultado:** empate no 4×4 (−12, IC −49 a +25), tendência a favor no 6×6 (+60, IC −18 a +138). Não comprovado estatisticamente; ganhos menores que ~±37 pts não aparecem com 5000 mapas.
+- **Descartado:** rede neural no lugar da soma (Chellapilla e Fogel) — exige muito mais avaliações com o ruído atual; calibrar parâmetros do AG antes — ganho esperado menor; aprender durante a Arena — mistura treino e avaliação.
+- **Custo:** 11 pesos em vez de 12; pesos treinados salvos no navegador na versão anterior são descartados.
+- **Onde:** `genome.ts`, `GeneticAgent.explore()` (`plan`), `genetic.ts` (`sizes`, `validationMaps`), `scripts/treinar.ts`, `scripts/medir.ts`, `pairedDiff` em `src/report/report.ts`.

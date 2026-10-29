@@ -46,7 +46,7 @@ scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
 | `scripts/arena.ts` | Arena no Node (contexto `vm`); `--relatorio` salva relatório HTML/JSON |
 | `scripts/treinar.ts` · `medir.ts` | Treino do genético e tabela de desempenho na linha de comando |
 | `agents/*.js` | Agentes da competição (`exemplo-cauteloso.js` é o modelo) |
-| `tests/*.test.ts` | Testes Vitest (regras, deduções, arena) |
+| `tests/*.test.ts` | Testes Vitest (regras, deduções, arena, relatórios, genético) |
 | `scripts/docs/` | Geradores dos PDFs (HTML → PDF com Playwright) |
 
 ## Invariantes (não quebre sem decidir conscientemente e registrar em DECISOES.md)
