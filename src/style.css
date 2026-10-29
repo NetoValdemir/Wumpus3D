@@ -218,14 +218,19 @@ button.highlight {
   display: none;
 }
 
-.setup details.fold > summary::after {
+.setup details.fold > summary::before {
   content: '▸';
   color: #c9b48a;
   transition: transform 0.15s;
 }
 
-.setup details.fold[open] > summary::after {
+.setup details.fold[open] > summary::before {
   transform: rotate(90deg);
+}
+
+/* Seta à esquerda, título alinhado à direita */
+.setup details.fold > summary h3 {
+  text-align: right;
 }
 
 .setup details.fold > summary:focus-visible {
@@ -240,7 +245,7 @@ button.highlight {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .setup details.fold > summary::after {
+  .setup details.fold > summary::before {
     transition: none;
   }
 }
