@@ -198,7 +198,7 @@ button.highlight {
 .setup section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding-top: 12px;
   border-top: 1px solid #3a3028;
 }
@@ -209,7 +209,7 @@ button.highlight {
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 2px 0;
 }
@@ -228,9 +228,9 @@ button.highlight {
   transform: rotate(90deg);
 }
 
-/* Seta à esquerda, título alinhado à direita */
+/* Seta à esquerda, título logo ao lado dela */
 .setup details.fold > summary h3 {
-  text-align: right;
+  text-align: left;
 }
 
 .setup details.fold > summary:focus-visible {
@@ -238,9 +238,16 @@ button.highlight {
   outline-offset: 2px;
 }
 
-.setup details.fold[open] {
+/* O conteúdo fica num bloco próprio: o navegador não aplica flex/gap direto em <details> */
+.setup .fold-body {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+/* Mais respiro entre os botões dentro das seções */
+.setup .inline {
   gap: 10px;
 }
 
