@@ -2,10 +2,9 @@
 import type { Outcome } from '../arena/runner';
 import { MAX_SERIES, OUTCOMES, installChartHover, legend, lineChart, outcomeBars, outcomeLegend, type Series } from './charts';
 import { OUTCOME_LABEL, cumulativeCount, cumulativeMean, movingAverage, summary, type Report, type ReportAgent } from './report';
+import { escapeHtml as esc, fixedOrDash, percentOf as pct } from '../util/format';
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const pct = (v: number, n: number) => `${n ? Math.round((100 * v) / n) : 0}%`;
-const num = (v: number | null, d = 1) => (v === null ? '—' : v.toFixed(d).replace('.', ','));
+const num = (v: number | null, d = 1) => fixedOrDash(v, d, true);
 const pts = (v: number) => `${Math.round(v)}`;
 
 export interface NamedAgent {

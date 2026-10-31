@@ -1,5 +1,6 @@
 // Consolida os resultados das partidas em estatísticas por agente e ordena o ranking.
 import type { EpisodeResult } from './runner';
+import { fixedOrDash, percentOf } from '../util/format';
 
 export interface AgentStats {
   name: string;
@@ -23,6 +24,7 @@ export interface AgentStats {
 export function aggregate(name: string, author: string, results: EpisodeResult[]): AgentStats {
   const n = results.length || 1;
   const sum = (f: (r: EpisodeResult) => number) => results.reduce((s, r) => s + f(r), 0);
+  const count = (outcome: EpisodeResult['outcome']) => results.filter((r) => r.outcome === outcome).length;
   const wins = results.filter((r) => r.outcome === 'won');
   const actions = sum((r) => r.actions);
   const shots = sum((r) => r.shots);
@@ -31,10 +33,10 @@ export function aggregate(name: string, author: string, results: EpisodeResult[]
     author,
     games: results.length,
     wins: wins.length,
-    deathsPit: results.filter((r) => r.outcome === 'dead-pit').length,
-    deathsWumpus: results.filter((r) => r.outcome === 'dead-wumpus').length,
-    timeouts: results.filter((r) => r.outcome === 'timeout').length,
-    errors: results.filter((r) => r.outcome === 'error').length,
+    deathsPit: count('dead-pit'),
+    deathsWumpus: count('dead-wumpus'),
+    timeouts: count('timeout'),
+    errors: count('error'),
     avgScore: sum((r) => r.score) / n,
     avgActionsPerWin: wins.length ? wins.reduce((s, r) => s + r.actions, 0) / wins.length : null,
     avgDecisionMs: actions ? sum((r) => r.decisionMs) / actions : 0,
@@ -53,8 +55,19 @@ export function rank(stats: AgentStats[]) {
   );
 }
 
-const pct = (v: number, n: number) => `${n ? Math.round((100 * v) / n) : 0}%`;
-const num = (v: number | null, digits = 1) => (v === null ? '—' : v.toFixed(digits));
+/** As colunas da tabela do ranking que são iguais no Markdown e na tela da Arena. */
+export const rankingCells = (s: AgentStats) => ({
+  score: String(Math.round(s.avgScore)),
+  wins: percentOf(s.wins, s.games),
+  deaths: percentOf(s.deathsPit + s.deathsWumpus, s.games),
+  timeouts: percentOf(s.timeouts, s.games),
+  errors: percentOf(s.errors, s.games),
+  actionsPerWin: fixedOrDash(s.avgActionsPerWin),
+  msPerDecision: fixedOrDash(s.avgDecisionMs, 2),
+  logicErrors: fixedOrDash(s.logicErrorsPerGame, 2),
+  needlessRisks: fixedOrDash(s.needlessRisksPerGame, 2),
+  hitRate: s.hitRate === null ? '—' : percentOf(s.hitRate, 1),
+});
 
 export interface ArenaMeta {
   seed: string;
@@ -74,9 +87,9 @@ export function toMarkdown(ranked: AgentStats[], meta: ArenaMeta) {
     `|---|---|---|---|---|---|---|---|---|---|---|---|`,
   ];
   ranked.forEach((s, i) => {
-    lines.push(
-      `| ${i + 1} | ${s.name} | ${s.author} | ${Math.round(s.avgScore)} | ${pct(s.wins, s.games)} | ${pct(s.deathsPit + s.deathsWumpus, s.games)} | ${pct(s.errors, s.games)} | ${num(s.avgActionsPerWin)} | ${num(s.avgDecisionMs, 2)} | ${num(s.logicErrorsPerGame, 2)} | ${num(s.needlessRisksPerGame, 2)} | ${s.hitRate === null ? '—' : pct(s.hitRate, 1)} |`,
-    );
+    const c = rankingCells(s);
+    const cells = [i + 1, s.name, s.author, c.score, c.wins, c.deaths, c.errors, c.actionsPerWin, c.msPerDecision, c.logicErrors, c.needlessRisks, c.hitRate];
+    lines.push(`| ${cells.join(' | ')} |`);
   });
   return lines.join('\n');
 }

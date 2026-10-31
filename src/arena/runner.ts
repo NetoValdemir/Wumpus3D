@@ -1,6 +1,7 @@
 // Executa partidas da arena com qualquer Controller (embutido ou externo).
 import { WumpusWorld, type MapLayout, type Status } from '../game/world';
-import { createAgent, type AgentId } from '../agents/agents';
+import { createAgent } from '../agents/agents';
+import type { BuiltinAgentId } from '../agents/benchmark';
 import { DEFAULT_GENOME } from '../agents/genome';
 import { infoOf, publicSensesOf, type Controller, type Decision } from './protocol';
 import { Referee } from './referee';
@@ -33,6 +34,21 @@ function withTimeout<T>(value: T | Promise<T>, ms: number): Promise<T> {
     );
   });
 }
+
+/** Partida que nem começou (o agente não carregou): conta como erro, com a penalidade de morte. */
+export const failedEpisode = (error: string): EpisodeResult => ({
+  outcome: 'error',
+  score: -1000,
+  actions: 0,
+  decisionMs: 0,
+  logicErrors: 0,
+  needlessRisks: 0,
+  bumps: 0,
+  shots: 0,
+  hits: 0,
+  gold: false,
+  error,
+});
 
 export async function playEpisode(ctrl: Controller, layout: MapLayout, decisionTimeoutMs: number): Promise<EpisodeResult> {
   const world = WumpusWorld.fromLayout(layout);
@@ -69,7 +85,7 @@ export async function playEpisode(ctrl: Controller, layout: MapLayout, decisionT
 }
 
 /** Embrulha um agente embutido (aleatório, lógico...) como Controller. */
-export function builtinController(id: Exclude<AgentId, 'human'>, opts: { genome?: number[]; withBeliefs?: boolean } = {}): Controller {
+export function builtinController(id: BuiltinAgentId, opts: { genome?: number[]; withBeliefs?: boolean } = {}): Controller {
   let agent: ReturnType<typeof createAgent>;
   return {
     start(info) {

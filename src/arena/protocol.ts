@@ -3,7 +3,7 @@
 // Veja AGENTES.md para a documentação completa.
 import type { Action, Dir, Percepts, WumpusWorld } from '../game/world';
 import type { CellBelief } from '../agents/knowledge';
-import { key } from '../game/world';
+import { inGrid, key } from '../game/world';
 
 /** O que o agente recebe ao começar cada partida. */
 export interface AgentInfo {
@@ -67,15 +67,19 @@ export function normalizeDecision(raw: unknown, size: number): Decision {
   if (!ACTIONS.includes(action)) throw new Error(`Ação inválida: ${JSON.stringify(obj.action)}. Use uma de: ${ACTIONS.join(', ')}.`);
   const decision: Decision = { action };
   if (typeof obj.thought === 'string') decision.thought = obj.thought.slice(0, 300);
-  if (Array.isArray(obj.beliefs)) {
-    const prob = (v: unknown) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : 0);
-    decision.beliefs = new Map();
-    for (const b of obj.beliefs.slice(0, size * size)) {
-      if (!b || !Number.isInteger(b.x) || !Number.isInteger(b.y) || b.x < 0 || b.y < 0 || b.x >= size || b.y >= size) continue;
-      decision.beliefs.set(key(b.x, b.y), { pit: prob(b.pit), wumpus: prob(b.wumpus) });
-    }
-  }
+  if (Array.isArray(obj.beliefs)) decision.beliefs = normalizeBeliefs(obj.beliefs, size);
   return decision;
+}
+
+/** Crenças válidas do agente: salas dentro do mapa, probabilidades de 0 a 1 (fora disso vira 0). */
+function normalizeBeliefs(list: unknown[], size: number) {
+  const prob = (v: unknown) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : 0);
+  const beliefs = new Map<string, CellBelief>();
+  for (const b of list.slice(0, size * size) as { x?: unknown; y?: unknown; pit?: unknown; wumpus?: unknown }[]) {
+    if (!b || !Number.isInteger(b.x) || !Number.isInteger(b.y) || !inGrid(size, b.x as number, b.y as number)) continue;
+    beliefs.set(key(b.x as number, b.y as number), { pit: prob(b.pit), wumpus: prob(b.wumpus) });
+  }
+  return beliefs;
 }
 
 /** Código que embrulha o arquivo do agente, igual no navegador (Worker) e no Node (vm). */

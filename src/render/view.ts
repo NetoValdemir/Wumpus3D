@@ -1,7 +1,8 @@
 // Camada 3D: lê o estado do WumpusWorld e desenha a caverna com Three.js.
 import * as THREE from 'three';
-import { DIR_VEC, type Cell, type WumpusWorld } from '../game/world';
+import { DIR_VEC, parseKey, type Cell, type WumpusWorld } from '../game/world';
 import { riskOf, type CellBelief } from '../agents/knowledge';
+import { percent } from '../util/format';
 
 const TILE = 2; // tamanho de cada sala em unidades 3D
 
@@ -9,6 +10,37 @@ const TILE = 2; // tamanho de cada sala em unidades 3D
 const toWorld = (x: number, y: number) => new THREE.Vector3(x * TILE, 0, -y * TILE);
 // Ângulo (yaw) do agente para cada direção: leste, norte, oeste, sul
 const DIR_YAW = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
+
+/** Verde (seguro) → amarelo (50%) → vermelho (morte certa). */
+function riskColor(risk: number) {
+  const color = new THREE.Color(0x3ddc84).lerp(new THREE.Color(0xffc93d), Math.min(risk * 2, 1));
+  if (risk > 0.5) color.lerp(new THREE.Color(0xff3d3d), (risk - 0.5) * 2);
+  return color;
+}
+
+/** Texto sobre a sala: as chances de poço e de Wumpus, ou "Segura". */
+function beliefLines(b: CellBelief) {
+  const lines: string[] = [];
+  if (b.pit > 0) lines.push(`Poço ${percent(b.pit)}`);
+  if (b.wumpus > 0) lines.push(`Wumpus ${percent(b.wumpus)}`);
+  return lines.length ? lines : ['Segura'];
+}
+
+/**
+ * Libera geometrias, materiais e texturas de um objeto e de tudo dentro dele (exceto os materiais em `keep`).
+ * O Three.js não faz isso sozinho: sem chamar dispose(), a memória de vídeo cresce a cada mapa novo.
+ */
+function disposeTree(root: THREE.Object3D, keep = new Set<THREE.Material>()) {
+  root.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh || obj instanceof THREE.Points || obj instanceof THREE.Sprite)) return;
+    if (!(obj instanceof THREE.Sprite)) obj.geometry.dispose(); // a geometria dos sprites é única e compartilhada pelo Three.js
+    for (const m of [obj.material].flat() as THREE.Material[]) {
+      if (keep.has(m)) continue;
+      if ('map' in m && m.map instanceof THREE.Texture) m.map.dispose();
+      m.dispose();
+    }
+  });
+}
 
 export type CameraMode = 'follow' | 'overview';
 
@@ -66,13 +98,34 @@ export class WorldView {
   /** Reconstrói toda a cena para um novo mundo. */
   load(world: WumpusWorld) {
     this.world = world;
-    this.level.clear();
+    this.disposeLevel();
     this.tiles = [];
     this.pits.clear();
     this.arrow = null;
-    const n = world.size;
 
-    // Piso: uma laje por sala
+    this.buildFloor(world.size);
+    this.buildEntrance();
+    this.buildWalls(world.size);
+    this.buildPits(world.pits);
+    this.buildActors(world);
+    this.level.add(this.beliefGroup);
+
+    this.camTarget.copy(this.agent.position);
+    this.placeCamera(1);
+    this.sync();
+  }
+
+  /**
+   * Libera da memória de vídeo as geometrias e materiais do mapa anterior. Os materiais do piso
+   * são reaproveitados entre mapas e ficam. Sem isso a memória crescia a cada novo mapa.
+   */
+  private disposeLevel() {
+    disposeTree(this.level, new Set([this.matTileHidden, this.matTileVisited]));
+    this.level.clear();
+  }
+
+  /** Piso: uma laje por sala. */
+  private buildFloor(n: number) {
     const tileGeo = new THREE.BoxGeometry(TILE * 0.96, 0.2, TILE * 0.96);
     for (let x = 0; x < n; x++) {
       this.tiles[x] = [];
@@ -83,8 +136,10 @@ export class WorldView {
         this.tiles[x][y] = tile;
       }
     }
+  }
 
-    // Entrada: um anel azul na sala (1,1)
+  /** Entrada: um anel azul na sala (1,1). */
+  private buildEntrance() {
     const entrance = new THREE.Mesh(
       new THREE.RingGeometry(0.55, 0.7, 32),
       new THREE.MeshBasicMaterial({ color: 0x4fa3ff, side: THREE.DoubleSide }),
@@ -92,8 +147,10 @@ export class WorldView {
     entrance.rotation.x = -Math.PI / 2;
     entrance.position.copy(toWorld(0, 0)).setY(0.02);
     this.level.add(entrance);
+  }
 
-    // Paredes ao redor do mapa
+  /** Paredes ao redor do mapa. */
+  private buildWalls(n: number) {
     const wallMat = new THREE.MeshStandardMaterial({ color: 0x2b2420, roughness: 1 });
     const span = n * TILE;
     const wallH = 0.7;
@@ -109,29 +166,32 @@ export class WorldView {
       wall.position.set(cx, wallH / 2 - 0.2, cz);
       this.level.add(wall);
     }
+  }
 
-    // Poços: buraco escuro com borda de pedra
-    for (const k of world.pits) {
-      const [x, y] = k.split(',').map(Number);
-      const pit = new THREE.Group();
-      const hole = new THREE.Mesh(
-        new THREE.CircleGeometry(0.7, 32),
-        new THREE.MeshBasicMaterial({ color: 0x000000 }),
-      );
+  /** Poços: buraco escuro com borda de pedra. */
+  private buildPits(pits: Set<string>) {
+    const holeGeo = new THREE.CircleGeometry(0.7, 32);
+    const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const rimGeo = new THREE.TorusGeometry(0.72, 0.08, 8, 32);
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0x3a3330 });
+    for (const k of pits) {
+      const [x, y] = parseKey(k);
+      const hole = new THREE.Mesh(holeGeo, holeMat);
       hole.rotation.x = -Math.PI / 2;
       hole.position.y = 0.01;
-      const rim = new THREE.Mesh(
-        new THREE.TorusGeometry(0.72, 0.08, 8, 32),
-        new THREE.MeshStandardMaterial({ color: 0x3a3330 }),
-      );
+      const rim = new THREE.Mesh(rimGeo, rimMat);
       rim.rotation.x = -Math.PI / 2;
       rim.position.y = 0.04;
+      const pit = new THREE.Group();
       pit.add(hole, rim);
       pit.position.copy(toWorld(x, y));
       this.level.add(pit);
       this.pits.set(k, pit);
     }
+  }
 
+  /** Wumpus, ouro e agente (com a tocha e as partículas de brisa e fedor). */
+  private buildActors(world: WumpusWorld) {
     this.wumpus = this.makeWumpus();
     this.wumpus.position.copy(toWorld(world.wumpus.x, world.wumpus.y));
     this.level.add(this.wumpus);
@@ -149,28 +209,18 @@ export class WorldView {
     this.breeze = this.makeParticles(0xbfe3ff, 60, 0.05);
     this.stench = this.makeParticles(0x6dff4a, 50, 0.09);
     this.agent.add(this.breeze, this.stench);
-
-    this.level.add(this.beliefGroup);
-
-    this.camTarget.copy(this.agent.position);
-    this.placeCamera(1);
-    this.sync();
   }
 
   /** Desenha sobre o piso o que o agente acredita sobre cada sala (null apaga). */
   showBeliefs(beliefs: Map<string, CellBelief> | null) {
-    for (const obj of this.beliefGroup.children) {
-      if (obj instanceof THREE.Sprite) obj.material.map?.dispose();
-    }
+    disposeTree(this.beliefGroup);
     this.beliefGroup.clear();
     if (!beliefs) return;
 
     const discGeo = new THREE.CircleGeometry(0.75, 32);
     for (const [k, b] of beliefs) {
-      const [x, y] = k.split(',').map(Number);
-      const risk = riskOf(b);
-      const color = new THREE.Color(0x3ddc84).lerp(new THREE.Color(0xffc93d), Math.min(risk * 2, 1));
-      if (risk > 0.5) color.lerp(new THREE.Color(0xff3d3d), (risk - 0.5) * 2);
+      const [x, y] = parseKey(k);
+      const color = riskColor(riskOf(b));
       const disc = new THREE.Mesh(
         discGeo,
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, depthWrite: false }),
@@ -178,11 +228,7 @@ export class WorldView {
       disc.rotation.x = -Math.PI / 2;
       disc.position.copy(toWorld(x, y)).setY(0.03);
 
-      const lines: string[] = [];
-      if (b.pit > 0) lines.push(`Poço ${Math.round(b.pit * 100)}%`);
-      if (b.wumpus > 0) lines.push(`Wumpus ${Math.round(b.wumpus * 100)}%`);
-      if (!lines.length) lines.push('Segura');
-      const label = this.makeLabel(lines, color);
+      const label = this.makeLabel(beliefLines(b), color);
       label.position.copy(toWorld(x, y)).setY(0.5);
       this.beliefGroup.add(disc, label);
     }
@@ -286,37 +332,52 @@ export class WorldView {
 
   /** Atualiza visibilidade e materiais a partir do estado atual do mundo. */
   sync() {
-    const w = this.world;
-    const showAll = this.revealAll || w.gameOver;
+    const showAll = this.revealAll || this.world.gameOver;
+    this.syncFloor(showAll);
+    this.syncWumpus(showAll);
+    this.syncGold(showAll);
+    this.syncEffects();
+  }
 
+  /** Salas e poços aparecem quando visitados (ou com o mapa aberto / fim de jogo). */
+  private syncFloor(showAll: boolean) {
+    const w = this.world;
     for (let x = 0; x < w.size; x++) {
       for (let y = 0; y < w.size; y++) {
         this.tiles[x][y].material = w.isVisited(x, y) || showAll ? this.matTileVisited : this.matTileHidden;
       }
     }
     for (const [k, pit] of this.pits) {
-      const [x, y] = k.split(',').map(Number);
+      const [x, y] = parseKey(k);
       pit.visible = showAll || w.isVisited(x, y);
     }
+  }
 
-    const wc = w.wumpus;
-    this.wumpus.visible = showAll || !w.wumpusAlive || w.isVisited(wc.x, wc.y);
-    const skin = this.wumpus.userData.skin as THREE.MeshStandardMaterial;
-    skin.color.set(w.wumpusAlive ? 0x6b1f1f : 0x3a3a3a);
-    this.wumpus.rotation.z = w.wumpusAlive ? 0 : Math.PI / 2;
-    this.wumpus.position.y = w.wumpusAlive ? 0 : 0.35;
+  /** Wumpus morto fica cinza e deitado, e sempre visível. */
+  private syncWumpus(showAll: boolean) {
+    const w = this.world;
+    const alive = w.wumpusAlive;
+    this.wumpus.visible = showAll || !alive || w.isVisited(w.wumpus.x, w.wumpus.y);
+    (this.wumpus.userData.skin as THREE.MeshStandardMaterial).color.set(alive ? 0x6b1f1f : 0x3a3a3a);
+    this.wumpus.rotation.z = alive ? 0 : Math.PI / 2;
+    this.wumpus.position.y = alive ? 0 : 0.35;
+  }
 
+  /** O ouro aparece quando o agente o vê; depois de pego, flutua acima dele. */
+  private syncGold(showAll: boolean) {
+    const w = this.world;
     this.gold.visible = !!w.gold && (showAll || w.percepts.glitter || w.isVisited(w.gold.x, w.gold.y));
-    if (w.hasGold) {
-      // O ouro passa a flutuar acima do agente
-      this.gold.visible = true;
-      if (this.gold.parent !== this.agent) {
-        this.agent.add(this.gold);
-        this.gold.position.set(0, 0.9, 0);
-        this.gold.scale.setScalar(0.6);
-      }
-    }
+    if (!w.hasGold) return;
+    this.gold.visible = true;
+    if (this.gold.parent === this.agent) return;
+    this.agent.add(this.gold);
+    this.gold.position.set(0, 0.9, 0);
+    this.gold.scale.setScalar(0.6);
+  }
 
+  /** Brisa e fedor em volta do agente; o agente some ao cair no poço. */
+  private syncEffects() {
+    const w = this.world;
     this.breeze.visible = w.percepts.breeze && !w.gameOver;
     this.stench.visible = w.percepts.stench && w.wumpusAlive && !w.gameOver;
     this.agent.visible = w.status !== 'dead-pit';
@@ -381,41 +442,44 @@ export class WorldView {
   frame() {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const time = this.clock.elapsedTime;
-    const w = this.world;
+    this.animateAgent(dt, time);
+    this.animateProps(dt, time);
+    this.animateParticles(this.breeze, time, false);
+    this.animateParticles(this.stench, time, true);
+    this.animateArrow(dt);
+    this.camTarget.lerp(this.agent.position, 1 - Math.exp(-dt * 6));
+    this.placeCamera(1 - Math.exp(-dt * 4));
+    this.renderer.render(this.scene, this.camera);
+  }
 
-    // Movimento suave do agente até a sala atual
-    const target = toWorld(w.agent.x, w.agent.y);
-    this.agent.position.lerp(target, 1 - Math.exp(-dt * 12));
-    let goal = DIR_YAW[w.agent.dir];
+  /** Movimento e giro suaves do agente até a sala e a direção atuais; tocha tremulando. */
+  private animateAgent(dt: number, time: number) {
+    const a = this.world.agent;
+    this.agent.position.lerp(toWorld(a.x, a.y), 1 - Math.exp(-dt * 12));
+    let goal = DIR_YAW[a.dir];
     while (goal - this.agentYaw > Math.PI) goal -= Math.PI * 2;
     while (goal - this.agentYaw < -Math.PI) goal += Math.PI * 2;
     this.agentYaw += (goal - this.agentYaw) * (1 - Math.exp(-dt * 14));
     this.agent.rotation.y = this.agentYaw;
-
-    // Tocha tremulando
     this.torch.intensity = 28 + Math.sin(time * 13) * 2 + Math.sin(time * 7.3) * 2;
+  }
 
+  /** Ouro girando e flutuando; Wumpus vivo balançando a cabeça. */
+  private animateProps(dt: number, time: number) {
     const gem = this.gold.userData.gem as THREE.Mesh;
     gem.rotation.y += dt * 2;
     gem.position.y = 0.6 + Math.sin(time * 2) * 0.08;
+    if (this.world.wumpusAlive) this.wumpus.rotation.y = Math.sin(time * 0.8) * 0.4;
+  }
 
-    if (w.wumpusAlive) this.wumpus.rotation.y = Math.sin(time * 0.8) * 0.4;
-
-    this.animateParticles(this.breeze, time, false);
-    this.animateParticles(this.stench, time, true);
-
-    if (this.arrow) {
-      const a = this.arrow;
-      a.t += dt / a.duration;
-      a.mesh.position.lerpVectors(a.from, a.to, Math.min(a.t, 1));
-      if (a.t >= 1.3) {
-        this.level.remove(a.mesh);
-        this.arrow = null;
-      }
-    }
-
-    this.camTarget.lerp(this.agent.position, 1 - Math.exp(-dt * 6));
-    this.placeCamera(1 - Math.exp(-dt * 4));
-    this.renderer.render(this.scene, this.camera);
+  private animateArrow(dt: number) {
+    const a = this.arrow;
+    if (!a) return;
+    a.t += dt / a.duration;
+    a.mesh.position.lerpVectors(a.from, a.to, Math.min(a.t, 1));
+    if (a.t < 1.3) return;
+    this.level.remove(a.mesh);
+    disposeTree(a.mesh);
+    this.arrow = null;
   }
 }

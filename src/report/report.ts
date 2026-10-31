@@ -3,6 +3,7 @@
 import type { EpisodeResult, Outcome } from '../arena/runner';
 import { aggregate, type AgentStats } from '../arena/ranking';
 import { pitCountFor } from '../game/world';
+import { slugify } from '../util/format';
 
 export const REPORT_FORMAT = 'wumpus3d-relatorio';
 
@@ -174,8 +175,7 @@ export const movingAverage = (values: number[], window: number) =>
   });
 
 /** Nome de arquivo seguro a partir do título. */
-export const reportFileName = (r: Report, ext: 'html' | 'json') =>
-  `relatorio-${r.title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'wumpus'}.${ext}`;
+export const reportFileName = (r: Report, ext: 'html' | 'json') => `relatorio-${slugify(r.title) || 'wumpus'}.${ext}`;
 
 /**
  * Diferença pareada (a − b) partida a partida, com intervalo de 95% pela aproximação normal.

@@ -3,6 +3,7 @@
 // mostra o gráfico, para valer no tema claro e no escuro.
 import type { Outcome } from '../arena/runner';
 import { OUTCOME_LABEL } from './report';
+import { escapeHtml as esc } from '../util/format';
 
 export const MAX_SERIES = 6; // a paleta validada tem 6 cores distintas; acima disso, só a tabela
 
@@ -12,8 +13,6 @@ export interface Series {
   /** Texto extra por ponto, mostrado na dica (ex.: a pontuação daquela partida) */
   notes?: string[];
 }
-
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const W = 640;
 const H = 240;

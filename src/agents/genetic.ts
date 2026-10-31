@@ -8,7 +8,7 @@
 // No fim, os 5 melhores jogam mapas novos (validação) e o vencedor é o genoma devolvido:
 // isso evita escolher um indivíduo que só teve sorte nos mapas da última geração.
 import { WumpusWorld, type MapLayout } from '../game/world';
-import { runEpisode } from './benchmark';
+import { playToEnd } from './benchmark';
 import { GENES, GENE_LIMIT } from './genome';
 
 export interface TrainingOptions {
@@ -58,7 +58,7 @@ export function randomGenome(rng: () => number = Math.random) {
 /** Pontuação média do genoma nos mapas dados. */
 export function fitness(genome: number[], maps: MapLayout[]) {
   let total = 0;
-  for (const layout of maps) total += runEpisode('genetic', { size: layout.size, pitProbability: layout.pitProbability, layout, genome }).score;
+  for (const layout of maps) total += playToEnd('genetic', layout, genome).score;
   return total / maps.length;
 }
 
@@ -103,25 +103,40 @@ export function* train(opts: TrainingOptions): Generator<GenerationReport> {
 
     if (gen === opts.generations) {
       // Validação: os finalistas jogam mapas que nunca viram
-      const validation = sampleMaps(opts.validationMaps ?? opts.mapsPerGeneration * 3);
-      const finalists = scored
-        .slice(0, FINALISTS)
-        .map((x) => ({ genome: x.genome, fit: fitness(x.genome, validation) }))
-        .sort((a, b) => b.fit - a.fit);
-      yield { generation: gen, best: finalists[0].fit, average: scored[0].fit, bestGenome: finalists[0].genome, validated: true };
+      const winner = validate(scored, sampleMaps(opts.validationMaps ?? opts.mapsPerGeneration * 3));
+      yield { generation: gen, best: winner.fit, average: scored[0].fit, bestGenome: winner.genome, validated: true };
       return;
     }
-
-    const pick = () => {
-      let winner = scored[Math.floor(rng() * scored.length)];
-      for (let i = 1; i < TOURNAMENT; i++) {
-        const rival = scored[Math.floor(rng() * scored.length)];
-        if (rival.fit > winner.fit) winner = rival;
-      }
-      return winner.genome;
-    };
-    const next = scored.slice(0, ELITE).map((x) => x.genome);
-    while (next.length < opts.population) next.push(mutate(crossover(pick(), pick(), rng), rng));
-    population = next;
+    population = nextGeneration(scored, opts.population, rng);
   }
+}
+
+interface Scored {
+  genome: number[];
+  fit: number;
+}
+
+/** Os FINALISTS melhores jogam os mapas de validação; devolve o vencedor com a nova aptidão. */
+function validate(scored: Scored[], maps: MapLayout[]): Scored {
+  return scored
+    .slice(0, FINALISTS)
+    .map((x) => ({ genome: x.genome, fit: fitness(x.genome, maps) }))
+    .sort((a, b) => b.fit - a.fit)[0];
+}
+
+/** Seleção por torneio: o melhor entre TOURNAMENT indivíduos sorteados. */
+function tournament(scored: Scored[], rng: () => number) {
+  let winner = scored[Math.floor(rng() * scored.length)];
+  for (let i = 1; i < TOURNAMENT; i++) {
+    const rival = scored[Math.floor(rng() * scored.length)];
+    if (rival.fit > winner.fit) winner = rival;
+  }
+  return winner.genome;
+}
+
+/** Elitismo + filhos de pais escolhidos por torneio, com cruzamento e mutação. */
+function nextGeneration(scored: Scored[], size: number, rng: () => number) {
+  const next = scored.slice(0, ELITE).map((x) => x.genome);
+  while (next.length < size) next.push(mutate(crossover(tournament(scored, rng), tournament(scored, rng), rng), rng));
+  return next;
 }
