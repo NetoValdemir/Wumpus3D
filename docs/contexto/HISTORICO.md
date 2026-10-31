@@ -105,6 +105,12 @@ Acrescente novas entradas no fim.
 - **Feito:** `<details class="fold">` nas três seções (seta ▸/▾ à esquerda com o título ao lado, conteúdo em `.fold-body` com 12 px entre itens e 10 px entre botões, foco visível, sem animação com redução de movimento); ordem: Partida, Minhas partidas, (Agente genético, Avaliação), Salvar mapas e, no fim do painel, os botões Arena e Análise de relatórios; exportar mapa abre a seção para mostrar o JSON. Manual (cap. 5 e 7), README e capturas atualizados.
 - **Verificado:** Playwright: as três começam fechadas, abrem e fecham, títulos em maiúsculas, sem erros no console; 41 testes.
 
+### 25. Refatoração pelo Código Limpo (branch `refatoracao`)
+- **Pedido:** refatorar o código seguindo o *Código Limpo* (Robert C. Martin), verificar que as decisões anteriores continuam valendo, e entregar prévia do jogo e relatório em PDF.
+- **Feito (D21):** `main.ts` 799 → ~150 linhas, dividido em `src/ui/*`; `step()`, construtor do mundo, `explore()` dos agentes, `load()`/`sync()`/`frame()` da cena, `initArena()` e `main()` da Arena em funções pequenas; utilitários comuns (`dom.ts`, `format.ts`, `parseKey`/`gridNeighbors`, `playToEnd`/`playMaps`, `rankingCells`, `args.ts`); `benchmark()` (sem uso) removido; `dispose()` na cena 3D. Relatório: `docs/Wumpus3D-Refatoracao.pdf`.
+- **Medido:** `main.ts` 799 → 140 linhas; maior função 224 → 56 linhas; média 11,7 → 7,9 linhas por função; funções com mais de 30 linhas 26 → 12; complexidade ciclomática média 2,96 → 2,22, máxima 26 → 13, funções acima de 10: 17 → 4; trechos duplicados (`$`, `esc`, `pct/num`, download, cópia, confirmação, laço de partida, `split(',')`, `localStorage`) 48 → 14 ocorrências (o que sobra é a definição única de cada um); geometrias após 40 mapas 393 → 10. Linhas totais subiram (4324 → 4862; código sem comentários 3605 → 3902) por causa das assinaturas e comentários das funções separadas; bundle +0,4% (gzip +2,6%).
+- **Verificado:** 49 testes (8 novos em `tests/refatoracao.test.ts`); saídas idênticas com sementes fixas (arena 300 mapas 4×4 e 150 6×6, `medir` 2000+500 mapas, `treinar`; o aleatório fica de fora por usar `Math.random`); mesmo roteiro Playwright (teclado, 4 agentes, avaliação, mapas, desafio, Minhas partidas, Análise, Arena com agente importado, treino, celular) nas duas versões: 67 pontos idênticos, sem erros no console, sem rolagem horizontal no celular.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
@@ -121,7 +127,6 @@ Regras atuais (D14, D15, D16), agentes com as correções de D17 e genético v2 
 
 - Conferir no log do Actions se `ARENA_SEED` está sendo usado.
 - Testes automatizados de interface/3D (Playwright) — hoje só regras, deduções e arena têm testes.
-- `WorldView.load()` não chama `dispose()` nas geometrias antigas (memória de vídeo cresce em sessões longas).
 - P(Wumpus) uniforme entre candidatas; enumeração aproximada com fronteira > 16 salas.
 - Agente genético não supera o probabilístico; novas características ou calibração de parâmetros poderiam mudar isso.
 - Bundle ~600 KB (`import * as THREE`).

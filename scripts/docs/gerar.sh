@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenera os três PDFs de docs/ a partir do código atual.
+# Regenera os PDFs de docs/ a partir do código atual.
 # Requisitos: python3, Node com Playwright (npx playwright install chromium) e as fontes
 # Inter, JetBrains Mono e Bitstream Charter instaladas (sem elas o PDF usa fontes substitutas).
 # As capturas de tela ficam em scripts/docs/img; para refazê-las, veja capturas-1.cjs e capturas-2.cjs.
@@ -16,5 +16,9 @@ node pdf.cjs "$tmp/fundamentacao.html" ../../docs/agente-genetico-fundamentacao.
 
 python3 manual.py "$tmp/manual.html"
 node pdf.cjs "$tmp/manual.html" ../../docs/wumpus3d-manual-de-uso.pdf "Wumpus 3D — Manual de uso"
+
+# Relatório da refatoração (D21): números fixos, medidos na época
+python3 refatoracao.py "$tmp/refatoracao.html"
+node pdf.cjs "$tmp/refatoracao.html" ../../docs/Wumpus3D-Refatoracao.pdf "Wumpus 3D — Refatoração pelo Código Limpo"
 
 echo "PDFs atualizados em docs/"

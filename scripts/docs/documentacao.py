@@ -115,7 +115,7 @@ SVG_ARCH = '''
   <g font-family="Inter" font-size="12">
     <rect x="10" y="10" width="700" height="70" rx="8" fill="#f3ede3" stroke="#c9b48a"/>
     <text x="24" y="32" font-weight="700" fill="#3b2f22">Interface (navegador)</text>
-    <text x="24" y="52" fill="#5b4c3b">index.html · style.css · src/main.ts · src/arena/ui.ts</text>
+    <text x="24" y="52" fill="#5b4c3b">index.html · style.css · src/main.ts · src/ui/* · src/arena/ui.ts</text>
     <text x="24" y="68" fill="#5b4c3b" font-size="11">Lê cliques e teclas, mostra placares, painel, Arena. Decide QUANDO cada coisa acontece.</text>
 
     <rect x="10" y="110" width="340" height="80" rx="8" fill="#e8eef7" stroke="#8aa3c9"/>
@@ -353,7 +353,7 @@ section('3', 'Tecnologias e decisões de arquitetura', f'''
 
 {box('decision', 'Por que TypeScript e não JavaScript puro', '''<p>O projeto tem muitos objetos com formato fixo (percepções, decisões, mapas, estatísticas). Com tipos, se você esquecer um campo ou escrever <code>breze</code> em vez de <code>breeze</code>, o erro aparece no editor. Os agentes externos, por outro lado, são JavaScript puro, para qualquer dev conseguir escrever um sem instalar nada.</p>''')}
 
-{box('decision', 'Por que não usar React', '''<p>A interface é pequena: placares, um painel e uma tela de Arena. O DOM puro resolve sem dependência extra e sem passo de compilação de JSX. A contrapartida é que <code>main.ts</code> atualiza a tela "à mão" em <code>updateHud()</code>. Se a interface crescer muito, vale migrar.</p>''')}
+{box('decision', 'Por que não usar React', '''<p>A interface é pequena: placares, um painel e uma tela de Arena. O DOM puro resolve sem dependência extra e sem passo de compilação de JSX. A contrapartida é que a tela é atualizada "à mão" (por exemplo, <code>updateHud()</code> em <code>src/ui/hud.ts</code>). Se a interface crescer muito, vale migrar.</p>''')}
 
 <h2>Configuração do TypeScript</h2>
 <p>O <code>tsconfig.json</code> veio do modelo do Vite e tem três opções que afetam como o código é escrito:</p>
@@ -385,7 +385,17 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
 {table(['Arquivo', 'Linhas', 'Responsabilidade'], [
     ['<code>index.html</code>', lines_of('index.html'), 'Toda a estrutura da página: área 3D, placares, botões, painel, tela da Arena.'],
     ['<code>src/style.css</code>', lines_of('src/style.css'), 'Layout e aparência. Tema escuro único.'],
-    ['<code>src/main.ts</code>', lines_of('src/main.ts'), 'Ponto de entrada: estado da partida, eventos, laço de animação.'],
+    ['<code>src/main.ts</code>', lines_of('src/main.ts'), 'Ponto de entrada: liga teclado, botões e painéis aos módulos de <code>src/ui</code>.'],
+    ['<code>src/ui/state.ts</code>', lines_of('src/ui/state.ts'), 'Estado da partida em andamento e campos de configuração.'],
+    ['<code>src/ui/game.ts</code>', lines_of('src/ui/game.ts'), 'Controle da partida: ação, passo do agente, recomeçar, câmera, laço de animação.'],
+    ['<code>src/ui/hud.ts</code>', lines_of('src/ui/hud.ts'), 'Placares, percepções, pensamento, registro de eventos e fim de jogo.'],
+    ['<code>src/ui/players.ts</code>', lines_of('src/ui/players.ts'), 'Quem joga: nomes, opções de "Quem joga" e criação do agente.'],
+    ['<code>src/ui/maps-panel.ts</code>', lines_of('src/ui/maps-panel.ts'), 'Seção "Salvar mapas".'],
+    ['<code>src/ui/genetic-panel.ts</code>', lines_of('src/ui/genetic-panel.ts'), 'Seção "Agente genético": pesos, gráfico e treino.'],
+    ['<code>src/ui/bench-panel.ts</code>', lines_of('src/ui/bench-panel.ts'), 'Seção "Avaliação".'],
+    ['<code>src/ui/human-panel.ts</code>', lines_of('src/ui/human-panel.ts'), 'Seção "Minhas partidas": árbitro, registro e desafio.'],
+    ['<code>src/ui/dom.ts</code>', lines_of('src/ui/dom.ts'), 'Utilitários de tela: mensagens, download, copiar, confirmar com dois cliques.'],
+    ['<code>src/util/format.ts</code>', lines_of('src/util/format.ts'), 'Formatação sem DOM: porcentagens, números, escape de HTML, nomes de arquivo.'],
     ['<code>src/game/world.ts</code>', lines_of('src/game/world.ts'), 'Regras do jogo, geração e validação de mapas.'],
     ['<code>src/render/view.ts</code>', lines_of('src/render/view.ts'), 'Cena 3D com Three.js.'],
     ['<code>src/agents/knowledge.ts</code>', lines_of('src/agents/knowledge.ts'), 'Base de conhecimento: deduções lógicas e probabilidades.'],
@@ -393,7 +403,7 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
     ['<code>src/agents/genome.ts</code>', lines_of('src/agents/genome.ts'), 'Genes e genoma padrão do agente genético.'],
     ['<code>src/agents/genetic.ts</code>', lines_of('src/agents/genetic.ts'), 'Algoritmo genético.'],
     ['<code>src/agents/ga.worker.ts</code>', lines_of('src/agents/ga.worker.ts'), 'Roda o treino genético em segundo plano.'],
-    ['<code>src/agents/benchmark.ts</code>', lines_of('src/agents/benchmark.ts'), 'Partidas rápidas sem 3D (usado pelo treino).'],
+    ['<code>src/agents/benchmark.ts</code>', lines_of('src/agents/benchmark.ts'), 'Partidas rápidas sem 3D (treino, medição e scripts).'],
     ['<code>src/arena/protocol.ts</code>', lines_of('src/arena/protocol.ts'), 'Contrato com agentes externos.'],
     ['<code>src/arena/sandbox.ts</code>', lines_of('src/arena/sandbox.ts'), 'Isola agentes externos num Web Worker.'],
     ['<code>src/arena/runner.ts</code>', lines_of('src/arena/runner.ts'), 'Executa uma partida da arena.'],
@@ -407,11 +417,11 @@ npm run arena        # competição de agentes na linha de comando""", 'Terminal
     ['<code>src/report/human.ts</code>', lines_of('src/report/human.ts'), 'Partidas humanas: o que conta, desafio por semente, relatório e comparação com os agentes.'],
     ['<code>src/report/ui.ts</code>', lines_of('src/report/ui.ts'), 'Tela de Análise de relatórios e downloads.'],
     ['<code>src/storage.ts</code>', lines_of('src/storage.ts'), 'Leitura e escrita no <code>localStorage</code>.'],
-    ['<code>scripts/arena.ts</code>', lines_of('scripts/arena.ts'), 'Arena na linha de comando.'],
+    ['<code>scripts/arena.ts</code>, <code>scripts/args.ts</code>', lines_of('scripts/arena.ts') + lines_of('scripts/args.ts'), 'Arena na linha de comando e leitura das opções.'],
     ['<code>scripts/treinar.ts</code>, <code>scripts/medir.ts</code>', lines_of('scripts/treinar.ts') + lines_of('scripts/medir.ts'), 'Treino do agente genético e tabela de desempenho na linha de comando.'],
     ['<code>agents/exemplo-cauteloso.js</code>', lines_of('agents/exemplo-cauteloso.js'), 'Agente de exemplo para outros devs.'],
     ['<code>vite.config.ts</code>', lines_of('vite.config.ts'), 'Configuração do build.'],
-    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report', 'genetic', 'human']), 'Testes automatizados (Vitest).'],
+    ['<code>tests/*.test.ts</code>', sum(lines_of(f'tests/{n}.test.ts') for n in ['world', 'knowledge', 'arena', 'report', 'genetic', 'human', 'refatoracao']), 'Testes automatizados (Vitest).'],
     ['<code>scripts/docs/</code>', '—', 'Geradores destes PDFs.'],
     ['<code>CLAUDE.md</code>, <code>.claude/</code>, <code>docs/contexto/</code>', '—', 'Memória do projeto para o Claude (resumo, skills, subagente, histórico e decisões).'],
     ['<code>.github/workflows/*.yml</code>', lines_of('.github/workflows/deploy.yml') + lines_of('.github/workflows/arena.yml'), 'Publicação no GitHub Pages e arena em pull requests.'],
@@ -435,8 +445,8 @@ section('5', 'Regras do jogo — src/game/world.ts', f'''
 <p><code>key(x, y)</code> transforma uma posição na string <code>"x,y"</code>. Ela é usada como chave de <code>Set</code> e <code>Map</code>, porque em JavaScript dois objetos <code>{{x: 1, y: 2}}</code> diferentes nunca são "iguais" para um <code>Set</code>, mas duas strings <code>"1,2"</code> são.</p>
 
 <h2>Gerando um mapa</h2>
-<p>O construtor sorteia um mapa até achar um em que <b>seja possível vencer</b>:</p>
-{snip('src/game/world.ts', '// Número fixo de poços, em salas sorteadas sem repetir', '    this.percepts = this.sense();', label='src/game/world.ts — construtor')}
+<p>O construtor chama <code>randomPlacement()</code>, que sorteia um mapa até achar um em que <b>seja possível vencer</b>:</p>
+{snip('src/game/world.ts', 'function randomPlacement(', 'if (reachable(size, pits, gold)) return', label='src/game/world.ts — randomPlacement()')}
 <ol>
 <li>O número de poços é fixo: <code>pitCountFor(tamanho, porcentagem)</code> = porcentagem × total de casas, arredondado (3 no 4×4 com 20%), com mínimo de 1. Eles vão para salas sorteadas sem repetição (embaralhamento de Fisher–Yates parcial), nunca na entrada.</li>
 <li>O Wumpus vai para uma sala sem poço, fora da entrada.</li>
@@ -449,8 +459,8 @@ section('5', 'Regras do jogo — src/game/world.ts', f'''
 <p>O parâmetro <code>rng</code> é a função de sorteio. Por padrão é <code>Math.random</code>, mas a Arena passa um sorteador com semente, para gerar sempre os mesmos mapas (capítulo 9).</p>
 
 <h2>Um passo do jogo: <code>step()</code></h2>
-<p><code>step(action)</code> é a única forma de mudar o estado. Ele cobra o ponto da ação, aplica a regra e recalcula as percepções. Veja o trecho de <code>forward</code>, que concentra as regras de morte e de vitória:</p>
-{snip('src/game/world.ts', "case 'forward': {", "case 'shoot'", label='src/game/world.ts — step(), ação forward', exclusive=True)}
+<p><code>step(action)</code> é a única forma de mudar o estado. Ele cobra o ponto da ação, passa a ação para um método próprio (<code>turn</code>, <code>moveForward</code>, <code>shoot</code>, <code>grab</code>) e recalcula as percepções. Veja <code>moveForward()</code>, que concentra as regras de morte e de vitória:</p>
+{snip('src/game/world.ts', 'private moveForward(): Outcome {', '  private shoot(): Outcome {', label='src/game/world.ts — moveForward(), die() e arriveAtEntrance()', exclusive=True)}
 <p>O tiro percorre a linha até a parede e para no Wumpus se o encontrar. O resultado traz <code>arrow</code> com origem e destino, para a parte 3D animar a flecha. No fim de todo passo, o limite de ações é conferido.</p>
 {box('notdo', 'O que world.ts não faz', '<ul><li>Não desenha nada e não lê teclado.</li><li>Não sabe quem está jogando (pessoa ou agente).</li><li>Não guarda histórico de ações (só o contador <code>actions</code>).</li><li>Não esconde nada: quem tem o objeto <code>WumpusWorld</code> vê o mapa inteiro. Por isso os agentes nunca recebem o objeto, só as percepções.</li></ul>')}
 
@@ -468,7 +478,7 @@ section('5', 'Regras do jogo — src/game/world.ts', f'''
 }""", 'Exemplo de arquivo de mapa (coordenadas começando em 1)')}
 <p><code>toLayout()</code> gera esse objeto a partir de uma partida, usando a posição <b>inicial</b> do ouro (<code>goldStart</code>), já que <code>gold</code> vira <code>null</code> quando é pego. <code>WumpusWorld.fromLayout()</code> faz o caminho inverso.</p>
 <p><code>parseLayout(json)</code> valida um JSON vindo de fora e lança um <code>Error</code> com uma mensagem em português explicando o problema:</p>
-{snip('src/game/world.ts', 'const cell = (c: unknown, what: string)', "if (pits.some(([x, y]) => x === gold[0] && y === gold[1]))")}
+{snip('src/game/world.ts', 'function parseLayoutCell(', 'return [c[0], c[1]];')}
 {box('trap', 'Armadilha comum', '<p>Confiar no JSON importado. Um arquivo pode ter qualquer coisa: tamanho 1000, coordenadas negativas, texto no lugar de números. Valide tudo antes de criar o mundo. <code>parseLayout</code> também é usado ao ler o <code>localStorage</code>, porque o armazenamento pode ter sido alterado ou corrompido.</p>')}
 ''')
 
@@ -501,7 +511,7 @@ section('6', 'A parte 3D — src/render/view.ts', f'''
 
 <h2>Movimento suave sem mexer nas regras</h2>
 <p>O estado do jogo muda de uma vez (o agente "teleporta" de uma sala para a outra). O 3D esconde isso com interpolação: a cada frame, o modelo anda uma fração da distância até onde deveria estar.</p>
-{snip('src/render/view.ts', '// Movimento suave do agente até a sala atual', 'this.agent.rotation.y = this.agentYaw;')}
+{snip('src/render/view.ts', 'private animateAgent(dt: number, time: number) {', 'this.agent.rotation.y = this.agentYaw;')}
 <p><code>1 - Math.exp(-dt * 12)</code> dá uma fração que não depende da taxa de quadros: num computador rápido ou lento, o movimento leva o mesmo tempo. As linhas com <code>while</code> escolhem o caminho de giro mais curto (girar 90° em vez de 270°).</p>
 
 <h2>Mostrando o raciocínio do agente</h2>
@@ -543,7 +553,7 @@ section('7', 'Inteligência — base de conhecimento (src/agents/knowledge.ts)',
 <li>A probabilidade de poço numa sala é: soma dos pesos das combinações com poço nela ÷ soma de todos os pesos.</li>
 </ol>
 {box('tip', 'Exemplo para fazer no papel', '''<p>Você está em (1,1) após visitar (1,1) e (2,1), e sentiu brisa só em (2,1). A fronteira é A = (3,1) e B = (2,2) (a sala (1,2) é segura porque (1,1) não tinha brisa). Com p = 0,2, as combinações que explicam a brisa são: só A (0,2×0,8 = 0,16), só B (0,16) e A e B (0,04). Total = 0,36. P(poço em A) = (0,16 + 0,04) ÷ 0,36 ≈ <b>56%</b>. É exatamente o "Poço 56%" que aparece no jogo nessa situação.</p>''')}
-{snip('src/agents/knowledge.ts', 'if (frontier.length <= MAX_ENUMERATION) {', '    } else {')}
+{snip('src/agents/knowledge.ts', 'function enumeratePits(', 'return weights.map')}
 <p>O laço usa <b>máscaras de bits</b>: cada combinação é um número inteiro, e o bit <i>i</i> ligado significa "poço na sala <i>i</i> da fronteira". <code>combo & m</code> testa se alguma sala vizinha da brisa tem poço naquela combinação.</p>
 {box('decision', 'Limite de 16 salas na fronteira', '<p>O número de combinações dobra a cada sala: 16 salas são 65.536 combinações, 25 seriam 33 milhões. Acima de 16 o código usa uma estimativa simples (1 ÷ número de vizinhas desconhecidas de cada brisa). Isso só acontece em mapas grandes e é uma aproximação, não o valor exato.</p>')}
 <h2>Probabilidade do Wumpus e risco da sala</h2>
@@ -613,7 +623,7 @@ section('8', 'Inteligência — os agentes', f'''
 
 <h2>Agente genético</h2>
 <p>O <code>GeneticAgent</code> reaproveita a base de conhecimento e as regras 1 e 2, mas troca as regras 3 a 5 por uma <b>fórmula de pontuação</b>. Para cada sala candidata da fronteira, ele calcula 8 características e soma cada uma multiplicada por um peso. As duas primeiras são os termos da pontuação, como numa utilidade esperada: o risco de morrer (custa 1000) e a distância (cada passo custa 1).</p>
-{snip('src/agents/agents.ts', 'const features = [', '];')}
+{snip('src/agents/agents.ts', 'private cellFeatures(', '];')}
 <p>O agente vai para a sala de maior nota. Uma segunda fórmula, com 3 pesos (viés, certeza sobre o alvo e "ainda existe sala segura"), dá nota à opção de atirar. Os 11 pesos formam o <b>genoma</b>.</p>
 {box('decision', 'Por que risco e distância como características (D19)', '<p>Na versão anterior, o genético pesava P(poço) e P(Wumpus) separadamente e precisava acertar a proporção entre os pesos para chegar à regra do probabilístico. Com o risco pronto, o <code>BAYES_LIKE_GENOME</code> (risco −5, distância −0,01) já se comporta como o probabilístico, e o treino parte desse nível para ajustar o resto.</p>')}
 <p><b>Compromisso com o alvo.</b> Depois de escolher uma sala, o agente vai até ela e só refaz a escolha quando aprende algo novo: entrou numa sala nova, ouviu o grito ou errou o tiro. Sem isso, pesos que dependem da posição (distância, giros) mudavam a nota das salas a cada passo, e o agente trocava de alvo, voltava e trocava de novo, até o tempo esgotar. Com pesos treinados assim, uma Arena 6×6 chegou a 53% de tempo esgotado; o teste <code>tests/genetic.test.ts</code> garante que isso não volta.</p>
@@ -694,7 +704,7 @@ section('9', 'A Arena de agentes (src/arena/)', f'''
 <li>O HTML exportado leva os dados dentro de <code>&lt;script type="application/json" id="wumpus3d-relatorio"&gt;</code>. A tela de Análise lê tanto esse HTML quanto o JSON puro, e aceita também a exportação antiga da Arena (só totais).</li>
 </ul>
 <h2>Partidas humanas (src/report/human.ts)</h2>
-<p>Com "Você (teclado)" em "Quem joga", <code>main.ts</code> cria um <code>Referee</code> (o árbitro da Arena) para a partida e, quando ela termina, guarda um <code>HumanGame</code> no <code>localStorage</code> (<code>storage.ts</code>, até 1000 partidas). Cada registro leva o <b>mapa inteiro</b>: é isso que permite aos agentes jogarem depois exatamente os mesmos mapas.</p>
+<p>Com "Você (teclado)" em "Quem joga", <code>src/ui/human-panel.ts</code> cria um <code>Referee</code> (o árbitro da Arena) para a partida e, quando ela termina, guarda um <code>HumanGame</code> no <code>localStorage</code> (<code>storage.ts</code>, até 1000 partidas). Cada registro leva o <b>mapa inteiro</b>: é isso que permite aos agentes jogarem depois exatamente os mesmos mapas.</p>
 {snip('src/report/human.ts', 'export function countedGames(', '}', label='src/report/human.ts — o que entra no relatório')}
 <ul>
 <li><b>Contam</b> só a primeira vez que o jogador termina cada mapa (<code>layoutKey</code>), e só se ele não abriu o mapa (tecla M).</li>
@@ -716,31 +726,32 @@ npm run arena -- --maps 200 --seed comparacao --relatorio relatorio.html""", 'Ex
 {box('decision', 'Por que a semente oficial é secreta', '<p>O motor é aberto e determinístico. Se a semente fosse pública, um dev poderia gerar os mapas da prova e programar um agente que "reconhece" cada mapa pelas primeiras percepções. Com a semente secreta, e uma semente nova a cada PR, isso não funciona.</p>')}
 ''')
 
-section('10', 'A interface — main.ts, index.html e style.css', f'''
-<p class="lead"><code>main.ts</code> é o maestro: guarda o estado da partida, liga os botões às funções e roda o laço de animação. {L('src/main.ts')}</p>
+section('10', 'A interface — src/ui, main.ts, index.html e style.css', f'''
+<p class="lead"><code>main.ts</code> só liga as peças: teclado, botões e painéis aos módulos de <code>src/ui</code>, um por responsabilidade. {L('src/main.ts')}</p>
+{table(['Módulo', 'Responsabilidade'], [
+    ['<code>state.ts</code>', 'O estado da partida em andamento (<code>match</code>) e os campos de configuração (<code>cfg</code>).'],
+    ['<code>game.ts</code>', 'Controle da partida: <code>act()</code>, <code>agentStep()</code>, <code>restart()</code>, câmera, mapa aberto e o laço <code>tick()</code>.'],
+    ['<code>hud.ts</code>', 'Placares, percepções, pensamento do agente, registro de eventos e tela de fim de jogo.'],
+    ['<code>players.ts</code>', 'Quem joga: nomes, opções do seletor e criação do agente (embutido ou importado).'],
+    ['<code>maps-panel.ts</code>, <code>genetic-panel.ts</code>, <code>bench-panel.ts</code>, <code>human-panel.ts</code>', 'Uma seção do painel cada: Salvar mapas, Agente genético, Avaliação e Minhas partidas.'],
+    ['<code>dom.ts</code>', 'Utilitários de tela usados também pela Arena e pela Análise: <code>$</code>, mensagens, download, copiar, confirmar com dois cliques.'],
+])}
+{box('decision', 'Por que dividir o main.ts (D21)', '<p>O <code>main.ts</code> chegou a 799 linhas misturando estado, HUD, mapas, treino, avaliação e partidas humanas. Na refatoração de Código Limpo cada seção virou um módulo pequeno, com o estado compartilhado num só lugar (<code>state.ts</code>). O comportamento é o mesmo: um roteiro de uso no navegador deu resultados idênticos antes e depois.</p>')}
 
 <h2>O estado da partida</h2>
-{snip('src/main.ts', 'const view = new WorldView', 'let genome: number[] | null')}
-{table(['Variável', 'Para que serve'], [
-    ['<code>world</code>', 'A partida atual (regras e estado).'],
-    ['<code>layout</code>', 'A configuração do mapa atual, para repetir a mesma partida com outro jogador.'],
-    ['<code>controller</code>', 'Quem está jogando. <code>null</code> quando é você.'],
-    ['<code>ready</code>', 'Promessa que resolve quando o agente terminou de se preparar.'],
-    ['<code>decision</code>', 'A última decisão do agente (pensamento e crenças) para mostrar na tela.'],
-    ['<code>game</code>', 'Contador de partidas. Explicado abaixo.'],
-    ['<code>stepping</code>', 'Evita pedir uma decisão nova enquanto a anterior não chegou.'],
-])}
+{snip('src/ui/state.ts', 'export interface Match {', '}')}
+<p><code>world</code> é a partida atual; <code>layout</code>, a configuração do mapa, para repetir a mesma partida com outro jogador; <code>controller</code>, quem joga (<code>null</code> quando é você); <code>ready</code>, a promessa de que o agente terminou de se preparar; <code>decision</code>, o último pensamento e as crenças para mostrar; <code>game</code>, o contador de partidas explicado abaixo; <code>stepping</code> evita pedir uma decisão nova enquanto a anterior não chegou.</p>
 
 <h2>Um passo do agente</h2>
 {SVG_STEP}
-{snip('src/main.ts', 'async function agentStep() {', '/** Começa uma partida', label='src/main.ts — agentStep()', exclusive=True)}
+{snip('src/ui/game.ts', 'export async function agentStep() {', '/** Escolhe o mapa da partida', label='src/ui/game.ts — agentStep()', exclusive=True)}
 {box('trap', 'Armadilha comum: respostas atrasadas', '<p>O agente externo responde por mensagem, então a resposta chega "depois". Imagine: o agente está pensando, você clica em <b>Parar</b> e a partida recomeça. Em seguida chega a resposta antiga e é aplicada à partida nova! O contador <code>game</code> resolve isso: cada partida tem um número, e uma resposta só é usada se o número ainda for o mesmo de quando foi pedida.</p>')}
 
 <h2>Recomeçar: <code>restart(newMap)</code></h2>
 <p><code>restart()</code> sorteia um mapa novo; <code>restart(false)</code> repete o atual. Ao trocar de jogador o mapa é mantido, para comparar agentes no mesmo cenário. O botão <b>⏹ Parar</b> (tecla T) chama <code>resetSameMap()</code>: interrompe o agente e volta ao início no mesmo mapa.</p>
 
 <h2>O laço de animação</h2>
-{snip('src/main.ts', 'view.renderer.setAnimationLoop', '});')}
+{snip('src/ui/game.ts', 'export function tick(now: number) {', '  view.frame();')}
 <p>O laço desenha um frame sempre e, se o agente estiver jogando, dá um passo quando passou o intervalo definido pela velocidade (passos por segundo).</p>
 
 <h2>Layout (index.html e style.css)</h2>
@@ -772,7 +783,7 @@ section('11', 'Mapas salvos, exportação e importação', f'''
 <li><b>Importar</b>: o texto (de arquivo ou colado) passa por <code>parseLayout()</code>; se for válido, é salvo e carregado; se não, a mensagem de erro explica o problema.</li>
 <li><b>Excluir</b>: pede um segundo clique ("Confirmar?"), porque <code>confirm()</code> nem sempre está disponível.</li>
 </ol>
-{snip('src/main.ts', 'function importJson(text: string) {', "$('#map-save')", label='src/main.ts — importJson()', exclusive=True)}
+{snip('src/ui/maps-panel.ts', 'function importJson(text: string) {', 'function saveCurrent() {', label='src/ui/maps-panel.ts — importJson()', exclusive=True)}
 ''')
 
 section('12', 'Roteiro de reimplementação', f'''
@@ -784,7 +795,7 @@ section('12', 'Roteiro de reimplementação', f'''
     ['3', 'Geração com BFS (só mapas vencíveis).', 'Em 10.000 mapas, nenhum tem ouro em poço ou sem caminho.'],
     ['4', 'Cena 3D estática: piso, paredes, câmera, luz.', 'A grade aparece no navegador.'],
     ['5', '<code>WorldView.load()</code> e <code>sync()</code>: desenhar o estado do mundo.', 'Poços e Wumpus aparecem nas posições certas com "revelar mapa".'],
-    ['6', 'Teclado, botões e placares (<code>main.ts</code>, <code>updateHud</code>).', 'Você joga uma partida completa no 3D.'],
+    ['6', 'Teclado, botões e placares (<code>main.ts</code>, <code>src/ui/game.ts</code>, <code>updateHud</code>).', 'Você joga uma partida completa no 3D.'],
     ['7', 'Animações em <code>frame()</code> (interpolação, tocha, partículas, flecha).', 'O agente desliza entre as salas em vez de pular.'],
     ['8', '<code>Knowledge</code>: <code>pitFree</code>, <code>wumpusCandidates</code>, <code>certainPits</code>, <code>safe</code>.', 'Nos exemplos do livro, as salas seguras batem com as do AIMA.'],
     ['9', 'Agente lógico e laço de jogo automático (velocidade, um passo).', 'O agente vence a maioria dos mapas 4×4 sem nunca dar erro de lógica.'],
@@ -960,7 +971,7 @@ svg.diagram.small {{ width: 75%; }}
     <span>Versão do código</span><b>{COMMIT}</b>
     <span>Data</span><b>{DATE}</b>
     <span>Tecnologias</span><b>TypeScript · Three.js · Vite · Web Workers</b>
-    <span>Tamanho</span><b>{sum(lines_of(p) for p in ['index.html','src/style.css','src/main.ts','src/storage.ts','src/game/world.ts','src/render/view.ts','src/agents/knowledge.ts','src/agents/agents.ts','src/agents/genome.ts','src/agents/genetic.ts','src/agents/ga.worker.ts','src/agents/benchmark.ts','src/arena/protocol.ts','src/arena/rng.ts','src/arena/referee.ts','src/arena/runner.ts','src/arena/ranking.ts','src/arena/sandbox.ts','src/arena/ui.ts','scripts/arena.ts','agents/exemplo-cauteloso.js'])} linhas em 21 arquivos de código</b>
+    <span>Tamanho</span><b>{sum(lines_of(p) for p in ['index.html','src/style.css','src/main.ts','src/ui/state.ts','src/ui/game.ts','src/ui/hud.ts','src/ui/players.ts','src/ui/maps-panel.ts','src/ui/genetic-panel.ts','src/ui/bench-panel.ts','src/ui/human-panel.ts','src/ui/dom.ts','src/util/format.ts','src/storage.ts','src/game/world.ts','src/render/view.ts','src/agents/knowledge.ts','src/agents/agents.ts','src/agents/genome.ts','src/agents/genetic.ts','src/agents/ga.worker.ts','src/agents/benchmark.ts','src/arena/protocol.ts','src/arena/rng.ts','src/arena/referee.ts','src/arena/runner.ts','src/arena/ranking.ts','src/arena/sandbox.ts','src/arena/ui.ts','scripts/arena.ts','agents/exemplo-cauteloso.js'])} linhas em 31 arquivos de código</b>
   </div>
 </div>
 

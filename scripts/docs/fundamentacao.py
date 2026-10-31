@@ -179,8 +179,8 @@ section('2', 'Como o agente funciona', f'''
 <li>escolhe a sala de maior nota.</li>
 </ol>
 <p>Se ainda tem flecha e o Wumpus está restrito a até 3 salas, calcula também a nota da opção "atirar" com outros 3 pesos. Se ela for maior que a da melhor sala, vai atirar. Os 11 pesos formam o <b>genoma</b>, e o algoritmo genético procura os pesos que dão a maior pontuação média.</p>
-{snip('src/agents/agents.ts', 'const features = [', lines=13, label='src/agents/agents.ts — características e nota de cada sala')}
-{snip('src/agents/agents.ts', 'if (s.hasArrow && candidates.size > 0 && candidates.size <= 3) {', lines=7, label='src/agents/agents.ts — nota da opção de tiro')}
+{snip('src/agents/agents.ts', 'private cellFeatures(', lines=19, label='src/agents/agents.ts — características de cada sala')}
+{snip('src/agents/agents.ts', 'private prefersShooting(', lines=6, label='src/agents/agents.ts — nota da opção de tiro')}
 ''')
 
 # ---------------------------------------------------------------- 3
@@ -231,7 +231,7 @@ section('3', 'Fundamentação de cada componente', f'''
 
 <h2>3.10 Validação final em mapas novos</h2>
 <p><b>No jogo:</b> na última geração, os 5 melhores jogam 3 × M mapas que nunca viram, e o vencedor dessa rodada é o resultado do treino.</p>
-{snip('src/agents/genetic.ts', 'if (gen === opts.generations) {', lines=10)}
+{snip('src/agents/genetic.ts', 'if (gen === opts.generations) {', lines=6)}
 <p><b>Base:</b> avaliar o modelo escolhido em dados que não foram usados para escolhê-lo, para estimar o desempenho sem o viés da seleção {cite('hastie')}; e reavaliar soluções promissoras para reduzir o efeito do ruído na aptidão {cite('jin')}.</p>
 <p><b>Motivo prático:</b> sem essa etapa, o genoma evoluído chegou a ficar <b>pior</b> que o escrito à mão (725 contra 760 pontos de média nos mesmos mapas), porque o "melhor" da última geração podia ter tido apenas mapas fáceis. O procedimento específico (5 finalistas, 3 × M mapas na tela, 2000 mapas no pré-treino) é {OWN}.</p>
 

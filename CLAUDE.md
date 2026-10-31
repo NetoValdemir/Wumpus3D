@@ -37,15 +37,18 @@ scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
 |---|---|
 | `src/game/world.ts` | Regras puras (sem 3D/DOM): `WumpusWorld`, `step()`, pontuação, geração de mapa vencível, `MapLayout`, `parseLayout()` |
 | `src/render/view.ts` | Cena 3D (Three.js): lê o estado, nunca muda regras |
-| `src/main.ts` | Estado da partida, eventos, laço de animação, painel, mapas, treino genético, avaliação |
+| `src/main.ts` | Ponto de entrada: liga teclado, botões e painéis aos módulos de `src/ui` |
+| `src/ui/*` | Interface: `state.ts` (estado da partida), `game.ts` (ação, passo do agente, `restart`, laço), `hud.ts`, `players.ts`, um `*-panel.ts` por seção do painel, `dom.ts` (utilitários de tela) |
+| `src/util/format.ts` | Formatação sem DOM (porcentagens, números, escape de HTML, nomes de arquivo) |
 | `src/agents/knowledge.ts` | Base de conhecimento: deduções lógicas e P(poço) por enumeração da fronteira |
 | `src/agents/agents.ts` | Agentes aleatório, lógico, probabilístico (`ReasoningAgent`) e genético (`GeneticAgent`) |
 | `src/agents/genome.ts` · `genetic.ts` · `ga.worker.ts` | Genes, genoma padrão, algoritmo genético, treino em Web Worker |
 | `src/arena/*` | Contrato de agentes externos, sandbox (Worker), árbitro, runner, ranking, sementes, tela da Arena |
 | `src/report/*` | Relatórios (modelo, gráficos SVG, HTML exportado), partidas humanas e desafios (`human.ts`) e tela de Análise de relatórios |
 | `src/storage.ts` | localStorage: mapas, genoma, agentes importados, partidas humanas e nome do jogador |
+| `src/agents/benchmark.ts` | Partidas rápidas sem 3D (`playToEnd`, `playMaps`): treino, `medir` e `treinar` |
 | `scripts/arena.ts` | Arena no Node (contexto `vm`); `--relatorio` salva relatório HTML/JSON |
-| `scripts/treinar.ts` · `medir.ts` | Treino do genético e tabela de desempenho na linha de comando |
+| `scripts/treinar.ts` · `medir.ts` · `args.ts` | Treino do genético, tabela de desempenho e leitura das opções de linha de comando |
 | `agents/*.js` | Agentes da competição (`exemplo-cauteloso.js` é o modelo) |
 | `tests/*.test.ts` | Testes Vitest (regras, deduções, arena, relatórios, genético, partidas humanas) |
 | `scripts/docs/` | Geradores dos PDFs (HTML → PDF com Playwright) |
