@@ -139,7 +139,7 @@ interface Placement {
 }
 
 /** Existe caminho da entrada até `target` sem passar por poços? (o Wumpus pode ser morto com a flecha) */
-function reachable(size: number, pits: Set<string>, target: Cell) {
+export function reachable(size: number, pits: Set<string>, target: Cell) {
   const seen = new Set([key(0, 0)]);
   const queue: Cell[] = [{ x: 0, y: 0 }];
   while (queue.length) {
