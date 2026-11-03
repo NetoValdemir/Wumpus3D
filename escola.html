@@ -8,299 +8,86 @@
   </head>
   <body class="escola">
     <header class="topbar">
-      <a class="brand" href="#inicio" data-tab="inicio"><span class="logo" aria-hidden="true"></span>Caverna do Pensamento</a>
-      <nav aria-label="Telas">
-        <button data-tab="inicio" aria-current="page">Início</button>
-        <button data-tab="detetive">Detetive</button>
-        <button data-tab="blocos">Blocos</button>
-        <button data-tab="criador">Criador</button>
-        <button data-tab="professor">Professor</button>
-      </nav>
+      <a class="brand" href="./escola.html"><span class="logo" aria-hidden="true"></span>Caverna do Pensamento</a>
       <a class="to3d" href="./index.html">Jogo 3D completo ↗</a>
     </header>
 
-    <main>
-      <!-- ================= Início (aluno) ================= -->
-      <section id="tab-inicio" class="tab">
-        <div class="hero">
-          <h1>Ensine um robô a sair vivo da caverna</h1>
-          <p>Descubra onde estão os perigos como um detetive, programe o robô com blocos e crie cavernas para desafiar os colegas.</p>
-        </div>
-        <div class="grid2">
-          <div class="card">
-            <h2>Quem é você?</h2>
-            <label for="student-name">Seu apelido (não use o nome completo)</label>
-            <input id="student-name" maxlength="40" placeholder="por exemplo: Ana B." autocomplete="off" />
-            <p class="hint">O apelido aparece no relatório que você envia ao professor. Nada sai deste computador sem você baixar o arquivo.</p>
+    <main class="login">
+      <div class="hero">
+        <h1>Ensine um robô a sair vivo da caverna</h1>
+        <p>Detetive, programação com blocos, criação de cavernas e uma trilha de Inteligência Artificial. Quem está entrando?</p>
+      </div>
+
+      <div class="grid2">
+        <!-- ================= Aluno ================= -->
+        <section class="card role aluno" aria-labelledby="al-title">
+          <h2 id="al-title">🎒 Sou aluno</h2>
+          <div id="al-turma-row">
+            <label for="al-turma">Turma</label>
+            <select id="al-turma"></select>
           </div>
-          <div class="card">
-            <h2>Atividade do professor</h2>
-            <p class="hint">Cole o código que o professor passou (começa com <code>PLANO1-</code>) ou abra o arquivo do plano.</p>
-            <textarea id="plan-code" rows="2" spellcheck="false" placeholder="PLANO1-…"></textarea>
+          <div id="al-code-box">
+            <label for="al-code">Código da turma (o professor passa; começa com <code>TURMA1-</code>)</label>
+            <textarea id="al-code" rows="2" spellcheck="false" placeholder="TURMA1-…"></textarea>
             <div class="row">
-              <button id="plan-load" class="primary">Abrir atividade</button>
-              <label class="file">Abrir arquivo<input type="file" id="plan-file" accept=".json,application/json" /></label>
+              <button id="al-code-open">Abrir turma</button>
+              <label class="file">Abrir arquivo da turma<input type="file" id="al-file" accept=".json,application/json" /></label>
             </div>
-            <p id="plan-msg" class="msg" role="status"></p>
           </div>
-        </div>
-
-        <div id="plan-box" class="card" hidden>
-          <div class="row spread">
-            <div>
-              <h2 id="plan-title"></h2>
-              <p id="plan-meta" class="hint"></p>
-            </div>
-            <button id="plan-close" class="ghost">Fechar atividade</button>
-          </div>
-          <p id="plan-instructions"></p>
-          <ol id="plan-activities" class="activities"></ol>
-          <div class="send">
-            <h3>Terminou?</h3>
-            <p class="hint">Baixe o seu registro e entregue ao professor (por e-mail, pendrive ou pela plataforma da escola). Ele traz tudo o que você fez nesta atividade.</p>
-            <div class="row">
-              <button id="record-download" class="primary">Enviar para o professor (baixar registro)</button>
-              <button id="record-show" class="ghost">Mostrar o registro como texto</button>
-            </div>
-            <textarea id="record-text" rows="4" readonly hidden></textarea>
-            <p id="record-msg" class="msg" role="status"></p>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Jogar livre</h2>
-          <div class="choices">
-            <button data-go="detetive"><b>🔎 Detetive</b><span>Jogue com as mãos e anote as pistas no caderno.</span></button>
-            <button data-go="blocos"><b>🧩 Programador com blocos</b><span>9 missões, do primeiro passo à caverna completa.</span></button>
-            <button data-go="criador"><b>🛠️ Criador de cavernas</b><span>Monte uma caverna e compartilhe com um código.</span></button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= Detetive ================= -->
-      <section id="tab-detetive" class="tab" hidden>
-        <div class="play">
-          <div class="board-wrap">
-            <svg id="det-board" class="board" role="group" aria-label="Caverna"></svg>
-          </div>
-          <aside class="side">
-            <div class="row spread">
-              <h2 id="det-title">Detetive</h2>
-              <select id="det-source" aria-label="Escolher caverna"></select>
-            </div>
-            <p id="det-goal" class="goal"></p>
-            <div class="senses" aria-live="polite">
-              <span>Você sente:</span>
-              <b id="det-senses">nada</b>
-            </div>
-            <div class="pad" aria-label="Controles">
-              <button data-act="left" title="Girar à esquerda (A ou ←)">↺<small>girar</small></button>
-              <button data-act="forward" title="Avançar (W ou ↑)">▲<small>avançar</small></button>
-              <button data-act="right" title="Girar à direita (D ou →)">↻<small>girar</small></button>
-              <button data-act="grab" title="Pegar o ouro (G)">✋<small>pegar</small></button>
-              <button data-act="shoot" title="Atirar a flecha (espaço)">➶<small>atirar</small></button>
-            </div>
-            <div class="notebook">
-              <h3>Caderno</h3>
-              <p class="hint">Toque numa sala desconhecida para anotar: segura → poço? → poço! → Wumpus? → Wumpus! → apagar.</p>
-              <div class="row">
-                <button id="det-hint">💡 Pedir dica</button>
-                <button id="det-check" aria-pressed="false">✔ Conferir anotações</button>
-              </div>
-              <p id="det-helper" class="helper" role="status"></p>
-            </div>
-            <ul id="det-log" class="log" aria-live="polite"></ul>
-            <p class="hint">Coisas na caverna: <span class="legend pit"></span> poço · <span class="legend gold"></span> ouro · <span class="legend wumpus"></span> Wumpus · 💨 brisa · 👃 fedor</p>
-          </aside>
-        </div>
-        <div id="det-end" class="endcard" hidden role="dialog" aria-labelledby="det-end-title">
-          <h2 id="det-end-title"></h2>
-          <p id="det-end-stars" class="stars"></p>
-          <ul id="det-end-feedback"></ul>
-          <div class="row">
-            <button id="det-retry" class="primary">Tentar de novo esta caverna</button>
-            <button id="det-new">Outra caverna</button>
-            <button id="det-back" class="ghost">Voltar ao início</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= Blocos ================= -->
-      <section id="tab-blocos" class="tab" hidden>
-        <div id="missions" class="missions">
-          <h1>Programador com blocos</h1>
-          <p class="hint">Monte o programa do robô encaixando blocos. Cada missão ensina uma ideia nova. Ganhe ★ ao vencer, ★★ com poucos blocos e ★★★ com poucos blocos e poucos passos.</p>
-          <ol id="mission-list" class="mission-list"></ol>
-        </div>
-        <div id="editor" class="editor" hidden>
-          <div class="editor-head">
-            <button id="blk-back" class="ghost">← Missões</button>
-            <div>
-              <h2 id="blk-title"></h2>
-              <p id="blk-goal" class="goal"></p>
-            </div>
-            <div class="counter"><span id="blk-count"></span><span id="blk-best" class="stars"></span></div>
-          </div>
-          <div class="editor-body">
-            <div id="blockly" class="blockly" aria-label="Área de montagem dos blocos"></div>
-            <aside class="side">
-              <div class="row spread">
-                <span id="blk-map-label" class="hint"></span>
-                <span class="row tight" id="blk-maps"></span>
-              </div>
-              <svg id="blk-board" class="board small" role="group" aria-label="Caverna da missão"></svg>
-              <div class="row">
-                <button id="blk-run" class="primary">▶ Executar</button>
-                <button id="blk-step">⏭ Um passo</button>
-                <button id="blk-reset">⟲ Recomeçar</button>
-              </div>
-              <label class="speed">Velocidade <input id="blk-speed" type="range" min="1" max="10" value="4" /></label>
-              <p id="blk-msg" class="helper" role="status"></p>
-              <details class="tip"><summary>💡 Dica</summary><p id="blk-tip"></p></details>
-              <details><summary>Ver o programa como texto</summary><pre id="blk-text"></pre></details>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= Criador ================= -->
-      <section id="tab-criador" class="tab" hidden>
-        <div class="play">
-          <div class="board-wrap">
-            <svg id="cr-board" class="board" role="group" aria-label="Caverna em construção"></svg>
-          </div>
-          <aside class="side">
-            <h2>Criador de cavernas</h2>
-            <label for="cr-name">Nome da caverna</label>
-            <input id="cr-name" maxlength="60" value="Minha caverna" />
-            <label for="cr-size">Tamanho</label>
-            <select id="cr-size">
-              <option value="3">3 × 3</option>
-              <option value="4" selected>4 × 4</option>
-              <option value="5">5 × 5</option>
-              <option value="6">6 × 6</option>
-              <option value="7">7 × 7</option>
-              <option value="8">8 × 8</option>
-            </select>
-            <fieldset class="tools">
-              <legend>Ferramenta (depois toque nas salas)</legend>
-              <label><input type="radio" name="tool" value="poco" checked /> <span class="legend pit"></span> Poço</label>
-              <label><input type="radio" name="tool" value="wumpus" /> <span class="legend wumpus"></span> Wumpus</label>
-              <label><input type="radio" name="tool" value="ouro" /> <span class="legend gold"></span> Ouro</label>
-              <label><input type="radio" name="tool" value="apagar" /> Apagar</label>
-            </fieldset>
-            <ul id="cr-problems" class="problems" role="status"></ul>
-            <div class="row">
-              <button id="cr-save" class="primary">Salvar</button>
-              <button id="cr-play-det">Jogar no Detetive</button>
-              <button id="cr-play-blk">Programar nela</button>
-            </div>
-            <div class="row">
-              <button id="cr-clear" class="ghost">Começar do zero</button>
-            </div>
-            <h3>Compartilhar</h3>
-            <p class="hint">Mande este código para um colega. Ele cola em "Abrir código" e joga a sua caverna.</p>
-            <textarea id="cr-code" rows="2" spellcheck="false" placeholder="O código aparece aqui quando a caverna estiver pronta."></textarea>
-            <div class="row">
-              <button id="cr-copy">Copiar código</button>
-              <button id="cr-open">Abrir código</button>
-            </div>
-            <h3>Minhas cavernas</h3>
-            <ul id="cr-list" class="cave-list"></ul>
-            <p id="cr-msg" class="msg" role="status"></p>
-          </aside>
-        </div>
-      </section>
-
-      <!-- ================= Professor ================= -->
-      <section id="tab-professor" class="tab" hidden>
-        <div class="subtabs" role="tablist">
-          <button data-sub="planejar" aria-selected="true" role="tab">1. Planejar a atividade</button>
-          <button data-sub="relatorio" aria-selected="false" role="tab">2. Relatório da turma</button>
-        </div>
-
-        <div id="sub-planejar" class="grid2">
-          <div class="card">
-            <h2>Plano</h2>
-            <label for="pl-title">Título</label>
-            <input id="pl-title" maxlength="80" />
+          <div id="al-who" hidden>
             <div class="grid2 tight">
-              <div><label for="pl-group">Turma</label><input id="pl-group" maxlength="40" placeholder="7º ano B" /></div>
-              <div><label for="pl-teacher">Professor(a)</label><input id="pl-teacher" maxlength="60" /></div>
+              <div><label for="al-name">Apelido</label><select id="al-name"></select></div>
+              <div><label for="al-pin">PIN</label><input id="al-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 dígitos" /></div>
             </div>
-            <label for="pl-instructions">Orientações para os alunos</label>
-            <textarea id="pl-instructions" rows="3"></textarea>
-            <h3>Atividades</h3>
-            <ol id="pl-activities" class="activities edit"></ol>
-            <p id="pl-empty" class="hint">Nenhuma atividade ainda. Adicione ao lado.</p>
-            <div class="row">
-              <button id="pl-new" class="ghost">Novo plano em branco</button>
-              <button id="pl-sample" class="ghost">Usar plano de exemplo</button>
-            </div>
+            <button id="al-enter" class="primary wide">Entrar</button>
           </div>
-          <div class="card">
-            <h2>Adicionar atividade</h2>
-            <label for="ac-kind">Modo</label>
-            <select id="ac-kind">
-              <option value="detetive">Detetive (jogar e anotar pistas)</option>
-              <option value="blocos">Programador com blocos</option>
-            </select>
-            <label for="ac-source">Caverna</label>
-            <select id="ac-source">
-              <option value="missao">Missão da campanha</option>
-              <option value="sorteio">Sorteada (a mesma para todos)</option>
-              <option value="minha">Uma das minhas cavernas (Criador)</option>
-              <option value="codigo">Código de caverna</option>
-            </select>
-            <div id="ac-missao"><label for="ac-mission">Missão</label><select id="ac-mission"></select></div>
-            <div id="ac-sorteio" class="grid2 tight" hidden>
-              <div><label for="ac-seed">Semente (palavra)</label><input id="ac-seed" value="turma" /></div>
-              <div>
-                <label for="ac-size">Tamanho</label>
-                <select id="ac-size"><option value="4">4 × 4</option><option value="5">5 × 5</option><option value="6">6 × 6</option></select>
-              </div>
-            </div>
-            <div id="ac-minha" hidden><label for="ac-cave">Caverna</label><select id="ac-cave"></select></div>
-            <div id="ac-codigo" hidden><label for="ac-code">Código (CAV1-…)</label><textarea id="ac-code" rows="2" spellcheck="false"></textarea></div>
-            <label for="ac-title">Título da atividade</label>
-            <input id="ac-title" maxlength="80" placeholder="deixe vazio para usar o nome da caverna" />
-            <label for="ac-instructions">Orientação (opcional)</label>
-            <textarea id="ac-instructions" rows="2"></textarea>
-            <button id="ac-add" class="primary">Adicionar ao plano</button>
-            <p id="ac-msg" class="msg" role="status"></p>
+          <p id="al-msg" class="msg" role="status"></p>
+          <p class="hint"><a href="#" id="al-visitor">Entrar sem turma (jogar livre)</a> — o progresso não vai para nenhum professor, a menos que você baixe o registro.</p>
+        </section>
 
-            <h2>Entregar aos alunos</h2>
-            <p class="hint">Passe o código (por exemplo, no quadro ou no chat da turma) ou o arquivo. Os alunos abrem em "Início → Atividade do professor".</p>
-            <textarea id="pl-code" rows="3" readonly spellcheck="false"></textarea>
-            <div class="row">
-              <button id="pl-copy">Copiar código</button>
-              <button id="pl-download">Baixar arquivo do plano</button>
-              <button id="pl-try" class="ghost">Testar como aluno</button>
-            </div>
-            <p id="pl-msg" class="msg" role="status"></p>
+        <!-- ================= Professor ================= -->
+        <section class="card role professor" aria-labelledby="pf-title">
+          <h2 id="pf-title">👩‍🏫 Sou professor</h2>
+          <div id="pf-login">
+            <label for="pf-user">Usuário</label>
+            <input id="pf-user" autocomplete="username" />
+            <label for="pf-pass">Senha</label>
+            <input id="pf-pass" type="password" autocomplete="current-password" />
+            <button id="pf-enter" class="primary wide">Entrar na área do professor</button>
+            <p class="hint"><button id="pf-show-create" class="link">Criar outro acesso de professor neste aparelho</button></p>
           </div>
-        </div>
+          <div id="pf-create" hidden>
+            <p class="hint">Primeiro acesso neste aparelho: crie seu usuário e senha. Eles ficam só neste navegador.</p>
+            <label for="pf-new-name">Seu nome (aparece para os alunos)</label>
+            <input id="pf-new-name" maxlength="60" autocomplete="name" />
+            <label for="pf-new-user">Usuário</label>
+            <input id="pf-new-user" maxlength="40" autocomplete="username" />
+            <div class="grid2 tight">
+              <div><label for="pf-new-pass">Senha (8 caracteres ou mais)</label><input id="pf-new-pass" type="password" autocomplete="new-password" /></div>
+              <div><label for="pf-new-pass2">Repita a senha</label><input id="pf-new-pass2" type="password" autocomplete="new-password" /></div>
+            </div>
+            <div class="row">
+              <button id="pf-create-btn" class="primary">Criar acesso e entrar</button>
+              <button id="pf-cancel" class="ghost">Voltar</button>
+            </div>
+          </div>
+          <p id="pf-msg" class="msg" role="status"></p>
+          <details id="pf-forgot">
+            <summary>Esqueci a senha</summary>
+            <p class="hint">Não há servidor, então não dá para recuperar a senha. Você pode apagar o acesso deste aparelho (as turmas e registros guardados aqui também são apagados) e criar outro. Se você guardava tudo no GitHub, é só trazer de volta na aba GitHub.</p>
+            <div class="row">
+              <select id="pf-forget-user" aria-label="Acesso a apagar"></select>
+              <button id="pf-forget" class="ghost">Apagar este acesso</button>
+            </div>
+          </details>
+        </section>
+      </div>
 
-        <div id="sub-relatorio" hidden>
-          <div class="card">
-            <h2>Relatório da turma</h2>
-            <p class="hint">Junte aqui os arquivos de registro que os alunos enviaram (pode escolher vários de uma vez). O relatório usa o plano aberto em "Planejar"; registros de outros planos aparecem num aviso.</p>
-            <div class="row">
-              <label class="file primary">Abrir registros dos alunos<input type="file" id="rp-files" accept=".json,application/json" multiple /></label>
-              <label class="file">Abrir arquivo do plano<input type="file" id="rp-plan" accept=".json,application/json" /></label>
-              <button id="rp-clear" class="ghost">Limpar</button>
-            </div>
-            <p id="rp-msg" class="msg" role="status"></p>
-            <div class="row">
-              <button id="rp-html" disabled>Baixar relatório (HTML)</button>
-              <button id="rp-csv" disabled>Baixar planilha (CSV)</button>
-              <button id="rp-print" disabled>Imprimir</button>
-            </div>
-          </div>
-          <iframe id="rp-view" class="report-view" title="Relatório da turma" sandbox="allow-same-origin allow-modals"></iframe>
-        </div>
-      </section>
+      <aside class="note">
+        <b>Sobre o login</b>
+        <p>O modo escola não tem servidor nem conta na internet: senhas e PINs são conferidos neste aparelho e guardados cifrados. Isso separa as áreas de professor e aluno e identifica cada aluno, mas não é proteção forte contra quem entende de programação. Nenhum dado sai do aparelho, a não ser pelos arquivos que você baixar ou pelo GitHub do professor.</p>
+      </aside>
     </main>
-    <script type="module" src="/src/edu/ui/app.ts"></script>
+    <script type="module" src="/src/edu/ui/login.ts"></script>
   </body>
 </html>

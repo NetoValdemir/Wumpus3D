@@ -193,7 +193,7 @@ export const LESSONS: Lesson[] = [
           'Ninguém escreve a estratégia: ela aparece com as gerações. Isso é <b>aprendizado de máquina</b>.',
         ],
       },
-      { type: 'tabuleiro', widget: 'genetico', title: 'Treine você', text: 'Treine com uma caverna só e depois com várias. Em cada caso, o resultado é testado em 100 cavernas que o agente nunca viu.' },
+      { type: 'tabuleiro', widget: 'genetico', title: 'Treine você', text: 'Treine com uma caverna só e depois com 40. Em cada caso, o melhor agente é testado em 100 cavernas que ele nunca viu. A última linha mostra o agente probabilístico, ajustado à mão com muito mais testes, para comparar.' },
       {
         type: 'escolha',
         prompt: 'O que é a aptidão de um agente no algoritmo genético?',

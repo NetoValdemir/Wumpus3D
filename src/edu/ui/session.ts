@@ -1,7 +1,10 @@
 // Quem está jogando, qual plano está aberto e o registro de tudo o que o aluno faz.
+// Aluno com login: o apelido e o plano vêm da turma (D23). Visitante: digita o apelido e abre planos por código.
 import type { MapLayout } from '../../game/world';
 import { arenaMaps } from '../../arena/rng';
-import { activityGroups, activityLayouts, type Activity, type Attempt, type Plan } from '../plan';
+import { activityGroups, activityLayouts, type Activity, type ActivityKind, type Attempt, type Plan } from '../plan';
+import { currentSession, knownTurma, type Role } from './access';
+import type { TurmaPublic } from '../turma';
 import { ALL_GROUPS, missionById, type BlockGroup, type Mission } from '../missions';
 import { getRecord, loadStudent, loadStudentPlan, saveRecords, saveStudent, saveStudentPlan } from '../edu-storage';
 
@@ -9,6 +12,7 @@ import { getRecord, loadStudent, loadStudentPlan, saveRecords, saveStudent, save
 export interface PlaySource {
   /** id para guardar programa e estrelas (atividade do plano, missão ou caverna) */
   id: string;
+  kind: ActivityKind;
   title: string;
   goal: string;
   tip: string;
@@ -18,10 +22,17 @@ export interface PlaySource {
   activity: Activity | null;
 }
 
+const access = currentSession();
+const turma: TurmaPublic | null = access?.role === 'aluno' && access.turmaId ? knownTurma(access.turmaId) : null;
+
 export const session = {
-  student: loadStudent(),
-  plan: loadStudentPlan() as Plan | null,
+  role: (access?.role ?? 'visitante') as Role,
+  turma,
+  student: access?.role === 'aluno' ? access.name : loadStudent(),
+  plan: (access?.role === 'aluno' ? (turma?.plan ?? null) : loadStudentPlan()) as Plan | null,
 };
+
+export const isStudent = () => session.role === 'aluno';
 
 export const studentName = () => session.student.trim() || 'Aluno sem nome';
 
@@ -36,7 +47,11 @@ export function setPlan(plan: Plan | null) {
 }
 
 /** Registro do aluno no plano aberto (ou no "jogo livre"). */
-export const currentRecord = (activity: Activity | null) => getRecord(studentName(), activity && session.plan ? session.plan : null);
+export function currentRecord(activity: Activity | null) {
+  const rec = getRecord(studentName(), activity && session.plan ? session.plan : null);
+  if (session.turma && activity) rec.turmaId = session.turma.id;
+  return rec;
+}
 
 export function recordAttempt(src: PlaySource, attempt: Omit<Attempt, 'activityId' | 'activityTitle' | 'at'>) {
   const rec = currentRecord(src.activity);
@@ -46,10 +61,17 @@ export function recordAttempt(src: PlaySource, attempt: Omit<Attempt, 'activityI
 
 export function sourceFromActivity(a: Activity): PlaySource {
   const mission = a.cave?.type === 'missao' ? (missionById(a.cave.missionId) ?? null) : null;
+  const goal: Record<ActivityKind, string> = {
+    detetive: 'Encontre o ouro e volte vivo para a entrada.',
+    blocos: 'Programe o robô para pegar o ouro e voltar.',
+    agente: 'Monte um robô que funcione em qualquer caverna: ele vai disputar a Arena da turma em 20 cavernas sorteadas. Teste nas cavernas de treino A, B e C.',
+    trilha: '',
+  };
   return {
     id: `${session.plan?.id ?? 'livre'}:${a.id}`,
+    kind: a.kind,
     title: a.title,
-    goal: a.instructions || mission?.goal || (a.kind === 'detetive' ? 'Encontre o ouro e volte vivo para a entrada.' : 'Programe o robô para pegar o ouro e voltar.'),
+    goal: a.instructions || mission?.goal || goal[a.kind],
     tip: mission?.tip ?? '',
     layouts: activityLayouts(a),
     groups: activityGroups(a),
@@ -58,10 +80,11 @@ export function sourceFromActivity(a: Activity): PlaySource {
   };
 }
 
-export const sourceFromMission = (m: Mission): PlaySource => ({ id: `missao:${m.id}`, title: `Missão: ${m.title}`, goal: m.goal, tip: m.tip, layouts: m.maps, groups: m.groups, mission: m, activity: null });
+export const sourceFromMission = (m: Mission): PlaySource => ({ id: `missao:${m.id}`, kind: 'blocos', title: `Missão: ${m.title}`, goal: m.goal, tip: m.tip, layouts: m.maps, groups: m.groups, mission: m, activity: null });
 
 export const sourceFromLayout = (l: MapLayout, kind: 'detetive' | 'blocos'): PlaySource => ({
   id: `caverna:${l.name}`,
+  kind,
   title: `Caverna: ${l.name}`,
   goal: kind === 'detetive' ? 'Encontre o ouro e volte vivo para a entrada.' : 'Programe o robô para pegar o ouro e voltar para a entrada.',
   tip: '',
@@ -83,6 +106,8 @@ export const nav = {
   /** Abre a aba preparando a tela (lista de missões, caverna sorteada...) */
   go: (_tab: string) => {},
   detective: (_src: PlaySource) => {},
+  /** Abre uma lição da trilha de IA (com a atividade do plano, se houver) */
+  lesson: (_lessonId: string, _activity: Activity | null) => {},
   blocks: (_src: PlaySource) => {},
   refreshHome: () => {},
 };

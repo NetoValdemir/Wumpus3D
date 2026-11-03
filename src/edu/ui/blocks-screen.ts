@@ -77,7 +77,7 @@ function updateCount() {
 function record(outcome: Parameters<typeof recordAttempt>[1]['outcome'], starsWon: number, actions: number, score: number, error: string | null) {
   const p = program();
   recordAttempt(src!, {
-    kind: 'blocos',
+    kind: src!.kind,
     ms: Math.round(performance.now() - openedAt),
     outcome,
     stars: starsWon,

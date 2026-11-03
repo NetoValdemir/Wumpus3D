@@ -1,16 +1,17 @@
-// Tela do Professor: montar o plano da aula (atividades e cavernas), entregar por código ou arquivo,
-// e juntar os registros dos alunos num relatório da turma.
+// Área do professor: montar o plano da aula (Detetive, Blocos, lições da Trilha de IA, Agente para a Arena)
+// e juntar os registros dos alunos no relatório da turma.
 import { $, copyFromBox, downloadText, showMessage } from '../../ui/dom';
 import { slugify } from '../../util/format';
 import { buildClassReport, classReportCsv, renderClassReportHtml, type ClassReport } from '../class-report';
 import { parseCaveCode } from '../caves';
-import { loadCaves, loadDraft, saveDraft } from '../edu-storage';
+import { loadCaves } from '../edu-storage';
 import { MISSIONS, missionById } from '../missions';
-import { KIND_LABEL, describeActivity, emptyPlan, newId, parsePlanFile, parseRecord, planCode, samplePlan, type Activity, type CaveSource, type Plan, type StudentRecord } from '../plan';
-import { nav, setPlan } from './session';
+import { KIND_LABEL, describeActivity, emptyPlan, mergeRecords, newId, parsePlanFile, parseRecord, planCode, samplePlan, type Activity, type CaveSource, type Plan, type StudentRecord } from '../plan';
+import { LESSONS, lessonById } from '../trilha/lessons';
+import { loadPlanDraft, loadReceived, loadTurmas, savePlanDraft, saveReceived, teacher } from './teacher-data';
 
-let plan: Plan = loadDraft() ?? samplePlan();
-let records: StudentRecord[] = [];
+let plan: Plan = loadPlanDraft();
+let records: StudentRecord[] = loadReceived();
 let report: ClassReport | null = null;
 
 const planMsg = (t: string, e = false) => showMessage('#pl-msg', t, e);
@@ -18,8 +19,16 @@ const acMsg = (t: string, e = false) => showMessage('#ac-msg', t, e);
 const rpMsg = (t: string, e = false) => showMessage('#rp-msg', t, e);
 const val = (sel: string) => $<HTMLInputElement>(sel).value.trim();
 
+/** O plano em edição (a aba Turmas usa para entregar à turma). */
+export const editingPlan = () => plan;
+
+export function setEditingPlan(p: Plan) {
+  plan = p;
+  renderPlan();
+}
+
 function persist() {
-  saveDraft(plan);
+  savePlanDraft(plan);
   $<HTMLTextAreaElement>('#pl-code').value = plan.activities.length ? planCode(plan) : '';
 }
 
@@ -61,17 +70,23 @@ function renderPlan() {
   persist();
 }
 
-function updateSourceFields() {
-  const v = $<HTMLSelectElement>('#ac-source').value;
+/** Mostra só os campos que valem para o modo e a fonte escolhidos. */
+function updateFields() {
+  const kind = $<HTMLSelectElement>('#ac-kind').value as Activity['kind'];
+  const source = $<HTMLSelectElement>('#ac-source');
+  $('#ac-source-row').hidden = kind === 'trilha' || kind === 'agente';
+  $('#ac-trilha').hidden = kind !== 'trilha';
+  const v = kind === 'agente' ? 'sorteio' : kind === 'trilha' ? '' : source.value;
   for (const s of ['missao', 'sorteio', 'minha', 'codigo']) $(`#ac-${s}`).hidden = s !== v;
   if (v === 'minha') {
     const caves = loadCaves();
     $<HTMLSelectElement>('#ac-cave').replaceChildren(...(caves.length ? caves.map((c) => new Option(`${c.name} (${c.size}×${c.size})`, c.name)) : [new Option('Nenhuma caverna salva no Criador', '')]));
   }
+  $('#ac-agente-hint').hidden = kind !== 'agente';
 }
 
-function caveFromForm(): CaveSource {
-  switch ($<HTMLSelectElement>('#ac-source').value) {
+function caveFromForm(source: string): CaveSource {
+  switch (source) {
     case 'missao':
       return { type: 'missao', missionId: $<HTMLSelectElement>('#ac-mission').value };
     case 'sorteio':
@@ -86,16 +101,26 @@ function caveFromForm(): CaveSource {
   }
 }
 
+function newActivity(): Activity {
+  const kind = $<HTMLSelectElement>('#ac-kind').value as Activity['kind'];
+  const base = { id: newId(), kind, instructions: val('#ac-instructions') };
+  if (kind === 'trilha') {
+    const lesson = lessonById($<HTMLSelectElement>('#ac-lesson').value)!;
+    return { ...base, title: val('#ac-title') || `Trilha de IA: ${lesson.title}`, cave: null, lessonId: lesson.id };
+  }
+  const cave = caveFromForm(kind === 'agente' ? 'sorteio' : $<HTMLSelectElement>('#ac-source').value);
+  const name = cave.type === 'missao' ? missionById(cave.missionId)!.title : cave.type === 'mapa' ? cave.layout.name : `caverna "${cave.seed}"`;
+  const label = { detetive: 'Detetive', blocos: 'Blocos', agente: 'Arena da turma' }[kind];
+  return { ...base, title: val('#ac-title') || `${label}: ${name}`, cave };
+}
+
 function addActivity() {
   try {
-    const cave = caveFromForm();
-    const kind = $<HTMLSelectElement>('#ac-kind').value as Activity['kind'];
-    const fallback = cave.type === 'missao' ? missionById(cave.missionId)!.title : cave.type === 'mapa' ? cave.layout.name : `Caverna "${cave.seed}"`;
-    plan.activities.push({ id: newId(), kind, title: val('#ac-title') || `${kind === 'detetive' ? 'Detetive' : 'Blocos'}: ${fallback}`, instructions: val('#ac-instructions'), cave });
+    plan.activities.push(newActivity());
     $<HTMLInputElement>('#ac-title').value = '';
     $<HTMLTextAreaElement>('#ac-instructions').value = '';
     renderPlan();
-    acMsg(`Atividade ${plan.activities.length} adicionada.`);
+    acMsg(`Atividade ${plan.activities.length} adicionada. Lembre de entregar o plano à turma (aba Turmas).`);
   } catch (err) {
     acMsg((err as Error).message, true);
   }
@@ -103,33 +128,56 @@ function addActivity() {
 
 // ---------------------------------------------------------------- Relatório
 
-function refreshReport() {
-  report = buildClassReport(plan, records);
-  const html = renderClassReportHtml(report);
-  $<HTMLIFrameElement>('#rp-view').srcdoc = html;
+/** Plano usado no relatório: o de uma turma, ou o plano em edição. */
+function reportPlan(): Plan {
+  const v = $<HTMLSelectElement>('#rp-plan-select').value;
+  return (v && loadTurmas().find((t) => t.id === v)?.plan) || plan;
+}
+
+export function refreshReportPlans() {
+  const sel = $<HTMLSelectElement>('#rp-plan-select');
+  const current = sel.value;
+  sel.replaceChildren(new Option(`Plano em edição: ${plan.title}`, ''), ...loadTurmas().filter((t) => t.plan).map((t) => new Option(`Turma ${t.name}: ${t.plan!.title}`, t.id)));
+  if ([...sel.options].some((o) => o.value === current)) sel.value = current;
+}
+
+export function refreshReport() {
+  report = buildClassReport(reportPlan(), records);
+  $<HTMLIFrameElement>('#rp-view').srcdoc = renderClassReportHtml(report);
   for (const id of ['#rp-html', '#rp-csv', '#rp-print']) $<HTMLButtonElement>(id).disabled = !records.length;
+  $('#rp-count').textContent = `${records.length} registro(s) guardado(s) neste aparelho.`;
+}
+
+/** Registros recebidos (para a aba GitHub enviar e trazer). */
+export const receivedRecords = () => records;
+
+export function addReceived(incoming: StudentRecord[]) {
+  records = mergeRecords(records, incoming);
+  saveReceived(records);
+  refreshReport();
 }
 
 async function importRecords(files: File[]) {
-  const ok: string[] = [];
+  const ok: StudentRecord[] = [];
   const bad: string[] = [];
   for (const f of files) {
     try {
-      records.push(parseRecord(await f.text(), f.name));
-      ok.push(f.name);
+      ok.push(parseRecord(await f.text(), f.name));
     } catch (err) {
       bad.push((err as Error).message);
     }
   }
-  refreshReport();
+  addReceived(ok);
   rpMsg(`${ok.length} registro(s) importado(s); ${report!.students.length} aluno(s) no relatório.${bad.length ? ` Problemas: ${bad.join(' · ')}` : ''}`, bad.length > 0);
 }
 
-const fileBase = () => slugify(plan.title) || 'plano';
+const fileBase = () => slugify(reportPlan().title) || 'plano';
 
 export function initTeacher() {
   $<HTMLSelectElement>('#ac-mission').replaceChildren(...MISSIONS.map((m, i) => new Option(`${i + 1}. ${m.title} (${m.concept})`, m.id)));
-  $('#ac-source').addEventListener('change', updateSourceFields);
+  $<HTMLSelectElement>('#ac-lesson').replaceChildren(...LESSONS.map((l) => new Option(`Módulo ${l.module}: ${l.title} (${l.minutes} min)`, l.id)));
+  $('#ac-kind').addEventListener('change', updateFields);
+  $('#ac-source').addEventListener('change', updateFields);
   $('#ac-add').addEventListener('click', addActivity);
   for (const [sel, field] of [['#pl-title', 'title'], ['#pl-group', 'group'], ['#pl-teacher', 'teacher'], ['#pl-instructions', 'instructions']] as const) {
     $(sel).addEventListener('input', (e) => {
@@ -138,35 +186,21 @@ export function initTeacher() {
     });
   }
   $('#pl-new').addEventListener('click', () => {
-    plan = emptyPlan();
+    plan = { ...emptyPlan(), teacher: teacher.name };
     renderPlan();
     planMsg('Plano novo. Ele tem uma identificação própria: registros de planos antigos não se misturam com este.');
   });
   $('#pl-sample').addEventListener('click', () => {
-    plan = samplePlan();
+    plan = { ...samplePlan(), teacher: teacher.name };
     renderPlan();
     planMsg('Plano de exemplo carregado: Detetive numa caverna sorteada e as três primeiras missões de blocos.');
   });
   $('#pl-copy').addEventListener('click', () => (plan.activities.length ? copyFromBox($<HTMLTextAreaElement>('#pl-code'), (t) => planMsg(t), 'Código copiado.') : planMsg('Adicione pelo menos uma atividade.', true)));
   $('#pl-download').addEventListener('click', () => {
     if (!plan.activities.length) return planMsg('Adicione pelo menos uma atividade.', true);
-    planMsg(downloadText(`plano-${fileBase()}.json`, JSON.stringify(plan, null, 2), 'application/json') ? 'Arquivo do plano baixado.' : 'O navegador bloqueou o download: use o código.', false);
-  });
-  $('#pl-try').addEventListener('click', () => {
-    if (!plan.activities.length) return planMsg('Adicione pelo menos uma atividade.', true);
-    setPlan(JSON.parse(JSON.stringify(plan)));
-    nav.refreshHome();
-    nav.show('inicio');
+    planMsg(downloadText(`plano-${slugify(plan.title) || 'plano'}.json`, JSON.stringify(plan, null, 2), 'application/json') ? 'Arquivo do plano baixado.' : 'O navegador bloqueou o download: use o código.');
   });
 
-  document.querySelectorAll<HTMLButtonElement>('[data-sub]').forEach((b) =>
-    b.addEventListener('click', () => {
-      document.querySelectorAll<HTMLButtonElement>('[data-sub]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
-      $('#sub-planejar').hidden = b.dataset.sub !== 'planejar';
-      $('#sub-relatorio').hidden = b.dataset.sub !== 'relatorio';
-      if (b.dataset.sub === 'relatorio') refreshReport();
-    }),
-  );
   $<HTMLInputElement>('#rp-files').addEventListener('change', async (e) => {
     const input = e.target as HTMLInputElement;
     const files = [...(input.files ?? [])];
@@ -181,20 +215,29 @@ export function initTeacher() {
     try {
       plan = parsePlanFile(await file.text());
       renderPlan();
+      refreshReportPlans();
+      $<HTMLSelectElement>('#rp-plan-select').value = '';
       refreshReport();
-      rpMsg(`Plano "${plan.title}" aberto.`);
+      rpMsg(`Plano "${plan.title}" aberto (agora é o plano em edição).`);
     } catch (err) {
       rpMsg((err as Error).message, true);
     }
   });
+  $('#rp-plan-select').addEventListener('change', refreshReport);
   $('#rp-clear').addEventListener('click', () => {
     records = [];
+    saveReceived(records);
     refreshReport();
-    rpMsg('Registros removidos desta tela.');
+    rpMsg('Registros removidos deste aparelho (os do GitHub, se houver, continuam lá).');
   });
   $('#rp-html').addEventListener('click', () => report && downloadText(`relatorio-turma-${fileBase()}.html`, renderClassReportHtml(report), 'text/html'));
   $('#rp-csv').addEventListener('click', () => report && downloadText(`relatorio-turma-${fileBase()}.csv`, classReportCsv(report), 'text/csv'));
   $('#rp-print').addEventListener('click', () => $<HTMLIFrameElement>('#rp-view').contentWindow?.print());
-  updateSourceFields();
+  updateFields();
   renderPlan();
+  refreshReportPlans();
 }
+
+/** HTML do relatório atual (a aba GitHub guarda uma cópia). */
+export const currentReportHtml = () => (report ? renderClassReportHtml(report) : null);
+export const currentReportPlan = () => reportPlan();

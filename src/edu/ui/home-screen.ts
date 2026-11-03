@@ -1,9 +1,10 @@
-// Tela Início (aluno): apelido, abrir a atividade do professor, ver o andamento e enviar o registro.
+// Tela Início da área do aluno: atividades da turma (aluno com login) ou do plano aberto por código
+// (visitante), andamento de cada uma e envio do registro ao professor.
 import { $, downloadText, showMessage } from '../../ui/dom';
 import { slugify } from '../../util/format';
-import { parsePlanCode, parsePlanFile, summarizeActivity, type Plan } from '../plan';
+import { KIND_LABEL, parsePlanCode, parsePlanFile, summarizeActivity, type Plan } from '../plan';
 import { clearRecord } from '../edu-storage';
-import { currentRecord, nav, session, setPlan, setStudent, sourceFromActivity, studentName } from './session';
+import { currentRecord, isStudent, nav, session, setPlan, setStudent, sourceFromActivity, studentName } from './session';
 
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 
@@ -14,9 +15,14 @@ function openPlan(p: Plan) {
 }
 
 export function renderHome() {
+  const student = isStudent();
+  document.querySelectorAll<HTMLElement>('.so-visitante').forEach((e) => (e.hidden = student));
+  document.querySelectorAll<HTMLElement>('.so-aluno').forEach((e) => (e.hidden = !student));
   $<HTMLInputElement>('#student-name').value = session.student;
+  if (student) $('#turma-info').textContent = session.turma ? `Turma ${session.turma.name}${session.turma.teacher ? ` · Professor(a) ${session.turma.teacher}` : ''}` : '';
   const p = session.plan;
   $('#plan-box').hidden = !p;
+  $('#plan-none').hidden = !student || !!p;
   if (!p) return;
   $('#plan-title').textContent = p.title;
   $('#plan-meta').textContent = [p.group && `Turma ${p.group}`, p.teacher && `Professor(a) ${p.teacher}`, `${p.activities.length} atividade${p.activities.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
@@ -30,7 +36,7 @@ export function renderHome() {
       const info = document.createElement('div');
       info.innerHTML = `<b></b><small></small>`;
       info.querySelector('b')!.textContent = `${i + 1}. ${a.title}`;
-      info.querySelector('small')!.textContent = `${a.kind === 'detetive' ? '🔎 Detetive' : '🧩 Blocos'}${a.instructions ? ` · ${a.instructions}` : ''}`;
+      info.querySelector('small')!.textContent = `${KIND_LABEL[a.kind]}${a.instructions ? ` · ${a.instructions}` : ''}`;
       const status = Object.assign(document.createElement('span'), {
         className: 'status',
         textContent: s.attempts ? (s.won ? stars(s.stars) : `${s.attempts} tentativa${s.attempts > 1 ? 's' : ''}`) : 'ainda não fez',
@@ -42,6 +48,7 @@ export function renderHome() {
           $('#student-name').focus();
           return;
         }
+        if (a.kind === 'trilha') return nav.lesson(a.lessonId!, a);
         const src = sourceFromActivity(a);
         if (a.kind === 'detetive') nav.detective(src);
         else nav.blocks(src);

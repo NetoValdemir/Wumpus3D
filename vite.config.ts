@@ -5,7 +5,7 @@ export default defineConfig({
   base: './',
   build: {
     chunkSizeWarningLimit: 900, // o modo escola carrega o Blockly (~800 KB) só na página dele
-    // Duas páginas: o jogo completo e o modo escola (D22)
-    rollupOptions: { input: { main: 'index.html', escola: 'escola.html' } },
+    // Páginas: o jogo completo e o modo escola (tela inicial, área do aluno e área do professor; D22, D23)
+    rollupOptions: { input: { main: 'index.html', escola: 'escola.html', aluno: 'aluno.html', professor: 'professor.html' } },
   },
 });

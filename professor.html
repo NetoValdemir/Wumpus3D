@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Área do professor — Caverna do Pensamento</title>
+  </head>
+  <body class="escola">
+    <header class="topbar">
+      <a class="brand" href="./escola.html"><span class="logo" aria-hidden="true"></span>Caverna do Pensamento</a>
+      <nav aria-label="Telas">
+        <button data-tab="turmas">Turmas</button>
+        <button data-tab="planejar">Planejar</button>
+        <button data-tab="relatorio">Relatório</button>
+        <button data-tab="criador">Criador</button>
+        <button data-tab="github">GitHub</button>
+      </nav>
+      <span class="who" id="who"></span>
+      <button id="logout" class="ghost">Sair</button>
+    </header>
+
+    <main>
+      <!-- ================= Turmas ================= -->
+      <section id="tab-turmas" class="tab">
+        <div class="grid2">
+          <div class="card">
+            <h2>Suas turmas</h2>
+            <label for="tm-select">Turma</label>
+            <select id="tm-select"></select>
+            <label for="tm-new-name">Nova turma</label>
+            <div class="row"><input id="tm-new-name" maxlength="40" placeholder="7º ano B" /><button id="tm-new" class="primary">Criar</button></div>
+            <p id="tm-msg" class="msg" role="status"></p>
+            <aside class="note">
+              <b>Como os alunos entram</b>
+              <ol>
+                <li>Acrescente os alunos: cada um ganha um PIN de 4 dígitos.</li>
+                <li>Escolha o plano da turma (aba Planejar → aqui, "Usar o plano em edição").</li>
+                <li>Gere o código da turma e entregue, junto com os cartões de PIN.</li>
+                <li>O aluno abre a tela inicial, "Sou aluno", cola o código uma vez e entra com apelido e PIN.</li>
+              </ol>
+              <p class="hint">Os PINs organizam o acesso, mas não são proteção forte: o site é público e a conferência acontece no aparelho do aluno.</p>
+            </aside>
+          </div>
+          <div class="card" id="tm-detail" hidden>
+            <label for="tm-name">Nome da turma</label>
+            <input id="tm-name" maxlength="40" />
+            <h3>Alunos</h3>
+            <div class="table-wrap"><table class="students"><thead><tr><th>Apelido</th><th>PIN</th><th></th></tr></thead><tbody id="tm-students"></tbody></table></div>
+            <p id="tm-empty" class="hint">Nenhum aluno ainda.</p>
+            <label for="tm-names">Acrescentar alunos (um apelido por linha; evite nome completo)</label>
+            <textarea id="tm-names" rows="4" placeholder="Ana B.&#10;Bruno C.&#10;Carla D."></textarea>
+            <button id="tm-add">Acrescentar alunos</button>
+            <h3>Plano da turma</h3>
+            <p>Atual: <b id="tm-plan"></b></p>
+            <button id="tm-use-plan">Usar o plano em edição (aba Planejar)</button>
+            <h3>Entregar à turma</h3>
+            <div class="row">
+              <button id="tm-generate" class="primary">Gerar código da turma</button>
+              <button id="tm-cards">Baixar cartões de PIN</button>
+            </div>
+            <textarea id="tm-code" rows="3" readonly spellcheck="false" placeholder="Gere o código depois de qualquer mudança na turma ou no plano."></textarea>
+            <div class="row">
+              <button id="tm-copy">Copiar código</button>
+              <button id="tm-download">Baixar arquivo da turma</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Planejar ================= -->
+      <section id="tab-planejar" class="tab" hidden>
+        <div class="grid2">
+          <div class="card">
+            <h2>Plano</h2>
+            <label for="pl-title">Título</label>
+            <input id="pl-title" maxlength="80" />
+            <div class="grid2 tight">
+              <div><label for="pl-group">Turma</label><input id="pl-group" maxlength="40" placeholder="7º ano B" /></div>
+              <div><label for="pl-teacher">Professor(a)</label><input id="pl-teacher" maxlength="60" /></div>
+            </div>
+            <label for="pl-instructions">Orientações para os alunos</label>
+            <textarea id="pl-instructions" rows="3"></textarea>
+            <h3>Atividades</h3>
+            <ol id="pl-activities" class="activities edit"></ol>
+            <p id="pl-empty" class="hint">Nenhuma atividade ainda. Adicione ao lado.</p>
+            <div class="row">
+              <button id="pl-new" class="ghost">Novo plano em branco</button>
+              <button id="pl-sample" class="ghost">Usar plano de exemplo</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Adicionar atividade</h2>
+            <label for="ac-kind">Modo</label>
+            <select id="ac-kind">
+              <option value="detetive">Detetive (jogar e anotar pistas)</option>
+              <option value="blocos">Programador com blocos</option>
+              <option value="trilha">Lição da Trilha de IA</option>
+              <option value="agente">Agente para a Arena da turma</option>
+            </select>
+            <div id="ac-trilha" hidden><label for="ac-lesson">Lição</label><select id="ac-lesson"></select></div>
+            <p id="ac-agente-hint" class="hint" hidden>Cada aluno monta um robô com blocos e testa em 3 cavernas de treino. No relatório, os programas de todos jogam as mesmas 20 cavernas sorteadas por esta semente, junto com os agentes do jogo.</p>
+            <div id="ac-source-row"><label for="ac-source">Caverna</label>
+            <select id="ac-source">
+              <option value="missao">Missão da campanha</option>
+              <option value="sorteio">Sorteada (a mesma para todos)</option>
+              <option value="minha">Uma das minhas cavernas (Criador)</option>
+              <option value="codigo">Código de caverna</option>
+            </select></div>
+            <div id="ac-missao"><label for="ac-mission">Missão</label><select id="ac-mission"></select></div>
+            <div id="ac-sorteio" class="grid2 tight" hidden>
+              <div><label for="ac-seed">Semente (palavra)</label><input id="ac-seed" value="turma" /></div>
+              <div>
+                <label for="ac-size">Tamanho</label>
+                <select id="ac-size"><option value="4">4 × 4</option><option value="5">5 × 5</option><option value="6">6 × 6</option></select>
+              </div>
+            </div>
+            <div id="ac-minha" hidden><label for="ac-cave">Caverna</label><select id="ac-cave"></select></div>
+            <div id="ac-codigo" hidden><label for="ac-code">Código (CAV1-…)</label><textarea id="ac-code" rows="2" spellcheck="false"></textarea></div>
+            <label for="ac-title">Título da atividade</label>
+            <input id="ac-title" maxlength="80" placeholder="deixe vazio para usar o nome da caverna" />
+            <label for="ac-instructions">Orientação (opcional)</label>
+            <textarea id="ac-instructions" rows="2"></textarea>
+            <button id="ac-add" class="primary">Adicionar ao plano</button>
+            <p id="ac-msg" class="msg" role="status"></p>
+
+            <h2>Entregar aos alunos</h2>
+            <p class="hint">Para as suas turmas, use a aba <b>Turmas → Usar o plano em edição</b> e entregue o código da turma. O código abaixo é para quem joga sem turma (área do aluno, "Atividade do professor").</p>
+            <textarea id="pl-code" rows="3" readonly spellcheck="false"></textarea>
+            <div class="row">
+              <button id="pl-copy">Copiar código</button>
+              <button id="pl-download">Baixar arquivo do plano</button>
+            </div>
+            <p id="pl-msg" class="msg" role="status"></p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= Relatório ================= -->
+      <section id="tab-relatorio" class="tab" hidden>
+
+          <div class="card">
+            <h2>Relatório da turma</h2>
+            <p class="hint">Junte aqui os arquivos de registro que os alunos enviaram (pode escolher vários de uma vez). Eles ficam guardados neste aparelho (e no GitHub, se você usar a aba GitHub). Registros de outros planos aparecem num aviso.</p>
+            <label for="rp-plan-select">Plano do relatório</label>
+            <select id="rp-plan-select"></select>
+            <div class="row">
+              <label class="file primary">Abrir registros dos alunos<input type="file" id="rp-files" accept=".json,application/json" multiple /></label>
+              <label class="file">Abrir arquivo do plano<input type="file" id="rp-plan" accept=".json,application/json" /></label>
+              <button id="rp-clear" class="ghost">Limpar</button>
+            </div>
+            <p id="rp-msg" class="msg" role="status"></p>
+            <p id="rp-count" class="hint"></p>
+            <div class="row">
+              <button id="rp-html" disabled>Baixar relatório (HTML)</button>
+              <button id="rp-csv" disabled>Baixar planilha (CSV)</button>
+              <button id="rp-print" disabled>Imprimir</button>
+            </div>
+          </div>
+          <iframe id="rp-view" class="report-view" title="Relatório da turma" sandbox="allow-same-origin allow-modals"></iframe>
+      </section>
+
+      <!-- ================= Criador ================= -->
+      <section id="tab-criador" class="tab" hidden>
+        <div class="play">
+          <div class="board-wrap">
+            <svg id="cr-board" class="board" role="group" aria-label="Caverna em construção"></svg>
+          </div>
+          <aside class="side">
+            <h2>Criador de cavernas</h2>
+            <label for="cr-name">Nome da caverna</label>
+            <input id="cr-name" maxlength="60" value="Minha caverna" />
+            <label for="cr-size">Tamanho</label>
+            <select id="cr-size">
+              <option value="3">3 × 3</option>
+              <option value="4" selected>4 × 4</option>
+              <option value="5">5 × 5</option>
+              <option value="6">6 × 6</option>
+              <option value="7">7 × 7</option>
+              <option value="8">8 × 8</option>
+            </select>
+            <fieldset class="tools">
+              <legend>Ferramenta (depois toque nas salas)</legend>
+              <label><input type="radio" name="tool" value="poco" checked /> <span class="legend pit"></span> Poço</label>
+              <label><input type="radio" name="tool" value="wumpus" /> <span class="legend wumpus"></span> Wumpus</label>
+              <label><input type="radio" name="tool" value="ouro" /> <span class="legend gold"></span> Ouro</label>
+              <label><input type="radio" name="tool" value="apagar" /> Apagar</label>
+            </fieldset>
+            <ul id="cr-problems" class="problems" role="status"></ul>
+            <div class="row">
+              <button id="cr-save" class="primary">Salvar</button>
+              <button id="cr-play-det">Jogar no Detetive</button>
+              <button id="cr-play-blk">Programar nela</button>
+            </div>
+            <div class="row">
+              <button id="cr-clear" class="ghost">Começar do zero</button>
+            </div>
+            <h3>Compartilhar</h3>
+            <p class="hint">Mande este código para um colega. Ele cola em "Abrir código" e joga a sua caverna.</p>
+            <textarea id="cr-code" rows="2" spellcheck="false" placeholder="O código aparece aqui quando a caverna estiver pronta."></textarea>
+            <div class="row">
+              <button id="cr-copy">Copiar código</button>
+              <button id="cr-open">Abrir código</button>
+            </div>
+            <h3>Minhas cavernas</h3>
+            <ul id="cr-list" class="cave-list"></ul>
+            <p id="cr-msg" class="msg" role="status"></p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= GitHub ================= -->
+      <section id="tab-github" class="tab" hidden>
+        <div class="grid2">
+          <div class="card">
+            <h2>Guardar no GitHub (opcional)</h2>
+            <p class="hint">Guarde turmas, planos, registros e relatórios num repositório <b>privado</b> seu, para usar em outro computador e ter o histórico. O token fica só neste navegador; nunca vai para o site.</p>
+            <div class="grid2 tight">
+              <div><label for="gh-owner">Dono (seu usuário do GitHub)</label><input id="gh-owner" autocomplete="off" /></div>
+              <div><label for="gh-repo">Repositório privado</label><input id="gh-repo" autocomplete="off" placeholder="caverna-turmas" /></div>
+            </div>
+            <label for="gh-folder">Pasta dentro do repositório</label>
+            <input id="gh-folder" value="caverna" autocomplete="off" />
+            <label for="gh-token">Token de acesso (fine-grained)</label>
+            <input id="gh-token" type="password" autocomplete="off" spellcheck="false" />
+            <label class="check"><input type="checkbox" id="gh-remember" /> Lembrar o token neste aparelho (senão, vale até fechar a aba)</label>
+            <div class="row">
+              <button id="gh-test">Testar conexão</button>
+              <button id="gh-send" class="primary">Enviar tudo para o GitHub</button>
+              <button id="gh-bring">Trazer do GitHub</button>
+              <button id="gh-forget" class="ghost">Esquecer o token</button>
+            </div>
+            <p id="gh-msg" class="msg" role="status"></p>
+          </div>
+          <div class="card">
+            <h2>Como preparar (uma vez)</h2>
+            <ol class="steps">
+              <li>Em github.com, crie um repositório novo marcado como <b>Private</b> (por exemplo, <code>caverna-turmas</code>).</li>
+              <li>Vá em <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b>.</li>
+              <li>Em <b>Repository access</b>, escolha <b>Only select repositories</b> e marque só esse repositório.</li>
+              <li>Em <b>Permissions → Contents</b>, escolha <b>Read and write</b>. Dê uma data de validade (por exemplo, o fim do semestre).</li>
+              <li>Copie o token e cole ao lado. Se ele vazar, apague-o no mesmo lugar e crie outro.</li>
+            </ol>
+            <p class="hint">O que é guardado: <code>turmas/</code> (com os PINs, por isso o repositório precisa ser privado), <code>planos/</code>, <code>registros/</code> e <code>relatorios/</code>. Cada envio vira uma versão no histórico do repositório. O jogo se recusa a gravar num repositório público.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/edu/ui/professor.ts"></script>
+  </body>
+</html>

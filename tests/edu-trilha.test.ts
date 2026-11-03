@@ -6,7 +6,7 @@ import { arenaMaps, mulberry32 } from '../src/arena/rng';
 import { explainCell } from '../src/edu/trilha/explain';
 import { pitCombinations } from '../src/edu/trilha/combos';
 import { bfsTrace } from '../src/edu/trilha/bfs';
-import { LITE_GENES, evaluateGenome, trainLite } from '../src/edu/trilha/ga-lite';
+import { LITE_GENES, LITE_RUN, TEST_SET, TRAIN_SETS, evaluateGenome, trainLite } from '../src/edu/trilha/ga-lite';
 import { classArena } from '../src/edu/trilha/class-arena';
 import { LESSONS, checkAnswer, isQuestion, lessonById, lessonStars, replay, type Question } from '../src/edu/trilha/lessons';
 import { programFromJson } from '../src/edu/blockly-json';
@@ -79,6 +79,18 @@ describe('genético de aula (módulo 5)', () => {
     expect(a.at(-1)!.best).toBeGreaterThanOrEqual(a[0].best - 1e-9); // elitismo: o melhor nunca piora
     expect(evaluateGenome(g, maps).games).toBe(6);
   });
+
+  it('a lição mostra o sobreajuste: 1 caverna decora, 40 cavernas generalizam melhor', () => {
+    const result = (which: 'uma' | 'varias') => {
+      const g = [...trainLite({ maps: TRAIN_SETS[which], population: LITE_RUN.population, generations: LITE_RUN.generations, rng: mulberry32(LITE_RUN.seed[which]) })].at(-1)!.genome;
+      return { train: evaluateGenome(g, TRAIN_SETS[which]).avg, test: evaluateGenome(g, TEST_SET).avg };
+    };
+    const uma = result('uma');
+    const varias = result('varias');
+    expect(uma.train - uma.test).toBeGreaterThan(500); // decorou a caverna do treino
+    expect(Math.abs(varias.train - varias.test)).toBeLessThan(150);
+    expect(varias.test).toBeGreaterThan(uma.test);
+  }, 30000);
 });
 
 describe('Arena da turma (módulo 6)', () => {

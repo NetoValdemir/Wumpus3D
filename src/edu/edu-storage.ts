@@ -14,7 +14,7 @@ const KEY = {
   stars: 'wumpus3d.escola.estrelas',
 };
 
-function read<T>(key: string, fallback: T): T {
+export function read<T>(key: string, fallback: T): T {
   try {
     return (JSON.parse(localStorage.getItem(key) ?? 'null') as T) ?? fallback;
   } catch {
@@ -22,7 +22,7 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write(key: string, value: unknown): boolean {
+export function write(key: string, value: unknown): boolean {
   try {
     if (value === null) localStorage.removeItem(key);
     else localStorage.setItem(key, JSON.stringify(value));
@@ -100,3 +100,6 @@ export function resetMemory() {
   programs = read(KEY.programs, {});
   stars = read(KEY.stars, {});
 }
+
+/** Todos os programas de blocos salvos neste aparelho (para a Arena da trilha). */
+export const listPrograms = () => Object.entries(programs);

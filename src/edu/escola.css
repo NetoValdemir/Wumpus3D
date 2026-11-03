@@ -219,6 +219,49 @@ pre { background: #120f0c; padding: 0.6rem; border-radius: 8px; font-size: 0.82r
 .activities.edit li small { font-size: 0.85rem; }
 .report-view { width: 100%; height: 75vh; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
 
+/* ---------- Login e barra de cima das áreas ---------- */
+.who { color: var(--muted); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 16rem; }
+main.login { max-width: 1000px; }
+.card.role.aluno { border-top: 4px solid var(--accent); }
+.card.role.professor { border-top: 4px solid var(--blue); }
+button.wide { width: 100%; margin-top: 0.8rem; }
+button.link { background: none; border: none; color: var(--accent); padding: 0; min-height: auto; text-decoration: underline; font-size: 0.9rem; }
+.note { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem 1rem; margin-top: 1rem; font-size: 0.92rem; }
+.note ol { padding-left: 1.2rem; margin: 0.4rem 0; }
+label.check { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
+label.check input { width: auto; min-height: auto; }
+table.students { width: 100%; border-collapse: collapse; }
+table.students th, table.students td { border-bottom: 1px solid var(--line); padding: 0.35rem 0.4rem; text-align: left; }
+table.students td.pin { font-family: ui-monospace, monospace; letter-spacing: 0.25em; color: var(--accent); }
+.steps { padding-left: 1.2rem; }
+.steps li { margin-bottom: 0.4rem; }
+.table-wrap { overflow-x: auto; }
+
+/* ---------- Trilha de IA ---------- */
+.lesson-body { min-height: 40vh; }
+.lesson-text p { max-width: 70ch; }
+.lesson-play { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(260px, 1fr); gap: 1rem; align-items: start; }
+.lesson-play .board-wrap { position: static; }
+.lesson-side ul { padding-left: 1.1rem; }
+.lesson-nav { margin-top: 1rem; }
+.prompt { font-size: 1.15rem; max-width: 70ch; }
+.options { display: grid; gap: 0.5rem; max-width: 40rem; }
+.options button { justify-content: flex-start; text-align: left; }
+.known { list-style: none; padding: 0; font-size: 0.95rem; }
+table.combos { border-collapse: collapse; font-size: 0.9rem; margin: 0.6rem 0; }
+table.combos th, table.combos td { border: 1px solid var(--line); padding: 0.3rem 0.5rem; }
+table.combos td.c { text-align: center; }
+table.combos tr.off td { opacity: 0.45; text-decoration: line-through; }
+table.combos tr.ref th, table.combos tr.ref td { color: var(--muted); font-style: italic; }
+table.combos tr.me th { color: var(--accent); }
+.mini-chart { width: 100%; max-width: 420px; display: block; margin: 0.4rem 0; }
+.mini-chart polyline { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.mini-chart circle { fill: var(--accent); }
+.mini-chart line.zero { stroke: var(--line); stroke-dasharray: 4 3; }
+.mini-chart text { fill: var(--muted); font-size: 10px; }
+#ls-number { max-width: 10rem; }
+#ls-reflexao { font-family: inherit; font-size: 1rem; }
+
 /* ---------- Celular ---------- */
 @media (max-width: 860px) {
   body.escola { font-size: 16px; }
@@ -227,7 +270,8 @@ pre { background: #120f0c; padding: 0.6rem; border-radius: 8px; font-size: 0.82r
   .topbar nav button { padding: 0.4em 0.45em; font-size: 0.86rem; }
   .to3d { margin-left: auto; }
   main { padding: 0.6rem; }
-  .grid2, .choices, .play, .editor-body { grid-template-columns: minmax(0, 1fr); }
+  .grid2, .choices, .play, .editor-body, .lesson-play { grid-template-columns: minmax(0, 1fr); }
+  .who { max-width: 9rem; }
   .side select { min-width: 0; max-width: 100%; }
   .board-wrap { position: static; }
   .editor-head { grid-template-columns: 1fr; }

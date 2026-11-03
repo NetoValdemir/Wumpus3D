@@ -217,3 +217,19 @@ export function summarizeActivity(attempts: Attempt[]): ActivitySummary {
     lastOutcome: attempts.at(-1)?.outcome ?? null,
   };
 }
+
+/** Junta registros novos aos que já existem, sem repetir tentativas (mesmo aluno, plano e horário). */
+export function mergeRecords(current: StudentRecord[], incoming: StudentRecord[]): StudentRecord[] {
+  const out = current.map((r) => ({ ...r, attempts: [...r.attempts] }));
+  for (const r of incoming) {
+    const same = out.find((x) => x.student === r.student && x.planId === r.planId);
+    if (!same) {
+      out.push({ ...r, attempts: [...r.attempts] });
+      continue;
+    }
+    const seen = new Set(same.attempts.map((a) => a.at + a.activityId));
+    same.attempts.push(...r.attempts.filter((a) => !seen.has(a.at + a.activityId)));
+    same.attempts.sort((a, b) => a.at.localeCompare(b.at));
+  }
+  return out;
+}

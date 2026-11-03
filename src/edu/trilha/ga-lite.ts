@@ -5,6 +5,16 @@ import type { MapLayout } from '../../game/world';
 import { BAYES_LIKE_GENOME, GENES, GENE_LIMIT } from '../../agents/genome';
 import { fitness } from '../../agents/genetic';
 import { playToEnd } from '../../agents/benchmark';
+import { arenaMaps } from '../../arena/rng';
+
+/**
+ * Cavernas e sementes fixas da lição (os alunos veem os mesmos números). Medido: com 1 caverna o melhor
+ * agente faz 1470 pontos no treino e 585 em 100 cavernas novas (decorou); com 40, 544 no treino e 609 nas
+ * novas. O probabilístico, ajustado à mão com muito mais testes, faz 686 nas novas.
+ */
+export const TRAIN_SETS = { uma: arenaMaps('trilha-ga-treino', 1, 4, 0.2), varias: arenaMaps('trilha-ga-treino', 40, 4, 0.2) };
+export const TEST_SET = arenaMaps('trilha-ga-teste', 100, 4, 0.2);
+export const LITE_RUN = { population: 8, generations: 8, seed: { uma: 11, varias: 22 } };
 
 /** Pesos que a aula deixa evoluir: risco, distância e novidade (índices em GENES). */
 export const LITE_GENES = [0, 1, 3];
@@ -27,11 +37,13 @@ export interface LiteGeneration {
 
 const clamp = (v: number) => Math.max(-GENE_LIMIT, Math.min(GENE_LIMIT, v));
 
-/** Começa de pesos sorteados nos genes da aula (o resto igual ao probabilístico) e evolui. */
+/** Começa do ponto de partida e de pesos sorteados nos genes da aula (o resto igual ao probabilístico) e evolui. */
 export function* trainLite(o: LiteOptions): Generator<LiteGeneration> {
   const base = o.start ?? BAYES_LIKE_GENOME;
   const randomOne = () => base.map((v, i) => (LITE_GENES.includes(i) ? (o.rng() * 2 - 1) * GENE_LIMIT : v));
-  let pop = Array.from({ length: o.population }, randomOne);
+  // O primeiro indivíduo é o ponto de partida (os pesos do agente probabilístico): com o elitismo, o
+  // treino nunca termina pior que ele nas cavernas de treino
+  let pop = [base, ...Array.from({ length: o.population - 1 }, randomOne)];
   for (let g = 1; g <= o.generations; g++) {
     const scored = pop.map((genome) => ({ genome, fit: fitness(genome, o.maps) })).sort((a, b) => b.fit - a.fit);
     yield { generation: g, best: scored[0].fit, average: scored.reduce((s, x) => s + x.fit, 0) / scored.length, genome: scored[0].genome };
