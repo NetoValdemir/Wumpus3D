@@ -127,6 +127,11 @@ Acrescente novas entradas no fim.
 - **Prévia do modo escola:** o dono escolheu testar como Artifact privado no claude.ai, sem mexer no site: https://claude.ai/artifact/NqCJA2MhDw9AfJhHMqY1Xu (commit 26a4702). Montada por `scripts/previa/montar-previa.py`; lá downloads e impressão são bloqueados (a prévia avisa) e o jogo 3D não está incluído. Para atualizar, publique na mesma URL.
 - **Registro do contexto:** proposta, scripts de verificação (`scripts/verificacao/`), montador da prévia e o estado das branches (seção "Branches e publicação" do `CLAUDE.md`) foram guardados no repositório para continuar em outra sessão.
 
+### 29. Refatoração na `main` (3/11/2026)
+- **Pedido:** fazer o merge da `refatoracao` com a `main`.
+- **Feito:** PR #8 (https://github.com/NetoValdemir/Wumpus3D/pull/8), merge bb40145; a `main` foi trazida para a `educacional`. O push disparou o deploy (actions/runs/41643063079: testes, ranking oficial, build e publicação com sucesso). O site oficial passa a seguir a `main` normalmente.
+- **Verificado:** `npm run check` na `refatoracao` antes do merge (49 testes).
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
@@ -144,7 +149,7 @@ Regras atuais (D14, D15, D16), agentes com as correções de D17 e genético v2 
 - Conferir no log do Actions se `ARENA_SEED` está sendo usado.
 - Testes de interface no `npm run check`: os roteiros Playwright de `scripts/verificacao/` existem, mas rodam à mão (precisam do site no ar e, para o 3D, de WebGL por software).
 - Modo escola: testar com turmas; itens da proposta não feitos (Cientista de agentes/Python, Arena da turma, Desplugado, leitura em voz alta); dividir o bundle do Blockly.
-- Levar `refatoracao`/`educacional` para a `main` (PR) quando o dono decidir; até lá, um push na `main` volta o site para a versão antiga.
+- Levar a `educacional` (modo escola) para a `main` (PR) quando o dono decidir.
 - P(Wumpus) uniforme entre candidatas; enumeração aproximada com fronteira > 16 salas.
 - Agente genético não supera o probabilístico; novas características ou calibração de parâmetros poderiam mudar isso.
 - Bundle ~600 KB (`import * as THREE`).
