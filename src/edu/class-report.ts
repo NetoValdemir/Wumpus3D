@@ -1,7 +1,9 @@
 // Relatório da turma: junta os registros dos alunos (arquivos que eles enviam) e mostra, por aluno e por
 // atividade, o que cada um fez. Gera HTML autossuficiente (para abrir, imprimir ou guardar) e CSV. Sem DOM.
 import { escapeHtml as esc } from '../util/format';
-import { describeCave, summarizeActivity, type ActivityKind, type ActivitySummary, type Attempt, type Plan, type StudentRecord } from './plan';
+import { KIND_LABEL, arenaLayouts, describeActivity, summarizeActivity, type ActivityKind, type ActivitySummary, type Attempt, type Plan, type StudentRecord } from './plan';
+import { programFromJson } from './blockly-json';
+import { classArena, type ArenaRow } from './trilha/class-arena';
 
 export interface ReportActivity {
   id: string;
@@ -26,6 +28,8 @@ export interface ClassReport {
   activities: ReportActivity[];
   students: ReportStudent[];
   warnings: string[];
+  /** Arena da turma: uma por atividade "agente", com o último programa de cada aluno */
+  arenas: { activity: ReportActivity; maps: number; rows: ArenaRow[] }[];
 }
 
 const OUTCOME: Record<Attempt['outcome'], string> = {
@@ -46,7 +50,7 @@ export function buildClassReport(plan: Plan | null, records: StudentRecord[]): C
     if (other.length) warnings.push(`${other.length} registro(s) são de outro plano e ficaram de fora: ${other.map((r) => `${r.student} ("${r.planTitle}")`).join(', ')}.`);
   }
   const activities: ReportActivity[] = plan
-    ? plan.activities.map((a) => ({ id: a.id, title: a.title, kind: a.kind, detail: describeCave(a.cave) }))
+    ? plan.activities.map((a) => ({ id: a.id, title: a.title, kind: a.kind, detail: describeActivity(a) }))
     : [...new Map(own.flatMap((r) => r.attempts).map((a) => [a.activityId, { id: a.activityId, title: a.activityTitle, kind: a.kind, detail: '' }])).values()];
   const byName = new Map<string, Attempt[]>();
   for (const r of own) byName.set(r.student, [...(byName.get(r.student) ?? []), ...r.attempts]);
@@ -59,7 +63,18 @@ export function buildClassReport(plan: Plan | null, records: StudentRecord[]): C
       return { name, attempts: unique, per, stars: sums.reduce((s, x) => s + x.stars, 0), done: sums.filter((x) => x.won).length };
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const arenas = (plan?.activities ?? [])
+    .filter((a) => a.kind === 'agente')
+    .map((a) => {
+      const entries = students.flatMap((s) => {
+        const last = s.attempts.filter((t) => t.activityId === a.id && t.program).at(-1);
+        return last?.program ? [{ name: s.name, program: programFromJson(last.program) }] : [];
+      });
+      const maps = arenaLayouts(a);
+      return { activity: activities.find((x) => x.id === a.id)!, maps: maps.length, rows: entries.length ? classArena(entries, maps) : [] };
+    });
   return {
+    arenas,
     title: plan?.title ?? 'Registros dos alunos',
     group: plan?.group ?? '',
     teacher: plan?.teacher ?? '',
@@ -71,7 +86,7 @@ export function buildClassReport(plan: Plan | null, records: StudentRecord[]): C
 }
 
 const starText = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
-const kindLabel = (k: ActivityKind) => (k === 'detetive' ? 'Detetive' : 'Blocos');
+const kindLabel = (k: ActivityKind) => KIND_LABEL[k].replace(/^\S+\s/, ''); // sem o ícone
 
 /** Números de cada atividade para a turma inteira. */
 export function activityStats(r: ClassReport, id: string) {
@@ -94,7 +109,7 @@ h1{margin:0 0 4px}h2{margin:28px 0 8px;border-bottom:2px solid #e9b52e;padding-b
 table{border-collapse:collapse;width:100%;margin:8px 0 16px;font-size:14px}th,td{border:1px solid #d6cbb8;padding:6px 8px;text-align:left;vertical-align:top}
 th{background:#f3ede3}td.c{text-align:center;white-space:nowrap}.star{color:#b07a00;letter-spacing:1px}.no{color:#9a8f80}
 .ok{color:#2e6b3e;font-weight:600}.bad{color:#8a3a2a}pre{background:#f6f2ea;padding:8px;border-radius:6px;font-size:12px;white-space:pre-wrap;margin:4px 0}
-details{margin:6px 0 14px}summary{cursor:pointer;font-weight:600}.hint{color:#5e5850;font-size:13px}
+details{margin:6px 0 14px}tr.agente th,tr.agente td{color:#5e5850;font-style:italic}blockquote{margin:4px 0;padding:4px 10px;border-left:3px solid #c9932a;background:#fbf4e2}summary{cursor:pointer;font-weight:600}.hint{color:#5e5850;font-size:13px}
 @media print{details{page-break-inside:avoid}details>*{display:block}}`;
 
 export function renderClassReportHtml(r: ClassReport): string {
@@ -126,9 +141,12 @@ export function renderClassReportHtml(r: ClassReport): string {
           const extra =
             t.kind === 'detetive'
               ? `entrou em sala comprovadamente perigosa: ${t.logicErrors ?? 0} · riscos desnecessários: ${t.needlessRisks ?? 0} · dicas: ${t.hints ?? 0} · anotações certas/possíveis/erradas: ${t.marks ? `${t.marks.certa}/${t.marks.possivel}/${t.marks.errada}` : '—'}`
-              : `blocos: ${t.blocks ?? 0}${t.error ? ` · erro: ${esc(t.error)}` : ''}`;
+              : t.kind === 'trilha'
+                ? `acertou de primeira ${t.answers?.firstTry ?? 0} de ${t.answers?.total ?? 0} perguntas`
+                : `blocos: ${t.blocks ?? 0}${t.error ? ` · erro: ${esc(t.error)}` : ''}`;
           const program = t.programText ? `<pre>${esc(t.programText)}</pre>` : '';
-          return `<li><b>${esc(t.activityTitle)}</b> — ${OUTCOME[t.outcome]} ${t.stars ? `<span class="star">${starText(t.stars)}</span>` : ''} · ${t.actions} ações · ${Math.round(t.ms / 1000)} s · ${time}<br><span class="hint">${extra}</span>${program}</li>`;
+          const reflections = (t.reflections ?? []).filter(Boolean).map((r) => `<blockquote>${esc(r)}</blockquote>`).join('');
+          return `<li><b>${esc(t.activityTitle)}</b> — ${OUTCOME[t.outcome]} ${t.stars ? `<span class="star">${starText(t.stars)}</span>` : ''} · ${t.actions} ações · ${Math.round(t.ms / 1000)} s · ${time}<br><span class="hint">${extra}</span>${reflections}${program}</li>`;
         })
         .join('');
       return `<details><summary>${esc(s.name)} — ${s.attempts.length} tentativa${s.attempts.length === 1 ? '' : 's'}</summary><ol>${items}</ol></details>`;
@@ -145,10 +163,24 @@ ${r.warnings.map((w) => `<p class="warn">${esc(w)}</p>`).join('')}
 <table><thead><tr><th>Aluno</th>${head}<th>Total</th></tr></thead><tbody>${rows || `<tr><td colspan="${r.activities.length + 2}">Nenhum registro importado.</td></tr>`}</tbody></table>
 <h2>Por atividade</h2>
 <table><thead><tr><th>Atividade</th><th>Modo</th><th>Caverna</th><th>Tentaram</th><th>Venceram</th><th>Tentativas até vencer (média)</th><th>Estrelas (média)</th><th>Dicas pedidas</th></tr></thead><tbody>${stats}</tbody></table>
+${renderArenas(r)}
 <h2>Tudo o que cada aluno fez</h2>
 ${details || '<p>Nenhum registro.</p>'}
 <p class="hint">Gerado pelo Wumpus 3D — modo escola. Os dados vêm dos arquivos enviados pelos alunos; nenhum dado sai do computador do professor.</p>
 </body></html>`;
+}
+
+function renderArenas(r: ClassReport) {
+  return r.arenas
+    .map(({ activity, maps, rows }) => {
+      if (!rows.length) return `<h2>Arena da turma: ${esc(activity.title)}</h2><p class="hint">Nenhum aluno enviou programa para esta atividade ainda.</p>`;
+      const body = rows
+        .map((x, i) => `<tr class="${x.kind}"><td class="c">${i + 1}</td><th>${esc(x.name)}</th><td class="c">${Math.round(x.avgScore)}</td><td class="c">${x.wins}</td><td class="c">${x.deaths}</td><td class="c">${x.timeouts}</td><td class="c">${x.unfinished}</td></tr>`)
+        .join('');
+      return `<h2>Arena da turma: ${esc(activity.title)}</h2><p class="hint">O último programa de cada aluno jogou as mesmas ${maps} cavernas (sorteadas pela semente da atividade), junto com os agentes de referência do jogo.</p>
+<table><thead><tr><th>#</th><th>Programa</th><th>Pontos (média)</th><th>Vitórias</th><th>Mortes</th><th>Tempo esgotado</th><th>Não terminou / erro</th></tr></thead><tbody>${body}</tbody></table>`;
+    })
+    .join('');
 }
 
 const csvCell = (v: unknown) => {
@@ -158,10 +190,10 @@ const csvCell = (v: unknown) => {
 
 /** Uma linha por tentativa (separador ";", que o Excel em português abre direto). */
 export function classReportCsv(r: ClassReport): string {
-  const head = ['aluno', 'atividade', 'modo', 'data', 'resultado', 'estrelas', 'acoes', 'segundos', 'dicas', 'erros_de_logica', 'riscos_desnecessarios', 'anotacoes_erradas', 'blocos', 'erro_programa'];
+  const head = ['aluno', 'atividade', 'modo', 'data', 'resultado', 'estrelas', 'acoes', 'segundos', 'dicas', 'erros_de_logica', 'riscos_desnecessarios', 'anotacoes_erradas', 'blocos', 'erro_programa', 'acertos_de_primeira', 'perguntas'];
   const lines = r.students.flatMap((s) =>
     s.attempts.map((t) =>
-      [s.name, t.activityTitle, kindLabel(t.kind), t.at, OUTCOME[t.outcome], t.stars, t.actions, Math.round(t.ms / 1000), t.hints ?? '', t.logicErrors ?? '', t.needlessRisks ?? '', t.marks?.errada ?? '', t.blocks ?? '', t.error ?? '']
+      [s.name, t.activityTitle, kindLabel(t.kind), t.at, OUTCOME[t.outcome], t.stars, t.actions, Math.round(t.ms / 1000), t.hints ?? '', t.logicErrors ?? '', t.needlessRisks ?? '', t.marks?.errada ?? '', t.blocks ?? '', t.error ?? '', t.answers?.firstTry ?? '', t.answers?.total ?? '']
         .map(csvCell)
         .join(';'),
     ),

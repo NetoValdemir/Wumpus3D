@@ -45,7 +45,7 @@ export function recordAttempt(src: PlaySource, attempt: Omit<Attempt, 'activityI
 }
 
 export function sourceFromActivity(a: Activity): PlaySource {
-  const mission = a.cave.type === 'missao' ? (missionById(a.cave.missionId) ?? null) : null;
+  const mission = a.cave?.type === 'missao' ? (missionById(a.cave.missionId) ?? null) : null;
   return {
     id: `${session.plan?.id ?? 'livre'}:${a.id}`,
     title: a.title,

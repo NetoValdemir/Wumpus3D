@@ -6,7 +6,7 @@ import { buildClassReport, classReportCsv, renderClassReportHtml, type ClassRepo
 import { parseCaveCode } from '../caves';
 import { loadCaves, loadDraft, saveDraft } from '../edu-storage';
 import { MISSIONS, missionById } from '../missions';
-import { describeCave, emptyPlan, newId, parsePlanFile, parseRecord, planCode, samplePlan, type Activity, type CaveSource, type Plan, type StudentRecord } from '../plan';
+import { KIND_LABEL, describeActivity, emptyPlan, newId, parsePlanFile, parseRecord, planCode, samplePlan, type Activity, type CaveSource, type Plan, type StudentRecord } from '../plan';
 import { nav, setPlan } from './session';
 
 let plan: Plan = loadDraft() ?? samplePlan();
@@ -35,7 +35,7 @@ function renderPlan() {
       const text = document.createElement('div');
       text.innerHTML = '<b></b><small></small>';
       text.querySelector('b')!.textContent = a.title;
-      text.querySelector('small')!.textContent = `${a.kind === 'detetive' ? '🔎 Detetive' : '🧩 Blocos'} · ${describeCave(a.cave)}${a.instructions ? ` · "${a.instructions}"` : ''}`;
+      text.querySelector('small')!.textContent = `${KIND_LABEL[a.kind]} · ${describeActivity(a)}${a.instructions ? ` · "${a.instructions}"` : ''}`;
       const tools = document.createElement('div');
       tools.className = 'row tight';
       const btn = (label: string, title: string, fn: () => void, disabled = false) => {

@@ -79,6 +79,11 @@ export class Knowledge {
     }
   }
 
+  /** A flecha já passou por esta sala sem acertar nada (só leitura: usado nas explicações do modo escola). */
+  arrowCleared(k: string) {
+    return this.noWumpus.has(k);
+  }
+
   /** Sem poço: já visitada, ou vizinha de uma sala visitada sem brisa. */
   pitFree(k: string) {
     return this.visited.has(k) || this.neighbors(k).some((n) => this.visited.get(n)?.breeze === false);

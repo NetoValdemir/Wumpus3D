@@ -5,8 +5,11 @@ import { arenaMaps } from '../arena/rng';
 import { MISSIONS, missionById, type BlockGroup, ALL_GROUPS } from './missions';
 import { fromCode, toCode } from './caves';
 import type { WorkspaceJson } from './blockly-json';
+import { lessonById } from './trilha/lessons';
 
-export type ActivityKind = 'detetive' | 'blocos';
+export type ActivityKind = 'detetive' | 'blocos' | 'trilha' | 'agente';
+
+export const KIND_LABEL: Record<ActivityKind, string> = { detetive: '🔎 Detetive', blocos: '🧩 Blocos', trilha: '🤖 Trilha de IA', agente: '🏆 Agente para a Arena' };
 
 export type CaveSource =
   | { type: 'missao'; missionId: string }
@@ -18,7 +21,10 @@ export interface Activity {
   kind: ActivityKind;
   title: string;
   instructions: string;
-  cave: CaveSource;
+  /** Caverna (Detetive, Blocos, Agente); null nas lições da trilha */
+  cave: CaveSource | null;
+  /** Lição da trilha de IA (só em 'trilha') */
+  lessonId?: string;
 }
 
 export interface Plan {
@@ -41,6 +47,8 @@ export function emptyPlan(): Plan {
 
 /** Cavernas da atividade (uma missão pode ter várias; as outras fontes têm uma). */
 export function activityLayouts(a: Activity): MapLayout[] {
+  if (!a.cave) return [];
+  if (a.kind === 'agente' && a.cave.type === 'sorteio') return arenaMaps(`agente-${a.cave.seed}`, 3, a.cave.size, a.cave.pits).map((m, i) => ({ ...m, name: `Treino ${i + 1}` }));
   switch (a.cave.type) {
     case 'missao':
       return missionById(a.cave.missionId)?.maps ?? [];
@@ -54,7 +62,17 @@ export function activityLayouts(a: Activity): MapLayout[] {
 }
 
 /** Blocos liberados: os da missão, ou todos para cavernas criadas/sorteadas. */
-export const activityGroups = (a: Activity): BlockGroup[] => (a.cave.type === 'missao' ? (missionById(a.cave.missionId)?.groups ?? ALL_GROUPS) : ALL_GROUPS);
+export const activityGroups = (a: Activity): BlockGroup[] => (a.cave?.type === 'missao' ? (missionById(a.cave.missionId)?.groups ?? ALL_GROUPS) : ALL_GROUPS);
+
+/** Cavernas da Arena da turma: as mesmas para todos os programas (semente da atividade). */
+export const arenaLayouts = (a: Activity, count = 20): MapLayout[] =>
+  a.cave?.type === 'sorteio' ? arenaMaps(`arena-turma-${a.cave.seed}`, count, a.cave.size, a.cave.pits) : activityLayouts(a);
+
+export function describeActivity(a: Activity): string {
+  if (a.kind === 'trilha') return `lição "${lessonById(a.lessonId ?? '')?.title ?? a.lessonId}"`;
+  if (!a.cave) return '';
+  return a.kind === 'agente' ? `Arena da turma, ${describeCave(a.cave)}` : describeCave(a.cave);
+}
 
 export function describeCave(c: CaveSource): string {
   switch (c.type) {
@@ -73,7 +91,12 @@ function validatePlan(data: unknown): Plan {
     throw new Error('Isto não é um plano de atividade do Wumpus 3D.');
   }
   for (const a of p.activities) {
-    if (!a || (a.kind !== 'detetive' && a.kind !== 'blocos') || !a.cave) throw new Error('O plano tem uma atividade incompleta.');
+    if (!a || !(a.kind in KIND_LABEL)) throw new Error('O plano tem uma atividade incompleta.');
+    if (a.kind === 'trilha') {
+      if (!lessonById(a.lessonId ?? '')) throw new Error(`A lição "${a.lessonId}" não existe nesta versão.`);
+      continue;
+    }
+    if (!a.cave) throw new Error('O plano tem uma atividade sem caverna.');
     if (a.cave.type === 'mapa') a.cave.layout = parseLayout(JSON.stringify(a.cave.layout));
     if (a.cave.type === 'missao' && !missionById(a.cave.missionId)) throw new Error(`A missão "${a.cave.missionId}" não existe nesta versão.`);
   }
@@ -121,7 +144,11 @@ export interface Attempt {
   needlessRisks?: number;
   hints?: number;
   marks?: { certa: number; possivel: number; errada: number };
-  // Blocos
+  // Trilha de IA
+  lessonId?: string;
+  answers?: { firstTry: number; total: number };
+  reflections?: string[];
+  // Blocos e Agente
   blocks?: number;
   program?: WorkspaceJson;
   programText?: string;
@@ -134,6 +161,7 @@ export interface StudentRecord {
   student: string;
   planId: string;
   planTitle: string;
+  turmaId?: string;
   created: string;
   attempts: Attempt[];
 }
