@@ -126,6 +126,7 @@ function mapFinished() {
     const ev = evaluateMission(p, { maps: src!.layouts, maxBlocks: m?.maxBlocks ?? Infinity, maxActions: m?.maxActions ?? Infinity });
     const n = m ? ev.stars : ev.won ? 1 : 0;
     saveStars(src!.id, n);
+    if (m) saveStars(`missao:${m.id}`, n); // a lista de missões mostra o melhor resultado, venha de onde vier
     const extra = m && n < 3 ? (n === 1 ? ` Dá para usar menos blocos? A meta é ${m.maxBlocks}.` : ` Dá para o robô dar menos passos? A meta é ${m.maxActions} ações.`) : '';
     msg(`${outcomeText(r)} ${m ? stars(n) : ''}${extra}`, 'ok');
     $('#blk-best').textContent = m ? stars(bestStars(src!.id)) : '';
