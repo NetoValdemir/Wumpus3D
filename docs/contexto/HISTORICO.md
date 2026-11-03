@@ -137,6 +137,11 @@ Acrescente novas entradas no fim.
 - **Feito:** a sessão não conseguiu apagar no GitHub (proxy bloqueia `push --delete` e a API de refs, erro 403); o dono apagou pelo navegador a `refatoracao` e as branches de trabalho `claude/awesome-brown-2xexng` e `claude/elegant-tesla-on1ll8`. Restam `main` e `educacional`. A regra `refatoracao` no ambiente `github-pages` pode ser removida.
 - **Conversa:** o dono pediu detalhes da "trilha de IA para o ensino médio" (item da proposta, nº 26); esboço em Pendências.
 
+### 31. Login, áreas separadas, trilha de IA e GitHub do professor (3/11/2026, branch `educacional`)
+- **Pedido:** aplicar as sugestões A–D do relatório de análise só na `educacional` (sem mexer na `main`): A) `aluno.html` e `professor.html` com tela inicial e login; B) login sem servidor (perfis no aparelho, senha e PIN cifrados, alunos dentro do código da turma); C) professor guardar turmas, planos e registros num repositório privado do GitHub com token próprio (opcional); D) trilha de IA, módulos 1–4 e depois 5–6. Depois: documentar no GitHub e mostrar prévia. Sugestões D (token para alunos) e F (serviços externos) ficaram para outra avaliação.
+- **Feito:** D23. Commits 4ee91e8 (núcleo sem tela), cf96eae (telas) e o de documentação. Manual do modo escola reescrito (13 capítulos, capturas novas), README, CLAUDE.md, documentação técnica; prévia no claude.ai atualizada com as três páginas.
+- **Verificado:** `npm run check` (100 testes; novos `edu-trilha` 12 e `edu-acesso` 8); `compara-saidas.sh main --rapido` idêntico (agentes e arena sem mudança); `roteiro-escola.cjs` (Playwright) com o fluxo completo professor → turma → aluno → relatório → GitHub simulado, sem requisições externas e sem rolagem horizontal no celular. Genético de aula: 1 caverna 1470/585 (treino/teste), 40 cavernas 544/609, probabilístico 686.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
@@ -153,9 +158,9 @@ Regras atuais (D14, D15, D16), agentes com as correções de D17 e genético v2 
 
 - Conferir no log do Actions se `ARENA_SEED` está sendo usado.
 - Testes de interface no `npm run check`: os roteiros Playwright de `scripts/verificacao/` existem, mas rodam à mão (precisam do site no ar e, para o 3D, de WebGL por software).
-- Modo escola: testar com turmas; itens da proposta não feitos (Cientista de agentes/Python, Arena da turma, Desplugado, leitura em voz alta); dividir o bundle do Blockly.
+- Modo escola: testar com turmas reais (login, código da turma, GitHub do professor); itens da proposta não feitos (Cientista de agentes/Python, Desplugado, leitura em voz alta); dividir o bundle do Blockly. Sugestões da análise não autorizadas ainda: alunos entregarem pelo GitHub (D) e serviços externos (F).
 - Levar a `educacional` (modo escola) para a `main` (PR) quando o dono decidir.
-- Trilha de IA para o ensino médio (16–18 anos), esboçada em 3/11/2026, não implementada: 6 módulos sobre o que o jogo já tem — (1) agente e ambiente/percepção (PEAS, o que o robô sente); (2) lógica: regras e deduções da `Knowledge`, com "por que esta sala é segura?"; (3) probabilidade: enumeração da fronteira à mão (o exemplo dos 56%) e decisão por utilidade esperada; (4) busca: BFS do caminho de volta; (5) aprendizado: o agente genético, treino × validação, sobreajuste num só mapa; (6) avaliação e impacto: Arena, mesmos mapas, ruído, responsabilidade de agentes autônomos. Projeto final: agente próprio (blocos → JavaScript) na Arena da turma. Alinhada às 5 grandes ideias do AI4K12. Peças novas: explicação das deduções em `knowledge.ts`, tela de crenças e calculadora de enumeração no modo escola, genético com poucos genes no modo escola, atividade "agente" no plano do professor com ranking da turma a partir dos registros.
+- Trilha de IA: feita (nº 31, D23). Ideias seguintes: agente em JavaScript na Arena da turma (hoje só blocos), P(Wumpus) na lição 3, mais lições de impacto.
 - P(Wumpus) uniforme entre candidatas; enumeração aproximada com fronteira > 16 salas.
 - Agente genético não supera o probabilístico; novas características ou calibração de parâmetros poderiam mudar isso.
 - Bundle ~600 KB (`import * as THREE`).

@@ -164,12 +164,14 @@ O repositório guarda a memória do projeto, para qualquer sessão nova do Claud
 
 ## Modo escola (pensamento computacional, 10 a 18 anos)
 
-Em `escola.html` (link "🎒 Modo escola" no fim do painel do jogo) há uma versão para sala de aula, com tabuleiro 2D leve:
+Em `escola.html` (link "🎒 Modo escola" no fim do painel do jogo) há uma versão para sala de aula, com tabuleiro 2D leve, em três páginas: a **tela inicial com login** (`escola.html`), a **área do aluno** (`aluno.html`) e a **área do professor** (`professor.html`).
 
+- **Login sem servidor**: o professor cria usuário e senha no próprio aparelho; o aluno entra com o **código da turma** (`TURMA1-…`), o apelido e um PIN de 4 dígitos. Senhas e PINs só ficam guardados como resumo cifrado (PBKDF2). Também dá para entrar sem turma, como visitante.
 - **Detetive**: o aluno joga e anota no caderno o que sabe de cada sala; o robô-ajudante confere as anotações com as deduções e dá dicas em forma de pergunta.
 - **Programador com blocos**: 9 missões com blocos (Blockly) — sequência, repetição, condições, funções —, execução passo a passo com o bloco atual destacado e estrelas por programa curto.
 - **Criador de cavernas**: monta uma caverna sala a sala e compartilha por um código (`CAV1-…`).
-- **Professor**: monta o plano da aula (missões, cavernas sorteadas com semente ou criadas), entrega por código (`PLANO1-…`) ou arquivo, e junta os registros que os alunos baixam num relatório da turma (HTML, CSV ou impressão).
+- **Trilha de IA** (ensino médio): seis lições — agente e percepção, lógica, probabilidade (combinações de poços), busca em largura, algoritmo genético (decorar × generalizar) e avaliação/impacto — com perguntas conferidas na hora e reflexões.
+- **Professor**: turmas com alunos e PINs, plano da aula (Detetive, Blocos, lições da trilha e "Agente para a Arena"), relatório da turma a partir dos registros que os alunos baixam (com a **Arena da turma**: os programas dos alunos contra os agentes do jogo nas mesmas 20 cavernas) e, opcionalmente, cópia de tudo num **repositório privado do GitHub** do professor, com token próprio.
 
 Sem servidor nem conta: o único dado pessoal é o apelido do aluno. Manual completo em `docs/wumpus3d-manual-escola.pdf`.
 
@@ -218,7 +220,7 @@ src/
 │   ├── players.ts   # quem joga: nomes, seletor e criação do agente
 │   ├── *-panel.ts   # seções do painel: mapas, agente genético, avaliação, minhas partidas
 │   └── dom.ts       # utilitários de tela (mensagens, download, copiar, confirmar)
-├── edu/             # modo escola: Detetive, blocos, criador, plano e relatório do professor (telas em edu/ui)
+├── edu/             # modo escola: login, turmas, Detetive, blocos, criador, trilha de IA (edu/trilha), plano, relatório, GitHub (telas em edu/ui)
 ├── util/format.ts   # formatação sem DOM (porcentagens, números, HTML, nomes de arquivo)
 ├── storage.ts       # mapas, genoma, agentes importados e partidas salvos no navegador
 └── style.css        # interface sobre o canvas

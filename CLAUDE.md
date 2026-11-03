@@ -39,7 +39,7 @@ scripts/docs/gerar.sh                       # regenera os PDFs de docs/ (inclui 
 | `src/render/view.ts` | Cena 3D (Three.js): lê o estado, nunca muda regras |
 | `src/main.ts` | Ponto de entrada: liga teclado, botões e painéis aos módulos de `src/ui` |
 | `src/ui/*` | Interface: `state.ts` (estado da partida), `game.ts` (ação, passo do agente, `restart`, laço), `hud.ts`, `players.ts`, um `*-panel.ts` por seção do painel, `dom.ts` (utilitários de tela) |
-| `escola.html` · `src/edu/*` | Modo escola (D22): Detetive (`detective.ts`), blocos (`program.ts`, `blockly-json.ts`, `run.ts`, `missions.ts`, `blocks-setup.ts`), criador (`caves.ts`), plano/registro/relatório do professor (`plan.ts`, `class-report.ts`), telas em `src/edu/ui/` |
+| `escola.html` · `aluno.html` · `professor.html` · `src/edu/*` | Modo escola (D22, D23): login (`auth.ts`, `turma.ts`, telas `ui/login.ts` e `ui/access.ts`), Detetive (`detective.ts`), blocos (`program.ts`, `blockly-json.ts`, `run.ts`, `missions.ts`, `blocks-setup.ts`), criador (`caves.ts`), trilha de IA (`trilha/*`: lições, explicações, combinações, busca, genético de aula, Arena da turma), plano/registro/relatório do professor (`plan.ts`, `class-report.ts`), GitHub do professor (`github-store.ts`), telas em `src/edu/ui/` (`aluno.ts`, `professor.ts`) |
 | `src/util/format.ts` | Formatação sem DOM (porcentagens, números, escape de HTML, nomes de arquivo) |
 | `src/agents/knowledge.ts` | Base de conhecimento: deduções lógicas e P(poço) por enumeração da fronteira |
 | `src/agents/agents.ts` | Agentes aleatório, lógico, probabilístico (`ReasoningAgent`) e genético (`GeneticAgent`) |
@@ -51,7 +51,7 @@ scripts/docs/gerar.sh                       # regenera os PDFs de docs/ (inclui 
 | `scripts/arena.ts` | Arena no Node (contexto `vm`); `--relatorio` salva relatório HTML/JSON |
 | `scripts/treinar.ts` · `medir.ts` · `args.ts` | Treino do genético, tabela de desempenho e leitura das opções de linha de comando |
 | `agents/*.js` | Agentes da competição (`exemplo-cauteloso.js` é o modelo) |
-| `tests/*.test.ts` | Testes Vitest (regras, deduções, arena, relatórios, genético, partidas humanas, refatoração, modo escola `edu-*`) |
+| `tests/*.test.ts` | Testes Vitest (regras, deduções, arena, relatórios, genético, partidas humanas, refatoração, modo escola `edu-*`, incluindo trilha e acesso) |
 | `scripts/verificacao/` | Verificações além dos testes: mesmas sementes → mesmos resultados (`compara-saidas.sh`), roteiros Playwright do jogo 3D e do modo escola, métricas de código (ver `LEIA-ME.md`) |
 | `scripts/previa/` | Monta a prévia do modo escola para publicar como Artifact no claude.ai |
 | `scripts/docs/` | Geradores dos PDFs (HTML → PDF com Playwright) |
@@ -61,7 +61,7 @@ scripts/docs/gerar.sh                       # regenera os PDFs de docs/ (inclui 
 | Branch | Conteúdo | Situação |
 |---|---|---|
 | `main` | Refatoração pelo Código Limpo (D21), via PR #8 (merge bb40145) | **É o que o site oficial mostra** (publicado a cada push na `main`). |
-| `educacional` | `main` + modo escola (D22) + proposta, manual e scripts de verificação | A mais completa. Prévia privada no claude.ai (HISTORICO nº 28). Ainda não publicada no site nem levada à `main`. |
+| `educacional` | `main` + modo escola (D22) + login, turmas, trilha de IA e GitHub do professor (D23) + proposta, manual e scripts de verificação | A mais completa. Prévia privada no claude.ai (HISTORICO nº 28 e 31). Ainda não publicada no site nem levada à `main`. |
 
 As branches `refatoracao`, `claude/awesome-brown-2xexng` e `claude/elegant-tesla-on1ll8` foram apagadas pelo dono depois dos merges (HISTORICO nº 30).
 

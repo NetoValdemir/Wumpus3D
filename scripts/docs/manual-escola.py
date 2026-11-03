@@ -1,5 +1,6 @@
 # Gera o PDF "Manual do modo escola" (docs/wumpus3d-manual-escola.pdf): alunos e professores.
-# As imagens vêm de capturas-escola.cjs; a tabela de missões é lida de src/edu/missions.ts.
+# As imagens vêm de capturas-escola.cjs; as tabelas de missões e de lições são lidas de src/edu/missions.ts
+# e src/edu/trilha/lessons.ts.
 import html, re, subprocess, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -48,47 +49,65 @@ def missions():
     return out
 
 
+def lessons():
+    """Módulo, título, grande ideia, objetivo e duração de cada lição, direto do código."""
+    src = (ROOT / 'src/edu/trilha/lessons.ts').read_text()
+    pat = r"id: '(ia\d)',\s*module: (\d),\s*title: '([^']*)',\s*idea: '([^']*)',\s*goal: '([^']*)',\s*minutes: (\d+)"
+    return re.findall(pat, src)
+
+
+LES = lessons()
 MIS = missions()
 mission_rows = [[n, f'<b>{html.escape(t)}</b>', html.escape(c), str(m), b, a] for n, t, c, b, a, m in MIS]
 
 # ---------------------------------------------------------------- 1
-section('1', 'O que é o modo escola', f'''
-<p class="lead">O modo escola ("Caverna do Pensamento") é uma versão do Wumpus 3D feita para ensinar <b>pensamento computacional</b> a crianças e jovens de 10 a 18 anos. Em vez de um jogo para quem já programa, ele oferece três formas de jogar e uma área para o professor.</p>
-{table(['Tela', 'O que se faz', 'Para quem'], [
-    ['<b>🔎 Detetive</b>', 'Jogar com as próprias mãos e anotar no caderno o que se descobre de cada sala. Um robô-ajudante faz perguntas e confere as anotações.', 'A partir de 10 anos'],
-    ['<b>🧩 Blocos</b>', 'Programar o robô encaixando blocos (avançar, repetir, se…), numa campanha de 9 missões.', '10 a 15 anos (e iniciantes de qualquer idade)'],
-    ['<b>🛠️ Criador</b>', 'Montar uma caverna sala a sala e mandar para os colegas por um código.', 'Todas as idades'],
-    ['<b>👩‍🏫 Professor</b>', 'Planejar a aula (atividades e cavernas), entregar aos alunos e montar o relatório da turma com tudo o que cada aluno fez.', 'Professores'],
+section('1', 'O que é o modo escola', f"""
+<p class="lead">O modo escola ("Caverna do Pensamento") é uma versão do Wumpus 3D para ensinar <b>pensamento computacional</b> e <b>Inteligência Artificial</b> a crianças e jovens de 10 a 18 anos. Ele tem três páginas: a <b>tela inicial</b>, onde cada pessoa entra, a <b>área do aluno</b> e a <b>área do professor</b>.</p>
+{table(['Área', 'Telas', 'Para quem'], [
+    ['<b>🎒 Aluno</b>', '<b>Início</b> (atividades da turma) · <b>🔎 Detetive</b> (jogar e anotar pistas) · <b>🧩 Blocos</b> (programar o robô) · <b>🛠️ Criador</b> (montar cavernas) · <b>🤖 Trilha de IA</b> (seis lições)', 'Alunos de 10 a 18 anos; a Trilha de IA é pensada para o ensino médio'],
+    ['<b>👩‍🏫 Professor</b>', '<b>Turmas</b> (alunos e PINs) · <b>Planejar</b> (atividades da aula) · <b>Relatório</b> (tudo o que os alunos fizeram) · <b>Criador</b> · <b>GitHub</b> (guardar no repositório privado do professor, opcional)', 'Professores'],
 ])}
 <h2>Como abrir</h2>
 <ul>
 <li>No navegador, acesse o endereço do jogo e acrescente <code>escola.html</code> (por exemplo, <code>…/Wumpus3D/escola.html</code>), ou clique em <b>🎒 Modo escola</b> no fim do painel do jogo 3D.</li>
-<li>Funciona em computador, Chromebook, tablet e celular, em qualquer navegador atual. Não precisa instalar nada nem criar conta.</li>
-<li>O link <b>Jogo 3D completo</b>, no canto de cima, volta para a versão original.</li>
+<li>Funciona em computador, Chromebook, tablet e celular, em qualquer navegador atual. Não precisa instalar nada.</li>
 </ul>
-<div class="shots" style="grid-template-columns:1fr 1fr;width:70%;margin:0 auto">
-{img('escola-celular-detetive.png', 'No celular: Detetive.', 'phonegrid')}
-{img('escola-celular-blocos.png', 'No celular: Blocos (montagem em cima, caverna embaixo).', 'phonegrid')}
-</div>
-{box('tip', 'Nada sai do computador sem você querer', '<p>O modo escola não tem servidor nem login. O progresso fica guardado no próprio navegador. O professor recebe as informações só quando o aluno <b>baixa o registro</b> e entrega o arquivo. O único dado pessoal é o apelido que o aluno digita (veja o capítulo 8).</p>')}
-''')
+{box('tip', 'Sem servidor e sem conta na internet', '<p>Logins, turmas e progresso ficam no próprio navegador. O professor recebe o que os alunos fizeram quando eles <b>baixam o registro</b> e entregam o arquivo. Opcionalmente, o professor guarda as turmas e os registros num repositório privado dele no GitHub (capítulo 11). O único dado pessoal é o apelido do aluno (capítulo 12).</p>')}
+""")
 
 # ---------------------------------------------------------------- 2
-section('2', 'Para o aluno: começando', f'''
-{img('escola-inicio.png', 'Tela Início com uma atividade do professor aberta: cada atividade mostra o andamento (tentativas ou estrelas).')}
+section('2', 'Tela inicial e login', f"""
+{img('escola-login.png', 'Tela inicial no primeiro acesso: o aluno abre a turma com o código; o professor cria o acesso dele neste aparelho.')}
+<h2>Professor</h2>
 <ol>
-<li><b>Digite seu apelido</b> em "Quem é você?". Use um apelido, não o nome completo (por exemplo, "Ana B."). Ele vai no registro que o professor recebe.</li>
-<li><b>Abra a atividade do professor</b>: cole o código que ele passou (começa com <code>PLANO1-</code>) e clique em <b>Abrir atividade</b>, ou use <b>Abrir arquivo</b> se ele mandou um arquivo.</li>
-<li>Na lista de atividades, clique em <b>Fazer</b>. A tela certa (Detetive ou Blocos) abre com a caverna escolhida pelo professor.</li>
-<li>Ao voltar ao Início, cada atividade mostra como você foi: "ainda não fez", o número de tentativas, ou as estrelas conquistadas.</li>
-<li><b>Terminou?</b> Clique em <b>Enviar para o professor (baixar registro)</b>. Um arquivo <code>registro-…json</code> é baixado: entregue ao professor do jeito que ele pedir (e-mail, plataforma da escola, pendrive).</li>
+<li><b>Primeiro acesso neste aparelho</b>: em "Sou professor", preencha nome, usuário e senha (8 caracteres ou mais) e clique em <b>Criar acesso e entrar</b>.</li>
+<li>Nas próximas vezes: usuário e senha, <b>Entrar na área do professor</b>. Mais de um professor pode ter acesso no mesmo aparelho ("Criar outro acesso").</li>
+<li><b>Esqueci a senha</b>: como não há servidor, ela não pode ser recuperada. Dá para apagar o acesso deste aparelho (as turmas e registros guardados aqui também são apagados) e criar outro; se você guardava tudo no GitHub, traga de volta na aba GitHub.</li>
 </ol>
-{box('trap', 'O download não funcionou?', '<p>Alguns computadores da escola bloqueiam downloads. Clique em <b>Mostrar o registro como texto</b>: o texto aparece selecionado numa caixa. Copie (Ctrl+C) e cole numa mensagem para o professor; ele salva o texto num arquivo <code>.json</code>.</p>')}
-<p>Sem atividade do professor, use <b>Jogar livre</b>: Detetive com cavernas sorteadas, a campanha de missões dos Blocos e o Criador. As partidas livres também ficam registradas, num registro "Jogo livre".</p>
-''')
+<h2>Aluno</h2>
+{img('escola-login-aluno.png', 'Aluno: a turma já foi aberta neste aparelho; basta escolher o apelido e digitar o PIN.')}
+<ol>
+<li>Na primeira vez, cole o <b>código da turma</b> que o professor passou (começa com <code>TURMA1-</code>) e clique em <b>Abrir turma</b>, ou abra o arquivo da turma. O aparelho guarda a turma para as próximas vezes.</li>
+<li>Escolha o <b>apelido</b> na lista e digite o <b>PIN</b> de 4 dígitos que o professor entregou. <b>Entrar</b>.</li>
+<li><b>Entrar sem turma (jogar livre)</b>: abre a área do aluno sem professor; dá para jogar tudo e até abrir uma atividade por código, como visitante.</li>
+</ol>
+<p>A entrada vale só para a aba do navegador: ao fechá-la, ou clicar em <b>Sair</b> no alto, é preciso entrar de novo. Isso ajuda em laboratórios com computadores compartilhados.</p>
+{box('trap', 'O que o login protege e o que não protege', '<p>Senhas e PINs nunca são guardados: só um resumo cifrado (PBKDF2). O código da turma leva só os resumos dos PINs, nunca os PINs. Isso separa as áreas e garante que cada aluno use o próprio apelido. Mas a conferência acontece no aparelho e o site é público: quem entende de programação consegue contornar. Por isso não há dados sensíveis no site: os registros ficam nos arquivos dos alunos, no computador do professor e, se ele quiser, no repositório privado dele.</p>')}
+""")
 
 # ---------------------------------------------------------------- 3
-section('3', 'Detetive', f'''
+section('3', 'Área do aluno: Início', f"""
+{img('escola-inicio.png', 'Início do aluno com login: a turma, o plano do professor e o andamento de cada atividade.')}
+<ul>
+<li>No alto, a turma e o professor. Abaixo, as <b>atividades da aula</b>: Detetive, Blocos, lições da Trilha de IA e Agente para a Arena. Cada uma mostra "ainda não fez", o número de tentativas ou as estrelas.</li>
+<li><b>Fazer</b> abre a tela certa com a caverna ou a lição escolhida pelo professor.</li>
+<li><b>Terminou?</b> <b>Enviar para o professor (baixar registro)</b> baixa um arquivo <code>registro-…json</code> com tudo o que você fez: entregue pelo canal que o professor pedir. Se o download for bloqueado, use <b>Mostrar o registro como texto</b>, copie e envie.</li>
+<li><b>Jogar livre</b>: Detetive com cavernas sorteadas, as 9 missões de blocos, o Criador e a Trilha de IA.</li>
+</ul>
+""")
+
+# ---------------------------------------------------------------- 4
+section('4', 'Detetive', f'''
 {img('escola-detetive.png', 'Detetive: o robô (azul) está em (2, 1) e sente brisa. O caderno tem anotações conferidas: verde = as pistas provam; amarelo = pode ser.')}
 <h2>O objetivo</h2>
 <p>Encontrar o ouro e voltar vivo para a entrada (a sala com o anel azul, no canto de baixo à esquerda). A caverna fica escondida: você só vê as salas por onde já passou.</p>
@@ -124,8 +143,8 @@ section('3', 'Detetive', f'''
 <p><b>Tentar de novo esta caverna</b> repete o mesmo mapa (agora você sabe onde estão os perigos: ótimo para entender o que as pistas diziam). <b>Outra caverna</b> sorteia outra, ou, numa atividade, recomeça a caverna do professor.</p>
 ''')
 
-# ---------------------------------------------------------------- 4
-section('4', 'Programador com blocos', f'''
+# ---------------------------------------------------------------- 5
+section('5', 'Programador com blocos', f'''
 {img('escola-blocos.png', 'Missão 6 rodando passo a passo: à esquerda, os blocos; à direita, a caverna. O bloco que o robô está executando fica destacado.')}
 <h2>Como funciona</h2>
 <ol>
@@ -161,112 +180,164 @@ section('4', 'Programador com blocos', f'''
     ['"O programa terminou, mas o robô ainda não voltou"', 'Faltam blocos: o robô precisa pegar o ouro e voltar até a entrada.'],
 ])}
 <p>Em <b>Ver o programa como texto</b> o programa aparece escrito, um comando por linha. É o mesmo texto que o professor vê no relatório.</p>
+<h2>Agente para a Arena da turma</h2>
+<p>Numa atividade <b>🏆 Agente para a Arena</b>, o aluno tem todos os blocos e três cavernas de treino (A, B e C). O desafio é montar um robô que funcione em <b>qualquer</b> caverna: no relatório do professor, o último programa de cada aluno joga as mesmas 20 cavernas sorteadas, junto com os agentes lógico e probabilístico do jogo. Programas que decoram um caminho costumam ir mal; os que usam os sensores (brisa, fedor, parede à frente) vão melhor.</p>
 ''')
 
-# ---------------------------------------------------------------- 5
-section('5', 'Criador de cavernas', f'''
+# ---------------------------------------------------------------- 6
+section('6', 'Criador de cavernas', f'''
 {img('escola-criador.png', 'Criador: poços, Wumpus e ouro colocados sala a sala; a caverna está pronta e já tem código para compartilhar.')}
 <ol>
 <li>Dê um nome e escolha o tamanho (3 × 3 a 8 × 8).</li>
 <li>Escolha a <b>ferramenta</b> (Poço, Wumpus, Ouro ou Apagar) e toque nas salas. Tocar de novo com a mesma ferramenta tira o que estava lá.</li>
 <li>A lista abaixo das ferramentas avisa o que falta. A caverna só fica pronta com ouro, Wumpus e <b>um caminho sem poço da entrada até o ouro</b>.</li>
-<li><b>Salvar</b> guarda em "Minhas cavernas" (o professor pode usá-las no plano, no mesmo computador). <b>Jogar no Detetive</b> e <b>Programar nela</b> abrem a caverna nas outras telas.</li>
+<li><b>Salvar</b> guarda em "Minhas cavernas" neste aparelho. O professor também tem o Criador na área dele e pode usar as cavernas salvas lá nos planos. <b>Jogar no Detetive</b> e <b>Programar nela</b> abrem a caverna nas outras telas.</li>
 <li><b>Compartilhar</b>: o código (começa com <code>CAV1-</code>) leva a caverna inteira. O colega cola o código na mesma caixa e clica em <b>Abrir código</b>.</li>
 </ol>
 {box('decision', 'Regras da caverna', '<ul><li>A entrada, sala (1, 1), fica sempre livre.</li><li>Wumpus e ouro nunca ficam dentro de um poço; colocar um poço apaga o que havia na sala.</li><li>Wumpus e ouro podem ficar na mesma sala: aí é preciso usar a flecha antes de pegar o ouro.</li></ul>')}
 <p><b>Ideia de desafio:</b> cada aluno cria uma caverna e troca o código com um colega. Quem consegue vencer no Detetive com ★★★? E um programa de blocos que vença as duas cavernas?</p>
 ''')
 
-# ---------------------------------------------------------------- 6
-section('6', 'Para o professor: planejar a atividade', f'''
-{img('escola-professor.png', 'Professor → Planejar: dados do plano e atividades à esquerda; adicionar atividade e entregar aos alunos à direita.')}
-<h2>Montar o plano</h2>
-<ol>
-<li>Em <b>Professor → 1. Planejar a atividade</b>, preencha título, turma, seu nome e orientações. Para começar rápido, clique em <b>Usar plano de exemplo</b> (Detetive numa caverna sorteada e as três primeiras missões).</li>
-<li>Em <b>Adicionar atividade</b>, escolha o <b>modo</b> (Detetive ou Blocos) e a <b>caverna</b>:
-<ul>
-<li><b>Missão da campanha</b>: uma das {len(MIS)} missões (cavernas fixas e blocos liberados aos poucos).</li>
-<li><b>Sorteada</b>: digite uma palavra (semente). A mesma palavra e o mesmo tamanho geram a <b>mesma caverna para todos os alunos</b>, o que permite comparar.</li>
-<li><b>Uma das minhas cavernas</b>: as salvas no Criador neste computador.</li>
-<li><b>Código de caverna</b>: cole um código <code>CAV1-</code> (de um aluno, de um colega professor…).</li>
-</ul></li>
-<li>Título e orientação são opcionais. Use ↑ ↓ para reordenar e ✕ para remover.</li>
-</ol>
-<p>O plano é salvo sozinho no navegador enquanto você edita.</p>
-<h2>Entregar aos alunos</h2>
-<ul>
-<li><b>Copiar código</b>: um texto que começa com <code>PLANO1-</code>, para o chat da turma ou a plataforma da escola.</li>
-<li><b>Baixar arquivo do plano</b>: o mesmo conteúdo num arquivo <code>.json</code>. Guarde-o: ele é usado no relatório.</li>
-<li><b>Testar como aluno</b>: abre o plano na tela Início deste computador, para conferir antes da aula.</li>
-</ul>
-{box('trap', 'Mudou o plano depois de entregar?', '<p>Pode acrescentar ou reordenar atividades, mas entregue o código novo. <b>Novo plano em branco</b> cria um plano com outra identificação: os registros dos alunos de um plano não se misturam com os de outro.</p>')}
-<h2>Sugestão de aula (50 minutos)</h2>
-{table(['Tempo', 'O que fazer'], [
-    ['10 min', 'Sem computador: um aluno é o "robô" de olhos vendados na grade desenhada no chão ou no quadro; os colegas dão os comandos e o robô só diz o que sente.'],
-    ['15 min', 'Detetive numa caverna sorteada (a mesma para todos): anotar no caderno, conferir, discutir as dicas.'],
-    ['20 min', 'Blocos: missões 1 a 3 (sequência e repetição). Quem terminar tenta ★★★ ou cria uma caverna.'],
-    ['5 min', 'Baixar e entregar o registro. Conversa: o que o robô "sabe"? Como ele decide sem ver o mapa?'],
-])}
-''')
-
 # ---------------------------------------------------------------- 7
-section('7', 'Para o professor: o relatório da turma', f'''
-{img('escola-relatorio.png', 'Relatório da turma: visão geral (aluno × atividade), números por atividade e, mais abaixo, tudo o que cada aluno fez.')}
-<ol>
-<li>Recolha os arquivos <code>registro-…json</code> dos alunos.</li>
-<li>Em <b>Professor → 2. Relatório da turma</b>, clique em <b>Abrir registros dos alunos</b> e escolha todos de uma vez (pode abrir mais depois). Se o plano não estiver aberto em "Planejar" neste computador, use <b>Abrir arquivo do plano</b>.</li>
-<li>O relatório aparece na tela. <b>Baixar relatório (HTML)</b> gera um arquivo que abre em qualquer navegador; <b>Baixar planilha (CSV)</b> abre no Excel ou no Google Planilhas (uma linha por tentativa); <b>Imprimir</b> imprime ou salva em PDF.</li>
-</ol>
-<h2>O que o relatório mostra</h2>
-{table(['Parte', 'Conteúdo'], [
-    ['Visão geral', 'Uma linha por aluno, uma coluna por atividade: as estrelas (se venceu) ou como terminou a última tentativa, o número de tentativas e de dicas. "—" = ainda não tentou. A última coluna soma atividades concluídas e estrelas.'],
-    ['Por atividade', 'Quantos tentaram e quantos venceram, média de tentativas até vencer, média de estrelas e total de dicas pedidas. Ajuda a ver qual atividade travou a turma.'],
-    ['Tudo o que cada aluno fez', 'Cada tentativa em ordem: resultado, ações, tempo e, no Detetive, quantas vezes entrou em sala comprovadamente perigosa, riscos desnecessários, dicas e anotações certas/possíveis/erradas. Nos Blocos, o número de blocos, o erro (se houve) e o <b>programa escrito como texto</b>.'],
+section('7', 'Trilha de IA', f"""
+<p class="lead">Seis lições curtas que mostram, por dentro do jogo, como um agente inteligente percebe o mundo, raciocina, procura caminhos e aprende. Uma lição por "grande ideia" da Inteligência Artificial (iniciativa AI4K12). Pensada para o ensino médio.</p>
+{img('escola-trilha.png', 'Os seis módulos; as estrelas mostram o melhor resultado em cada lição.')}
+{table(['Módulo', 'Lição', 'Grande ideia', 'Objetivo', 'Tempo'], [[m, f'<b>{html.escape(t)}</b>', html.escape(i), html.escape(g), f'{mi} min'] for _, m, t, i, g, mi in LES])}
+<h2>Como uma lição funciona</h2>
+<ul>
+<li>Uma lição é uma sequência de passos: <b>texto</b> curto, <b>interação no tabuleiro</b> e <b>perguntas</b>. Os botões <b>Voltar</b> e <b>Avançar</b> passam de um passo a outro; numa pergunta, é preciso responder antes de avançar.</li>
+<li>Perguntas de escolha ou de número são conferidas na hora, com a explicação. Errou? Tente de novo: o que conta para as estrelas é acertar de primeira.</li>
+<li>No último módulo há uma <b>reflexão</b> escrita (sem resposta certa), que o professor lê no relatório.</li>
+<li>Estrelas: ★ concluiu · ★★ acertou ao menos 2/3 das perguntas de primeira · ★★★ acertou todas de primeira.</li>
+</ul>
+{img('escola-trilha-pergunta.png', 'Pergunta conferida na hora, com a explicação.')}
+<h2>As interações</h2>
+{table(['Módulo', 'Interação', 'O que o aluno vê'], [
+    ['1', 'Seja o robô', 'Joga só com o que os sensores dizem; ao lado, a lista do que o robô sabe de cada sala.'],
+    ['2', 'Por que o robô sabe?', 'Toca nas salas e o jogo explica a dedução passo a passo ("(1, 2) não tinha brisa, então…").'],
+    ['3', 'As combinações', 'A chance de poço em cada sala e, ao tocar numa delas, a tabela de todas as combinações com seus pesos: a mesma conta do agente probabilístico.'],
+    ['4', 'Busca passo a passo', 'A busca em largura avançando: a sala atual, a fila e, no fim, o caminho mais curto até a entrada.'],
+    ['5', 'Treine você', 'Um algoritmo genético de aula (8 agentes, 8 gerações) treina com 1 caverna e depois com 40; cada resultado é testado em 100 cavernas novas. Com 1 caverna o agente "decora" (muitos pontos no treino, menos nas novas); com 40, generaliza melhor.'],
+    ['6', 'Arena', 'Um programa de blocos do aluno joga 20 cavernas contra os agentes lógico e probabilístico.'],
 ])}
-<h2>Como ler os números (pensamento computacional)</h2>
-{table(['Sinal', 'Pode indicar'], [
-    ['Muitas tentativas com o mesmo erro de programa', 'Dificuldade com o conceito da missão (por exemplo, condição do "repetir até"). Vale uma conversa sobre depuração.'],
-    ['Venceu com ★ mas não com ★★', 'Resolveu, mas sem usar repetição ou função: hora de falar de padrões e abstração.'],
-    ['Detetive: "entrou em sala comprovadamente perigosa"', 'Ainda não conecta a pista (brisa, fedor) à sala vizinha. Retome com o caderno e a conferência.'],
-    ['Muitas dicas e anotações erradas', 'Está tentando raciocinar: um bom momento para mediar.'],
-    ['Poucas tentativas e ★★★', 'Pronto para o próximo desafio: criar uma caverna para os colegas ou ir para o jogo 3D completo.'],
-])}
-{box('notdo', 'O que o relatório não faz', '<ul><li>Não junta os registros sozinho: não há servidor. Os arquivos chegam pelo canal que a escola já usa.</li><li>Não dá nota. As estrelas e contagens são pistas para a mediação, não uma avaliação pronta.</li><li>Não sabe se o aluno trocou de apelido: dois apelidos aparecem como dois alunos.</li></ul>')}
-''')
+<div class="shots2">
+{img('escola-trilha-deducao.png', 'Módulo 2: a explicação da dedução.', 'half')}
+{img('escola-trilha-combinacoes.png', 'Módulo 3: a tabela de combinações.', 'half')}
+{img('escola-trilha-busca.png', 'Módulo 4: a busca em largura passo a passo.', 'half')}
+{img('escola-trilha-genetico.png', 'Módulo 5: treino com 1 e com 40 cavernas.', 'half')}
+</div>
+""")
 
 # ---------------------------------------------------------------- 8
-section('8', 'Privacidade e dados', f'''
-<ul>
-<li><b>Sem conta e sem servidor.</b> Nada é enviado pela internet. O site só baixa as próprias páginas.</li>
-<li><b>Único dado pessoal: o apelido.</b> Oriente os alunos a não usar o nome completo. Isso vai ao encontro do art. 14 da LGPD (Lei 13.709/2018), que pede cuidado especial com dados de crianças e adolescentes.</li>
-<li><b>O que fica no navegador</b> (localStorage): apelido, plano aberto, registros, cavernas salvas, programas das missões, estrelas e o plano que o professor está montando. Em computador compartilhado, isso fica visível para o próximo usuário do mesmo navegador.</li>
-<li><b>Apagar</b>: limpar os dados do site nas configurações do navegador (ou usar uma janela anônima, que apaga tudo ao fechar — mas aí o aluno precisa baixar o registro antes de fechar).</li>
-<li>Os registros que o professor recebe ficam no computador dele. O relatório baixado também.</li>
-</ul>
-''')
+section('8', 'Área do professor: turmas', f"""
+{img('escola-turmas.png', 'Turmas: alunos com PIN, plano da turma e código da turma.')}
+<ol>
+<li><b>Nova turma</b>: dê um nome (por exemplo, "7º ano B") e clique em Criar.</li>
+<li><b>Acrescentar alunos</b>: um apelido por linha (evite nome completo). Cada aluno ganha um PIN de 4 dígitos. <b>Novo PIN</b> troca o PIN de quem esqueceu; <b>Remover</b> tira o aluno.</li>
+<li><b>Plano da turma</b>: monte o plano na aba Planejar e clique em <b>Usar o plano em edição</b>.</li>
+<li><b>Gerar código da turma</b>: um texto que começa com <code>TURMA1-</code> e leva o nome da turma, os resumos dos PINs e o plano. Passe pelo quadro, chat ou plataforma da escola, ou use <b>Baixar arquivo da turma</b>. <b>Baixar cartões de PIN</b> gera uma página para imprimir e recortar.</li>
+</ol>
+{box('trap', 'Mudou algo? Gere o código de novo', '<p>Depois de acrescentar alunos, trocar um PIN ou mudar o plano, gere e entregue o código outra vez. O aluno cola o código novo na tela inicial ("Outra turma") e o aparelho atualiza a turma.</p>')}
+""")
 
 # ---------------------------------------------------------------- 9
-section('9', 'Perguntas frequentes', f'''
+section('9', 'Área do professor: planejar a aula', f"""
+{img('escola-professor.png', 'Planejar: dados do plano e atividades à esquerda; adicionar atividade à direita.')}
+<h2>Tipos de atividade</h2>
+{table(['Modo', 'O que o aluno faz', 'O que escolher'], [
+    ['🔎 Detetive', 'Joga e anota pistas no caderno.', 'A caverna: missão, sorteada por uma palavra (a mesma para todos), uma das suas cavernas ou um código <code>CAV1-</code>.'],
+    ['🧩 Blocos', 'Programa o robô para vencer a caverna.', 'Uma das 9 missões (blocos liberados aos poucos) ou uma caverna (todos os blocos).'],
+    ['🤖 Lição da Trilha de IA', 'Faz uma das seis lições.', 'A lição.'],
+    ['🏆 Agente para a Arena', 'Monta um robô geral, testado em 3 cavernas de treino.', 'Uma palavra (semente) e o tamanho: os programas de todos jogam as mesmas 20 cavernas no relatório.'],
+])}
+<p>Título e orientação são opcionais; ↑ ↓ reordenam e ✕ remove. O plano fica salvo neste aparelho, no seu acesso. O código <code>PLANO1-</code> da aba Planejar serve para quem joga sem turma (visitante).</p>
+<h2>Sugestões de aula (50 minutos)</h2>
+{table(['Público', 'Roteiro'], [
+    ['10 a 14 anos', '10 min sem computador (um aluno é o robô de olhos vendados e só diz o que sente) · 15 min Detetive numa caverna sorteada · 20 min Blocos, missões 1 a 3 · 5 min registro e conversa.'],
+    ['Ensino médio (trilha em 3 aulas)', 'Aula 1: lições 1 e 2 + Detetive · Aula 2: lições 3 e 4 · Aula 3: lição 5, atividade Agente para a Arena e lição 6 com o resultado da Arena da turma projetado.'],
+])}
+""")
+
+# ---------------------------------------------------------------- 10
+section('10', 'Área do professor: relatório da turma', f"""
+{img('escola-relatorio.png', 'Relatório: visão geral aluno × atividade, por atividade e tudo o que cada aluno fez.')}
+<ol>
+<li>Recolha os arquivos <code>registro-…json</code> dos alunos e, em <b>Relatório</b>, clique em <b>Abrir registros dos alunos</b> (vários de uma vez). Eles ficam guardados neste aparelho; abrir o mesmo registro de novo não duplica as tentativas.</li>
+<li>Em <b>Plano do relatório</b>, escolha a turma (ou o plano em edição).</li>
+<li><b>Baixar relatório (HTML)</b>, <b>Baixar planilha (CSV)</b> (uma linha por tentativa) ou <b>Imprimir</b>.</li>
+</ol>
+{table(['Parte', 'Conteúdo'], [
+    ['Visão geral', 'Uma linha por aluno, uma coluna por atividade: estrelas ou como terminou a última tentativa, tentativas e dicas.'],
+    ['Por atividade', 'Quantos tentaram e venceram, tentativas até vencer, estrelas médias e dicas pedidas.'],
+    ['Arena da turma', 'Para cada atividade Agente: o último programa de cada aluno nas mesmas 20 cavernas, com os agentes de referência, em ordem de pontuação.'],
+    ['Tudo o que cada aluno fez', 'Cada tentativa: no Detetive, erros de lógica, riscos, dicas e anotações; nos Blocos, os blocos e o programa como texto; nas lições, os acertos de primeira e as reflexões.'],
+])}
+{img('escola-relatorio-arena.png', 'Arena da turma no relatório: os programas dos alunos e os agentes do jogo nas mesmas cavernas.')}
+<h2>Como ler os números</h2>
+{table(['Sinal', 'Pode indicar'], [
+    ['Muitas tentativas com o mesmo erro de programa', 'Dificuldade com o conceito da missão: vale uma conversa sobre depuração.'],
+    ['Venceu com ★ mas não com ★★', 'Resolveu sem repetição ou função: hora de falar de padrões e abstração.'],
+    ['Detetive: entrou em sala comprovadamente perigosa', 'Ainda não liga a pista à sala vizinha. Retome com o caderno.'],
+    ['Lição com poucos acertos de primeira', 'Volte ao passo do tabuleiro daquela lição com a turma.'],
+    ['Arena: programa com muitas mortes', 'Decorou um caminho em vez de usar os sensores.'],
+])}
+""")
+
+# ---------------------------------------------------------------- 11
+section('11', 'Guardar no GitHub (opcional)', f"""
+{img('escola-github.png', 'Aba GitHub: repositório privado, token e o passo a passo para prepará-lo.')}
+<p>Para usar as turmas em outro computador e ter o histórico de tudo, o professor pode guardar os dados num <b>repositório privado</b> do GitHub dele. É gratuito.</p>
+<h2>Preparar (uma vez)</h2>
+<ol>
+<li>Em github.com, crie um repositório marcado como <b>Private</b> (por exemplo, <code>caverna-turmas</code>).</li>
+<li>Em <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b>: <b>Only select repositories</b> com só esse repositório; <b>Permissions → Contents: Read and write</b>; validade até o fim do semestre.</li>
+<li>Na aba GitHub, preencha o dono, o repositório e o token. <b>Testar conexão</b>.</li>
+</ol>
+<h2>Usar</h2>
+<ul>
+<li><b>Enviar tudo para o GitHub</b> grava <code>turmas/</code>, <code>planos/</code>, <code>registros/</code> e <code>relatorios/</code> (na pasta escolhida). Cada envio vira uma versão no histórico do repositório.</li>
+<li><b>Trazer do GitHub</b> junta as turmas e registros de lá com os deste aparelho.</li>
+<li><b>Lembrar o token neste aparelho</b>: sem marcar, o token vale só até fechar a aba. <b>Esquecer o token</b> o apaga do aparelho.</li>
+</ul>
+{box('trap', 'Segurança', '<ul><li>O jogo recusa gravar num repositório <b>público</b>: as turmas levam os PINs.</li><li>O token nunca vai para o site nem para os alunos. Se ele vazar, apague-o no GitHub e crie outro.</li><li>Os alunos não usam o GitHub: continuam entregando o arquivo de registro.</li></ul>')}
+""")
+
+# ---------------------------------------------------------------- 12
+section('12', 'Privacidade e dados', f"""
+<ul>
+<li><b>Único dado pessoal: o apelido.</b> Oriente os alunos e cadastre apelidos, não nomes completos. Isso vai ao encontro do art. 14 da LGPD (Lei 13.709/2018), que pede cuidado especial com dados de crianças e adolescentes.</li>
+<li><b>No aparelho do aluno</b>: as turmas abertas (com os resumos dos PINs), o registro, programas, cavernas e estrelas.</li>
+<li><b>No aparelho do professor</b>: os acessos (senha só em resumo cifrado), turmas com os PINs, planos, registros recebidos e, se pedido, o token do GitHub.</li>
+<li><b>No GitHub do professor</b> (opcional): repositório privado dele, sob a conta dele.</li>
+<li><b>Apagar</b>: limpar os dados do site nas configurações do navegador. Na tela inicial, "Esqueci a senha" apaga o acesso do professor e os dados dele no aparelho.</li>
+</ul>
+""")
+
+# ---------------------------------------------------------------- 13
+section('13', 'Perguntas frequentes', f"""
+{img('escola-celular-trilha.png', 'No celular: Trilha de IA.', 'phone')}
 {table(['Pergunta', 'Resposta'], [
-    ['O aluno trocou de computador no meio da atividade.', 'Ele abre o mesmo plano no computador novo e continua. No fim, entrega os dois registros: o relatório junta as tentativas do mesmo apelido.'],
-    ['Apareceu "registro(s) de outro plano".', 'O arquivo foi gerado com outro plano (por exemplo, o plano de exemplo ou uma versão em branco). Abra o arquivo do plano certo ou peça ao aluno para reabrir a atividade pelo código correto.'],
-    ['O código do plano é muito comprido.', 'É normal: ele leva o plano inteiro, inclusive as cavernas. Prefira o arquivo, ou cole o código num documento compartilhado com a turma.'],
-    ['Posso usar no celular?', 'Sim. No Blocos, a área de montagem fica em cima e a caverna embaixo; arrastar com o dedo funciona.'],
-    ['O computador da escola não tem internet.', 'Depois de aberta, a página funciona sem internet. Para não depender da rede, dá para hospedar o site na rede da escola (os arquivos do <code>dist/</code> são estáticos).'],
-    ['Como os alunos chegam ao jogo 3D completo?', 'Pelo link "Jogo 3D completo" no alto. Lá estão os agentes inteligentes, a Arena e o algoritmo genético (manual próprio).'],
+    ['O aluno esqueceu o PIN.', 'Em Turmas, clique em Novo PIN ao lado do apelido, gere o código da turma de novo e entregue. Enquanto isso, ele pode entrar sem turma e baixar o registro depois.'],
+    ['O aluno trocou de computador.', 'Ele cola o código da turma no aparelho novo e entra com apelido e PIN. No fim, entrega os registros dos dois aparelhos: o relatório junta as tentativas.'],
+    ['Apareceu "registro(s) de outro plano".', 'O arquivo é de outro plano (por exemplo, de antes de mudar o plano da turma). Escolha o plano certo em "Plano do relatório".'],
+    ['Posso usar no celular?', 'Sim, as duas áreas. No Blocos, a montagem fica em cima e a caverna embaixo.'],
+    ['O computador da escola não tem internet.', 'Depois de abertas, as páginas funcionam sem internet (o GitHub, claro, precisa de internet).'],
+    ['Como chego ao jogo 3D completo?', 'Pelo link "Jogo 3D completo" na tela inicial.'],
 ])}
 <h2>Referência rápida</h2>
 {table(['Onde', 'Atalho'], [
     ['Detetive', 'W/↑ avançar · A/← girar à esquerda · D/→ girar à direita · G pegar · Espaço atirar · Tab + Enter anotar sala'],
-    ['Blocos', 'Arrastar da categoria para dentro de "quando começar" · arrastar para a lixeira para apagar · Ctrl+Z desfazer'],
-    ['Códigos', '<code>PLANO1-…</code> plano do professor · <code>CAV1-…</code> caverna'],
-    ['Arquivos', '<code>plano-….json</code> plano · <code>registro-….json</code> registro do aluno · <code>relatorio-turma-….html/.csv</code> relatório'],
+    ['Blocos', 'Arrastar da categoria para dentro de "quando começar" · lixeira para apagar · Ctrl+Z desfazer'],
+    ['Códigos', '<code>TURMA1-…</code> turma · <code>PLANO1-…</code> plano (sem turma) · <code>CAV1-…</code> caverna'],
+    ['Arquivos', '<code>turma-….json</code> · <code>pins-….html</code> · <code>registro-….json</code> · <code>relatorio-turma-….html/.csv</code>'],
 ])}
-''')
+""")
 
 toc_html = ''.join(f'<li><a href="#{sid}"><span class="tnum">{n}</span>{t}</a></li>' for n, t, sid in toc)
 extra = '''
 .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.shots2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.shots2 figure.shot { width: 100%; margin: 0; }
 table.compact td { vertical-align: top; }
 '''
 doc = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Manual do modo escola</title>
@@ -275,7 +346,7 @@ doc = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>M
   <div>
     <div class="kicker">Wumpus 3D · Modo escola</div>
     <h1>Caverna do Pensamento</h1>
-    <p class="sub">Manual do aluno e do professor: Detetive, Programador com blocos, Criador de cavernas, planejamento da atividade e relatório da turma.</p>
+    <p class="sub">Manual do aluno e do professor: login, Detetive, Programador com blocos, Criador de cavernas, Trilha de IA, turmas, planejamento, relatório e GitHub.</p>
     <div class="grid"><i class="e"></i><i></i><i class="p"></i><i></i><i></i><i class="w"></i><i class="g"></i><i></i><i></i><i></i><i></i><i class="p"></i><i></i><i class="p"></i><i></i><i></i></div>
   </div>
   <div class="meta">
