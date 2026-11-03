@@ -60,8 +60,8 @@ scripts/docs/gerar.sh                       # regenera os PDFs de docs/ (inclui 
 
 | Branch | Conteúdo | Situação |
 |---|---|---|
-| `main` | Refatoração pelo Código Limpo (D21), via PR #8 (merge bb40145) | **É o que o site oficial mostra** (publicado a cada push na `main`). |
-| `educacional` | `main` + modo escola (D22) + login, turmas, trilha de IA e GitHub do professor (D23) + proposta, manual e scripts de verificação | A mais completa. Prévia privada no claude.ai (HISTORICO nº 28 e 31). Ainda não publicada no site nem levada à `main`. |
+| `main` | Refatoração pelo Código Limpo (D21), via PR #8 (merge bb40145) | Publicada a cada push na `main`; no momento o site mostra a `educacional` (nº 32). |
+| `educacional` | `main` + modo escola (D22) + login, turmas, trilha de IA e GitHub do professor (D23) + proposta, manual e scripts de verificação | A mais completa. Prévia privada no claude.ai (HISTORICO nº 28 e 31). **Publicada no site desde 3/11/2026** por disparo manual (HISTORICO nº 32), até o próximo push na `main`; ainda não levada à `main`. |
 
 As branches `refatoracao`, `claude/awesome-brown-2xexng` e `claude/elegant-tesla-on1ll8` foram apagadas pelo dono depois dos merges (HISTORICO nº 30).
 

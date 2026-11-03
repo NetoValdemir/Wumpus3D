@@ -142,6 +142,10 @@ Acrescente novas entradas no fim.
 - **Feito:** D23. Commits 4ee91e8 (núcleo sem tela), cf96eae (telas) e o de documentação. Manual do modo escola reescrito (13 capítulos, capturas novas), README, CLAUDE.md, documentação técnica; prévia no claude.ai atualizada com as três páginas, na mesma URL (https://claude.ai/artifact/NqCJA2MhDw9AfJhHMqY1Xu, versão 2; `montar-previa.py` agora publica `escola.html`, `aluno.html` e `professor.html`).
 - **Verificado:** `npm run check` (100 testes; novos `edu-trilha` 12 e `edu-acesso` 8); `compara-saidas.sh main --rapido` idêntico (agentes e arena sem mudança); `roteiro-escola.cjs` (Playwright) com o fluxo completo professor → turma → aluno → relatório → GitHub simulado, sem requisições externas e sem rolagem horizontal no celular. Genético de aula: 1 caverna 1470/585 (treino/teste), 40 cavernas 544/609, probabilístico 686.
 
+### 32. Site mostrando a `educacional` (3/11/2026)
+- **Pedido:** acessar o modo escola pelo GitHub Pages sem mexer na `main`.
+- **Feito:** workflow "Deploy no GitHub Pages" disparado manualmente com a `educacional` (execução 41656144589, commit 6763ecd, sucesso em todas as etapas). O site passa a mostrar a `educacional` (jogo 3D + `escola.html`, `aluno.html`, `professor.html`) até o próximo push na `main`, que volta a publicar a `main`.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
