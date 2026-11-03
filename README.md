@@ -162,6 +162,17 @@ O repositório guarda a memória do projeto, para qualquer sessão nova do Claud
 
 **No chat do claude.ai** (sem acesso ao código): crie um Projeto e adicione como conhecimento `CLAUDE.md`, `docs/contexto/HISTORICO.md`, `docs/contexto/DECISOES.md` e, se quiser, os PDFs de `docs/`. Assim o chat responde sobre o projeto, mas não consegue alterar nem testar o código.
 
+## Modo escola (pensamento computacional, 10 a 18 anos)
+
+Em `escola.html` (link "🎒 Modo escola" no fim do painel do jogo) há uma versão para sala de aula, com tabuleiro 2D leve:
+
+- **Detetive**: o aluno joga e anota no caderno o que sabe de cada sala; o robô-ajudante confere as anotações com as deduções e dá dicas em forma de pergunta.
+- **Programador com blocos**: 9 missões com blocos (Blockly) — sequência, repetição, condições, funções —, execução passo a passo com o bloco atual destacado e estrelas por programa curto.
+- **Criador de cavernas**: monta uma caverna sala a sala e compartilha por um código (`CAV1-…`).
+- **Professor**: monta o plano da aula (missões, cavernas sorteadas com semente ou criadas), entrega por código (`PLANO1-…`) ou arquivo, e junta os registros que os alunos baixam num relatório da turma (HTML, CSV ou impressão).
+
+Sem servidor nem conta: o único dado pessoal é o apelido do aluno. Manual completo em `docs/wumpus3d-manual-escola.pdf`.
+
 ## Documentação em PDF
 
 Os PDFs de `docs/` são gerados por `scripts/docs/gerar.sh` a partir do código (os trechos de código são copiados dos arquivos reais). Requer python3, Playwright e as fontes Inter, JetBrains Mono e Bitstream Charter.
@@ -196,6 +207,7 @@ src/
 │   ├── players.ts   # quem joga: nomes, seletor e criação do agente
 │   ├── *-panel.ts   # seções do painel: mapas, agente genético, avaliação, minhas partidas
 │   └── dom.ts       # utilitários de tela (mensagens, download, copiar, confirmar)
+├── edu/             # modo escola: Detetive, blocos, criador, plano e relatório do professor (telas em edu/ui)
 ├── util/format.ts   # formatação sem DOM (porcentagens, números, HTML, nomes de arquivo)
 ├── storage.ts       # mapas, genoma, agentes importados e partidas salvos no navegador
 └── style.css        # interface sobre o canvas

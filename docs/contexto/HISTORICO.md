@@ -111,6 +111,12 @@ Acrescente novas entradas no fim.
 - **Medido:** `main.ts` 799 → 140 linhas; maior função 224 → 56 linhas; média 11,7 → 7,9 linhas por função; funções com mais de 30 linhas 26 → 12; complexidade ciclomática média 2,96 → 2,22, máxima 26 → 13, funções acima de 10: 17 → 4; trechos duplicados (`$`, `esc`, `pct/num`, download, cópia, confirmação, laço de partida, `split(',')`, `localStorage`) 48 → 14 ocorrências (o que sobra é a definição única de cada um); geometrias após 40 mapas 393 → 10. Linhas totais subiram (4324 → 4862; código sem comentários 3605 → 3902) por causa das assinaturas e comentários das funções separadas; bundle +0,4% (gzip +2,6%).
 - **Verificado:** 49 testes (8 novos em `tests/refatoracao.test.ts`); saídas idênticas com sementes fixas (arena 300 mapas 4×4 e 150 6×6, `medir` 2000+500 mapas, `treinar`; o aleatório fica de fora por usar `Math.random`); mesmo roteiro Playwright (teclado, 4 agentes, avaliação, mapas, desafio, Minhas partidas, Análise, Arena com agente importado, treino, celular) nas duas versões: 67 pontos idênticos, sem erros no console, sem rolagem horizontal no celular.
 
+### 26. Modo escola (branch `educacional`)
+- **Pedido:** versão para ensino de pensamento computacional (10 a 18 anos), a partir da proposta "Caverna do Pensamento": Modo Detetive, Programador com blocos, Criador de cavernas, planejamento e relatório do professor, manual do usuário.
+- **Feito (D22):** `escola.html` + `src/edu/*`: Detetive com caderno, conferência e dicas; 9 missões de blocos (Blockly) com estrelas e execução passo a passo; criador com validação e código `CAV1-`; plano do professor (`PLANO1-`), registro do aluno (arquivo) e relatório da turma (HTML/CSV/impressão); link no jogo 3D; manual `docs/wumpus3d-manual-escola.pdf`.
+- **Verificado:** 80 testes (31 novos: soluções de referência das 9 missões com 3 estrelas, interpretador, caderno, criador, plano, relatório); arena com sementes fixas idêntica; Playwright no fluxo completo professor → aluno → relatório (Detetive, arrastar bloco do Blockly, vitória, erro de laço, missão com 3 cavernas, criador, CSV), sem erros no console nem requisições externas, sem rolagem horizontal em 390 px.
+- **Pendências:** testar com turmas reais; leitura em voz alta; modo desplugado (PDF de tabuleiro e cartas); Python no modo texto; o bundle da página escola tem ~845 KB (Blockly).
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |

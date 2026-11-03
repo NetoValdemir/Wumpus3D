@@ -28,7 +28,7 @@ npm run arena -- --maps 200 --seed treino   # competição de agentes na linha d
 npm run treinar -- --seed utilidade-a --pop 20 --geracoes 20 --mapas 500 --tamanhos 4,6 --validacao 2000
                                             # treino do agente genético (reproduz o DEFAULT_GENOME, ~15 min)
 npm run medir                               # tabela de desempenho (5000 mapas 4×4, 1000 6×6)
-scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
+scripts/docs/gerar.sh                       # regenera os PDFs de docs/ (inclui o manual do modo escola)
 ```
 
 ## Mapa do código
@@ -39,6 +39,7 @@ scripts/docs/gerar.sh                       # regenera os 3 PDFs de docs/
 | `src/render/view.ts` | Cena 3D (Three.js): lê o estado, nunca muda regras |
 | `src/main.ts` | Ponto de entrada: liga teclado, botões e painéis aos módulos de `src/ui` |
 | `src/ui/*` | Interface: `state.ts` (estado da partida), `game.ts` (ação, passo do agente, `restart`, laço), `hud.ts`, `players.ts`, um `*-panel.ts` por seção do painel, `dom.ts` (utilitários de tela) |
+| `escola.html` · `src/edu/*` | Modo escola (D22): Detetive (`detective.ts`), blocos (`program.ts`, `blockly-json.ts`, `run.ts`, `missions.ts`, `blocks-setup.ts`), criador (`caves.ts`), plano/registro/relatório do professor (`plan.ts`, `class-report.ts`), telas em `src/edu/ui/` |
 | `src/util/format.ts` | Formatação sem DOM (porcentagens, números, escape de HTML, nomes de arquivo) |
 | `src/agents/knowledge.ts` | Base de conhecimento: deduções lógicas e P(poço) por enumeração da fronteira |
 | `src/agents/agents.ts` | Agentes aleatório, lógico, probabilístico (`ReasoningAgent`) e genético (`GeneticAgent`) |

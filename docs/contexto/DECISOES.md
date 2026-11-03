@@ -119,3 +119,13 @@ Antes de mudar algo listado aqui, leia o motivo. Ao decidir algo novo, acrescent
 - **Mudanças visíveis intencionais (mínimas):** `WorldView` agora libera geometrias, materiais e texturas ao trocar de mapa, de crenças e ao fim da flecha (antes a memória de vídeo crescia: 393 geometrias após 40 mapas, agora 10); poços compartilham geometria e material; nome do arquivo de mapa exportado agora tira acentos (`ação` → `acao`, antes `a-o`).
 - **Descartado:** framework de UI (D1 continua valendo); classes para cada painel (módulos com funções bastaram); mudar o formato do id dos agentes importados (quebraria agentes já salvos).
 - **Onde:** `src/ui/*`, `src/util/format.ts`, `scripts/args.ts`, `tests/refatoracao.test.ts`; relatório em `docs/Wumpus3D-Refatoracao.pdf`.
+
+## D22 — Modo escola: página separada, mesmo motor, sem servidor
+- **Por quê:** pedido do dono: versão para ensinar pensamento computacional a crianças e jovens de 10 a 18 anos (proposta "Caverna do Pensamento", com base em Lightbot, Blockly Games, Karel, Scratch, CS Unplugged, Bebras; Brennan e Resnick 2012; BNCC Computação).
+- **Como:** `escola.html` (segunda entrada do build) com tabuleiro 2D em SVG, sem 3D. Regras, sorteio e pontuação continuam os de `world.ts`; as estrelas são só exibição (invariante 5 intacta). Missões usam mapas fixos em JSON (sem passar pelo sorteio, como mapas importados), com o Wumpus longe da rota nas primeiras (invariante 6 intacta).
+- **Blocos:** Blockly 13.4.0 (Apache-2.0), blocos próprios em português. O programa vira uma árvore de comandos (`blockly-json.ts`) executada por um interpretador próprio (`program.ts`), sem `eval`, que só recebe as percepções públicas (invariante 2). Laço sem fim (5000 passos sem ação) e recursão (40 níveis) viram erro no bloco certo. Sons desligados e imagens em `public/blockly-media` para não depender de servidor externo.
+- **Detetive:** anotações conferidas com a mesma `Knowledge` dos agentes; estrelas pelo `Referee` (erros de lógica, riscos desnecessários) e pelas anotações erradas.
+- **Professor e privacidade:** plano e registros trocados como arquivo ou código (base64 do JSON); o relatório da turma é montado no navegador do professor. Sem conta, sem servidor, só apelido (LGPD art. 14). `world.ts` passou a exportar `reachable()` (usado pelo criador).
+- **Descartado:** servidor com turmas e login (custo, dados de menores); usar o gerador JavaScript do Blockly + `eval` (executar texto gerado e passo a passo ficaria mais difícil e menos seguro); 3D no modo escola (pesado em computadores de laboratório; o 3D continua a um clique).
+- **Onde:** `escola.html`, `src/edu/*`, `tests/edu-*.test.ts`, `scripts/docs/manual-escola.py`, `capturas-escola.cjs`.
+
