@@ -1,0 +1,2 @@
+Imagens da biblioteca Blockly (https://github.com/RaspberryPiFoundation/blockly), licença Apache-2.0.
+Copiadas de node_modules/blockly/media para o modo escola não depender de servidor externo.
