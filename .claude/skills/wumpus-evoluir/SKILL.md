@@ -18,7 +18,8 @@ description: Roteiro para qualquer mudança no Wumpus 3D (nova funcionalidade, c
 ## 3. Verificar (obrigatório antes de dizer que terminou)
 1. `npm run check` — tipos + testes. Tudo precisa passar.
 2. Escreva ou ajuste um teste em `tests/` para o comportamento novo ou corrigido.
-3. Mudou agentes, conhecimento ou arena? `npm run arena -- --maps 200 --seed verificacao` e compare com a tabela do `HISTORICO.md`.
+3. Mudou agentes, conhecimento ou arena? `npm run arena -- --maps 200 --seed verificacao` e compare com a tabela do `HISTORICO.md`. Mudança que não deveria alterar resultados (refatoração, limpeza)? `scripts/verificacao/compara-saidas.sh main` precisa dar "idêntico" em tudo.
+   Mudou o modo escola (`escola.html`, `src/edu/`)? Rode `scripts/verificacao/roteiro-escola.cjs` (fluxo professor → aluno → relatório) e, se a tela mudou, `scripts/docs/capturas-escola.cjs` e o manual (`manual-escola.py`).
 4. Mudou interface ou 3D? `npm run build && npm run preview -- --port 4173` e verifique no navegador (Playwright está disponível nas sessões em nuvem: `require('playwright')`, `chromium.launch({ args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] })`). Confira console sem erros, tela de computador (1280×800) e de celular (390×844).
 5. Relate o que foi verificado e o que não foi. Não arredonde resultados nem omita falhas.
 

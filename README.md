@@ -177,6 +177,17 @@ Sem servidor nem conta: o único dado pessoal é o apelido do aluno. Manual comp
 
 Os PDFs de `docs/` são gerados por `scripts/docs/gerar.sh` a partir do código (os trechos de código são copiados dos arquivos reais). Requer python3, Playwright e as fontes Inter, JetBrains Mono e Bitstream Charter.
 
+| PDF | Conteúdo |
+|---|---|
+| `wumpus3d-manual-de-uso.pdf` | Manual do jogo 3D (jogadores, professores) |
+| `wumpus3d-manual-escola.pdf` | Manual do modo escola (alunos e professores) |
+| `wumpus3d-documentacao.pdf` | Documentação técnica (para reimplementar) |
+| `agente-genetico-fundamentacao.pdf` | Base teórica do agente genético |
+| `Wumpus3D-Refatoracao.pdf` | O que mudou na refatoração pelo Código Limpo e como foi verificado |
+| `wumpus3d-proposta-educacional.pdf` | Proposta que originou o modo escola (pesquisa de jogos de pensamento computacional) |
+
+Para conferir que uma mudança não alterou o comportamento, veja `scripts/verificacao/LEIA-ME.md`.
+
 ## Estrutura
 
 ```
@@ -215,6 +226,8 @@ scripts/arena.ts     # arena na linha de comando (npm run arena)
 scripts/treinar.ts   # treino do agente genético na linha de comando (npm run treinar)
 scripts/medir.ts     # tabela de desempenho dos agentes (npm run medir)
 scripts/docs/        # geradores dos PDFs de docs/
+scripts/verificacao/ # comparação de resultados entre versões, roteiros Playwright, métricas de código
+scripts/previa/      # prévia do modo escola como Artifact do claude.ai
 tests/               # testes automatizados (vitest)
 agents/              # agentes da competição (um arquivo .js cada)
 ```

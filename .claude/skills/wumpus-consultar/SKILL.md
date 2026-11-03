@@ -15,6 +15,8 @@ Objetivo: responder com precisão lendo só o necessário. Nunca invente: se a r
 | "Por que foi feito assim?", "o que foi descartado?" | `docs/contexto/DECISOES.md` |
 | "O que já foi pedido/feito?", números medidos, pendências | `docs/contexto/HISTORICO.md` |
 | Como jogar, o que cada configuração faz | textos em `scripts/docs/manual.py` |
+| Modo escola (Detetive, blocos, criador, professor) | textos em `scripts/docs/manual-escola.py`; motivos em D22 |
+| Branches, o que o site mostra, prévias | seção "Branches e publicação" do `CLAUDE.md` e HISTORICO nº 28 |
 | Contrato para agentes externos | `AGENTES.md` |
 | Fundamentação teórica do agente genético e referências | textos em `scripts/docs/fundamentacao.py` |
 | Comportamento exato de uma regra ou função | o código-fonte (passo 2) |

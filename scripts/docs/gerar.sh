@@ -20,7 +20,10 @@ node pdf.cjs "$tmp/manual.html" ../../docs/wumpus3d-manual-de-uso.pdf "Wumpus 3D
 python3 manual-escola.py "$tmp/manual-escola.html"
 node pdf.cjs "$tmp/manual-escola.html" ../../docs/wumpus3d-manual-escola.pdf "Wumpus 3D — Manual do modo escola"
 
-# Relatório da refatoração (D21): números fixos, medidos na época
+# Documentos históricos (números e textos fixos, da época): proposta educacional e relatório da refatoração (D21)
+python3 proposta-educacional.py "$tmp/proposta.html"
+node pdf.cjs "$tmp/proposta.html" ../../docs/wumpus3d-proposta-educacional.pdf "Wumpus 3D — Proposta educacional: pensamento computacional"
+
 python3 refatoracao.py "$tmp/refatoracao.html"
 node pdf.cjs "$tmp/refatoracao.html" ../../docs/Wumpus3D-Refatoracao.pdf "Wumpus 3D — Refatoração pelo Código Limpo"
 

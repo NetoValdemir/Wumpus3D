@@ -111,11 +111,21 @@ Acrescente novas entradas no fim.
 - **Medido:** `main.ts` 799 → 140 linhas; maior função 224 → 56 linhas; média 11,7 → 7,9 linhas por função; funções com mais de 30 linhas 26 → 12; complexidade ciclomática média 2,96 → 2,22, máxima 26 → 13, funções acima de 10: 17 → 4; trechos duplicados (`$`, `esc`, `pct/num`, download, cópia, confirmação, laço de partida, `split(',')`, `localStorage`) 48 → 14 ocorrências (o que sobra é a definição única de cada um); geometrias após 40 mapas 393 → 10. Linhas totais subiram (4324 → 4862; código sem comentários 3605 → 3902) por causa das assinaturas e comentários das funções separadas; bundle +0,4% (gzip +2,6%).
 - **Verificado:** 49 testes (8 novos em `tests/refatoracao.test.ts`); saídas idênticas com sementes fixas (arena 300 mapas 4×4 e 150 6×6, `medir` 2000+500 mapas, `treinar`; o aleatório fica de fora por usar `Math.random`); mesmo roteiro Playwright (teclado, 4 agentes, avaliação, mapas, desafio, Minhas partidas, Análise, Arena com agente importado, treino, celular) nas duas versões: 67 pontos idênticos, sem erros no console, sem rolagem horizontal no celular.
 
-### 26. Modo escola (branch `educacional`)
+### 26. Proposta educacional "Caverna do Pensamento" (2/11/2026)
+- **Pedido:** sugestões (sem mexer no código) para uma versão que ensine pensamento computacional a crianças e jovens de 10 a 18 anos, com pesquisa de jogos que já fazem isso, em PDF.
+- **Feito:** `docs/wumpus3d-proposta-educacional.pdf` (gerador `scripts/docs/proposta-educacional.py`, guardado depois no repositório). Pesquisa: Lightbot, Blockly Games, Code.org/Minecraft, Karel, Human Resource Machine, CodeCombat, Scratch, Robot Turtles, CS Unplugged, Bebras, Machine Learning for Kids; base: Wing 2006, Brennan e Resnick 2012, Papert 1980, AI4K12 (Touretzky et al. 2019), BNCC Computação (Parecer CNE/CEB 2/2022), LGPD art. 14. Propôs 5 modos: Detetive, Blocos, Cientista de agentes (texto/Arena da turma), Criador, Desplugado; campanha de 12 missões; ferramentas do professor; roteiro em 7 fases.
+- **Decisão do dono:** implementar Detetive, Blocos, Criador e professor (item 27). Ficaram para depois: Cientista de agentes (Python, Arena da turma), Desplugado, trilha de IA.
+
+### 27. Modo escola (branch `educacional`)
 - **Pedido:** versão para ensino de pensamento computacional (10 a 18 anos), a partir da proposta "Caverna do Pensamento": Modo Detetive, Programador com blocos, Criador de cavernas, planejamento e relatório do professor, manual do usuário.
 - **Feito (D22):** `escola.html` + `src/edu/*`: Detetive com caderno, conferência e dicas; 9 missões de blocos (Blockly) com estrelas e execução passo a passo; criador com validação e código `CAV1-`; plano do professor (`PLANO1-`), registro do aluno (arquivo) e relatório da turma (HTML/CSV/impressão); link no jogo 3D; manual `docs/wumpus3d-manual-escola.pdf`.
 - **Verificado:** 80 testes (31 novos: soluções de referência das 9 missões com 3 estrelas, interpretador, caderno, criador, plano, relatório); arena com sementes fixas idêntica; Playwright no fluxo completo professor → aluno → relatório (Detetive, arrastar bloco do Blockly, vitória, erro de laço, missão com 3 cavernas, criador, CSV), sem erros no console nem requisições externas, sem rolagem horizontal em 390 px.
 - **Pendências:** testar com turmas reais; leitura em voz alta; modo desplugado (PDF de tabuleiro e cartas); Python no modo texto; o bundle da página escola tem ~845 KB (Blockly).
+
+### 28. Publicações, prévia e registro do contexto (31/10 a 3/11/2026)
+- **Site oficial:** depois da refatoração, o dono pediu para publicar a `refatoracao` sem tocar na `main`. Feito pelo disparo manual do workflow "Deploy no GitHub Pages" (`workflow_dispatch`, ref `refatoracao`); a primeira tentativa falhou porque o ambiente `github-pages` só aceitava a `main`, e o dono acrescentou a regra `refatoracao` em Settings → Environments → github-pages. Execução que publicou: actions/runs/41216639927 (commit 14546c8). **O site fica com essa versão até o próximo push na `main`.** Para publicar outra branch, ela precisa da mesma regra no ambiente.
+- **Prévia do modo escola:** o dono escolheu testar como Artifact privado no claude.ai, sem mexer no site: https://claude.ai/artifact/NqCJA2MhDw9AfJhHMqY1Xu (commit 26a4702). Montada por `scripts/previa/montar-previa.py`; lá downloads e impressão são bloqueados (a prévia avisa) e o jogo 3D não está incluído. Para atualizar, publique na mesma URL.
+- **Registro do contexto:** proposta, scripts de verificação (`scripts/verificacao/`), montador da prévia e o estado das branches (seção "Branches e publicação" do `CLAUDE.md`) foram guardados no repositório para continuar em outra sessão.
 
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
@@ -132,7 +142,9 @@ Regras atuais (D14, D15, D16), agentes com as correções de D17 e genético v2 
 ## Pendências e ideias (não feitas)
 
 - Conferir no log do Actions se `ARENA_SEED` está sendo usado.
-- Testes automatizados de interface/3D (Playwright) — hoje só regras, deduções e arena têm testes.
+- Testes de interface no `npm run check`: os roteiros Playwright de `scripts/verificacao/` existem, mas rodam à mão (precisam do site no ar e, para o 3D, de WebGL por software).
+- Modo escola: testar com turmas; itens da proposta não feitos (Cientista de agentes/Python, Arena da turma, Desplugado, leitura em voz alta); dividir o bundle do Blockly.
+- Levar `refatoracao`/`educacional` para a `main` (PR) quando o dono decidir; até lá, um push na `main` volta o site para a versão antiga.
 - P(Wumpus) uniforme entre candidatas; enumeração aproximada com fronteira > 16 salas.
 - Agente genético não supera o probabilístico; novas características ou calibração de parâmetros poderiam mudar isso.
 - Bundle ~600 KB (`import * as THREE`).
