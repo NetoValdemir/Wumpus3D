@@ -60,13 +60,14 @@ scripts/docs/gerar.sh                       # regenera os PDFs de docs/ (inclui 
 
 | Branch | Conteúdo | Situação |
 |---|---|---|
-| `main` | Refatoração pelo Código Limpo (D21), via PR #8 (merge bb40145) | **É o que o site oficial mostra** (publicado pelo push na `main`). |
-| `refatoracao` | Igual à `main` (já incorporada pelo PR #8) | Pode ser apagada. |
+| `main` | Refatoração pelo Código Limpo (D21), via PR #8 (merge bb40145) | **É o que o site oficial mostra** (publicado a cada push na `main`). |
 | `educacional` | `main` + modo escola (D22) + proposta, manual e scripts de verificação | A mais completa. Prévia privada no claude.ai (HISTORICO nº 28). Ainda não publicada no site nem levada à `main`. |
-| `claude/awesome-brown-2xexng` | Igual à `refatoracao` (branch de trabalho da sessão) | Pode ser apagada. |
 
-- Para publicar uma branch sem mexer na `main`: o ambiente `github-pages` precisa de uma regra para ela (Settings → Environments → github-pages → Deployment branches; só o dono faz) e depois o workflow "Deploy no GitHub Pages" é disparado manualmente com essa branch. Hoje `main` e `refatoracao` têm regra.
+As branches `refatoracao`, `claude/awesome-brown-2xexng` e `claude/elegant-tesla-on1ll8` foram apagadas pelo dono depois dos merges (HISTORICO nº 30).
+
 - Levar o modo escola ao site: PR da `educacional` para a `main` (decisão do dono; a `educacional` já contém a `main`, então o PR não tem conflitos).
+- Para publicar uma branch sem mexer na `main`: o ambiente `github-pages` precisa de uma regra para ela (Settings → Environments → github-pages → Deployment branches; só o dono faz) e depois o workflow "Deploy no GitHub Pages" é disparado manualmente com essa branch.
+- Nas sessões em nuvem, apagar branches no GitHub (push `--delete` ou API) é bloqueado pelo proxy: o dono apaga pelo navegador.
 - Documentos de cada etapa: `docs/Wumpus3D-Refatoracao.pdf`, `docs/wumpus3d-proposta-educacional.pdf`, `docs/wumpus3d-manual-escola.pdf`.
 
 ## Invariantes (não quebre sem decidir conscientemente e registrar em DECISOES.md)

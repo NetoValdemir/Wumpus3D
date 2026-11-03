@@ -132,6 +132,11 @@ Acrescente novas entradas no fim.
 - **Feito:** PR #8 (https://github.com/NetoValdemir/Wumpus3D/pull/8), merge bb40145; a `main` foi trazida para a `educacional`. O push disparou o deploy (actions/runs/41643063079: testes, ranking oficial, build e publicação com sucesso). O site oficial passa a seguir a `main` normalmente.
 - **Verificado:** `npm run check` na `refatoracao` antes do merge (49 testes).
 
+### 30. Limpeza das branches (3/11/2026)
+- **Pedido:** apagar a `refatoracao` (já mesclada na `main`) e manter a `educacional` como está.
+- **Feito:** a sessão não conseguiu apagar no GitHub (proxy bloqueia `push --delete` e a API de refs, erro 403); o dono apagou pelo navegador a `refatoracao` e as branches de trabalho `claude/awesome-brown-2xexng` e `claude/elegant-tesla-on1ll8`. Restam `main` e `educacional`. A regra `refatoracao` no ambiente `github-pages` pode ser removida.
+- **Conversa:** o dono pediu detalhes da "trilha de IA para o ensino médio" (item da proposta, nº 26); esboço em Pendências.
+
 ## Resultados medidos (mesmos mapas para todos, 20% de poços)
 
 | Agente | 4×4 (5000 mapas) | 6×6 (1000 mapas) |
@@ -150,6 +155,7 @@ Regras atuais (D14, D15, D16), agentes com as correções de D17 e genético v2 
 - Testes de interface no `npm run check`: os roteiros Playwright de `scripts/verificacao/` existem, mas rodam à mão (precisam do site no ar e, para o 3D, de WebGL por software).
 - Modo escola: testar com turmas; itens da proposta não feitos (Cientista de agentes/Python, Arena da turma, Desplugado, leitura em voz alta); dividir o bundle do Blockly.
 - Levar a `educacional` (modo escola) para a `main` (PR) quando o dono decidir.
+- Trilha de IA para o ensino médio (16–18 anos), esboçada em 3/11/2026, não implementada: 6 módulos sobre o que o jogo já tem — (1) agente e ambiente/percepção (PEAS, o que o robô sente); (2) lógica: regras e deduções da `Knowledge`, com "por que esta sala é segura?"; (3) probabilidade: enumeração da fronteira à mão (o exemplo dos 56%) e decisão por utilidade esperada; (4) busca: BFS do caminho de volta; (5) aprendizado: o agente genético, treino × validação, sobreajuste num só mapa; (6) avaliação e impacto: Arena, mesmos mapas, ruído, responsabilidade de agentes autônomos. Projeto final: agente próprio (blocos → JavaScript) na Arena da turma. Alinhada às 5 grandes ideias do AI4K12. Peças novas: explicação das deduções em `knowledge.ts`, tela de crenças e calculadora de enumeração no modo escola, genético com poucos genes no modo escola, atividade "agente" no plano do professor com ranking da turma a partir dos registros.
 - P(Wumpus) uniforme entre candidatas; enumeração aproximada com fronteira > 16 salas.
 - Agente genético não supera o probabilístico; novas características ou calibração de parâmetros poderiam mudar isso.
 - Bundle ~600 KB (`import * as THREE`).
