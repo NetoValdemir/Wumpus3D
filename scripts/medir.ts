@@ -4,10 +4,10 @@
 //
 // Mapas das sementes "medicao-4x4" e "medicao-6x6". Lotes pequenos variam muito (um lote difícil
 // derruba todos os agentes juntos, mas a ordem entre agentes próximos muda): compare com 5000 mapas 4×4.
-import { createAgent, sensesOf, type AgentId } from '../src/agents/agents';
+import { playMaps, type BuiltinAgentId } from '../src/agents/benchmark';
 import { BAYES_LIKE_GENOME, DEFAULT_GENOME } from '../src/agents/genome';
 import { arenaMaps } from '../src/arena/rng';
-import { WumpusWorld, type MapLayout } from '../src/game/world';
+import type { MapLayout } from '../src/game/world';
 import { pairedDiff } from '../src/report/report';
 
 const args = process.argv.slice(2);
@@ -17,7 +17,7 @@ const arg = (name: string, fallback: number) => {
 };
 const pits = arg('--pits', 0.2);
 
-const agents: [string, Exclude<AgentId, 'human'>, number[] | undefined][] = [
+const agents: [string, BuiltinAgentId, number[] | undefined][] = [
   ['Aleatório', 'random', undefined],
   ['Lógico', 'logic', undefined],
   ['Probabilístico', 'bayes', undefined],
@@ -26,19 +26,9 @@ const agents: [string, Exclude<AgentId, 'human'>, number[] | undefined][] = [
 ];
 
 /** Joga os mapas e devolve a pontuação de cada partida, mais um resumo em texto. */
-function measure(id: Exclude<AgentId, 'human'>, genome: number[] | undefined, maps: MapLayout[]) {
-  let wins = 0, shots = 0;
-  const scores: number[] = [];
-  for (const layout of maps) {
-    const world = WumpusWorld.fromLayout(layout);
-    const agent = createAgent(id, world.size, world.pitProbability, genome);
-    while (!world.gameOver) world.step(agent.decide(sensesOf(world)));
-    scores.push(world.score);
-    if (world.status === 'won') wins++;
-    if (!world.hasArrow) shots++;
-  }
+function measure(id: BuiltinAgentId, genome: number[] | undefined, maps: MapLayout[]) {
+  const { scores, wins, shots, avg } = playMaps(id, genome, maps);
   const n = maps.length;
-  const avg = scores.reduce((s, v) => s + v, 0) / n;
   return { scores, text: `${((100 * wins) / n).toFixed(1)}% vitórias, ${avg.toFixed(1)} pts, tiro em ${((100 * shots) / n).toFixed(0)}% das partidas` };
 }
 

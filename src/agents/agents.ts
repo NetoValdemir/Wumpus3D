@@ -1,6 +1,7 @@
 // Agentes que jogam sozinhos. Cada um recebe só o que um jogador real saberia:
 // as percepções da sala atual, a própria posição/direção e o que carrega.
-import { key, type Action, type Cell, type Dir, type Percepts, type WumpusWorld } from '../game/world';
+import { key, parseKey, type Action, type Cell, type Dir, type Percepts, type WumpusWorld } from '../game/world';
+import { percent } from '../util/format';
 import { Knowledge, riskOf, type CellBelief } from './knowledge';
 import { CELL_GENES, DEFAULT_GENOME, GENES } from './genome';
 
@@ -61,23 +62,27 @@ export function createAgent(id: Exclude<AgentId, 'human'>, size: number, pitProb
   return new ReasoningAgent(size, pitProbability, id);
 }
 
-export const fmt = (k: string) => {
-  const [x, y] = k.split(',').map(Number);
+/** Sala no formato da tela (1-based): "2,0" → "(3, 1)". */
+const cellName = (k: string) => {
+  const [x, y] = parseKey(k);
   return `(${x + 1}, ${y + 1})`;
 };
-export const pct = (v: number) => `${Math.round(v * 100)}%`;
 
-class RandomAgent implements Agent {
+/** Direção do primeiro passo de (x, y) para uma sala vizinha (tx, ty). */
+function dirTo(x: number, y: number, tx: number, ty: number): Dir {
+  if (tx > x) return 0;
+  if (ty > y) return 1;
+  if (tx < x) return 2;
+  return 3;
+}
+
+/** Base dos agentes: guarda o pensamento da última decisão. */
+abstract class ThinkingAgent implements Agent {
   thought = '';
 
-  decide(s: Senses): Action {
-    if (s.percepts.glitter && !s.hasGold) return this.say('Brilho! Pegando o ouro.', 'grab');
-    const r = Math.random();
-    const a: Action = r < 0.6 ? 'forward' : r < 0.8 ? 'left' : 'right';
-    return this.say('Escolhendo uma ação qualquer...', a);
-  }
+  abstract decide(s: Senses): Action;
 
-  beliefs() {
+  beliefs(): Map<string, CellBelief> | null {
     return null;
   }
 
@@ -87,13 +92,29 @@ class RandomAgent implements Agent {
   }
 }
 
-export class ReasoningAgent implements Agent {
-  thought = '';
+class RandomAgent extends ThinkingAgent {
+  decide(s: Senses): Action {
+    if (s.percepts.glitter && !s.hasGold) return this.say('Brilho! Pegando o ouro.', 'grab');
+    const r = Math.random();
+    const a: Action = r < 0.6 ? 'forward' : r < 0.8 ? 'left' : 'right';
+    return this.say('Escolhendo uma ação qualquer...', a);
+  }
+}
+
+/** O que o agente sabe sobre o Wumpus e por onde pode andar sem risco, a cada decisão. */
+interface Situation {
+  here: string;
+  candidates: Set<string>; // salas onde o Wumpus ainda pode estar
+  walkable: (k: string) => boolean; // visitada ou comprovadamente segura
+}
+
+export class ReasoningAgent extends ThinkingAgent {
   protected kb: Knowledge;
   private mode: 'logic' | 'bayes';
   private pendingShot: { from: Cell; dir: Dir } | null = null;
 
   constructor(size: number, pitProbability: number, mode: 'logic' | 'bayes') {
+    super();
     this.kb = new Knowledge(size, pitProbability);
     this.mode = mode;
   }
@@ -103,14 +124,10 @@ export class ReasoningAgent implements Agent {
   }
 
   decide(s: Senses): Action {
-    const kb = this.kb;
-    const p = s.percepts;
-    kb.observe(s.x, s.y, p.breeze, p.stench, p.scream);
-    if (this.pendingShot && !p.scream) kb.arrowMissed(this.pendingShot.from, this.pendingShot.dir);
-    this.pendingShot = null;
+    this.learn(s);
 
     // 1. Ouro aqui? Pega.
-    if (p.glitter && !s.hasGold) return this.say('Brilho! O ouro está aqui.', 'grab');
+    if (s.percepts.glitter && !s.hasGold) return this.say('Brilho! O ouro está aqui.', 'grab');
 
     // 2. Com o ouro: volta pelo caminho conhecido (chegar na entrada com ele é a vitória).
     if (s.hasGold) return this.goHome(s, 'Tenho o ouro, voltando para a entrada.');
@@ -118,46 +135,72 @@ export class ReasoningAgent implements Agent {
     return this.explore(s);
   }
 
+  /** Registra as percepções; se o último tiro não fez o Wumpus gritar, a linha do tiro está limpa. */
+  private learn(s: Senses) {
+    const p = s.percepts;
+    this.kb.observe(s.x, s.y, p.breeze, p.stench, p.scream);
+    if (this.pendingShot && !p.scream) this.kb.arrowMissed(this.pendingShot.from, this.pendingShot.dir);
+    this.pendingShot = null;
+  }
+
+  protected situation(s: Senses): Situation {
+    const kb = this.kb;
+    const candidates = kb.wumpusCandidates();
+    return { here: key(s.x, s.y), candidates, walkable: (k) => kb.visited.has(k) || kb.safe(k, candidates) };
+  }
+
   /** Decide para onde ir quando ainda não tem o ouro. */
   protected explore(s: Senses): Action {
     const kb = this.kb;
-    const here = key(s.x, s.y);
-    const candidates = kb.wumpusCandidates();
-    const safe = (k: string) => kb.safe(k, candidates);
-    const walkable = (k: string) => kb.visited.has(k) || safe(k);
+    const sit = this.situation(s);
 
     // 3. Explora a sala segura não visitada mais próxima.
-    const safeTargets = kb.allCells().filter((k) => !kb.visited.has(k) && safe(k));
-    const toSafe = this.route(here, new Set(safeTargets), walkable);
-    if (toSafe) return this.walk(s, toSafe, `${fmt(toSafe[toSafe.length - 1])} é segura, indo explorar.`);
+    const safeTargets = kb.allCells().filter((k) => !kb.visited.has(k) && kb.safe(k, sit.candidates));
+    const toSafe = this.route(sit.here, new Set(safeTargets), sit.walkable);
+    if (toSafe) return this.walk(s, toSafe, `${cellName(toSafe[toSafe.length - 1])} é segura, indo explorar.`);
 
     // 4. Sem salas seguras: tenta abrir caminho matando o Wumpus.
-    if (s.hasArrow && candidates.size > 0) {
-      const shot = this.planShot(s, candidates, walkable);
+    if (s.hasArrow && sit.candidates.size > 0) {
+      const shot = this.planShot(s, sit);
       if (shot) return shot;
     }
 
     // 5. Sem sala segura e sem como desistir: precisa arriscar uma sala da fronteira.
-    const options = this.frontier(candidates);
+    return this.gamble(s, sit);
+  }
+
+  /** Escolhe a sala da fronteira menos perigosa; a distância pelas salas visitadas desempata. */
+  private gamble(s: Senses, sit: Situation): Action {
+    const options = this.frontier(sit.candidates);
     if (!options.length) return this.idle();
-    // Distância pelas salas já visitadas: desempate entre opções de mesmo risco (vai na mais perto)
-    const paths = new Map(options.map((k) => [k, this.route(here, new Set([k]), (c) => kb.visited.has(c))!]));
+    const paths = new Map(options.map((k) => [k, this.route(sit.here, new Set([k]), (c) => this.kb.visited.has(c))!]));
     const dist = (k: string) => paths.get(k)!.length;
-    if (this.mode === 'bayes') {
-      const beliefs = kb.beliefs();
-      const risk = (k: string) => riskOf(beliefs.get(k)!);
-      const target = options.sort((a, b) => risk(a) - risk(b) || dist(a) - dist(b))[0];
-      return this.walk(s, paths.get(target)!, `Nenhuma sala é garantida. ${fmt(target)} tem o menor risco (${pct(risk(target))}), arriscando.`);
-    }
-    // Agente lógico não usa probabilidades. A lógica só diz que estas salas "não são perigo certo";
-    // para escolher entre elas, conta os indícios (brisas e fedores) ao redor, uma regra prática.
-    const evidence = (k: string) =>
+    const danger = this.mode === 'bayes' ? this.riskMeasure() : this.evidenceCount();
+    const target = options.sort((a, b) => danger(a) - danger(b) || dist(a) - dist(b))[0];
+    const thought =
+      this.mode === 'bayes'
+        ? `Nenhuma sala é garantida. ${cellName(target)} tem o menor risco (${percent(danger(target))}), arriscando.`
+        : `Nenhuma sala é comprovadamente segura. Chutando ${cellName(target)}, a com menos indícios de perigo.`;
+    return this.walk(s, paths.get(target)!, thought);
+  }
+
+  /** Agente probabilístico: P(poço) + P(Wumpus) de cada sala. */
+  private riskMeasure() {
+    const beliefs = this.kb.beliefs();
+    return (k: string) => riskOf(beliefs.get(k)!);
+  }
+
+  /**
+   * Agente lógico não usa probabilidades. A lógica só diz que as salas "não são perigo certo";
+   * para escolher entre elas, conta os indícios (brisas e fedores) ao redor, uma regra prática.
+   */
+  private evidenceCount() {
+    const kb = this.kb;
+    return (k: string) =>
       kb.neighbors(k).reduce((n, v) => {
         const o = kb.visited.get(v);
         return n + (o?.breeze ? 1 : 0) + (o?.stench && !kb.wumpusDead ? 1 : 0);
       }, 0);
-    const target = options.sort((a, b) => evidence(a) - evidence(b) || dist(a) - dist(b))[0];
-    return this.walk(s, paths.get(target)!, `Nenhuma sala é comprovadamente segura. Chutando ${fmt(target)}, a com menos indícios de perigo.`);
   }
 
   /** Salas da fronteira que não são perigo certo (poço deduzido ou Wumpus localizado). */
@@ -174,29 +217,36 @@ export class ReasoningAgent implements Agent {
     return this.say('Todas as salas que restam são perigo certo. Sem jogadas possíveis.', 'left');
   }
 
-  /** Vai até uma sala alinhada com o Wumpus e atira. */
-  protected planShot(s: Senses, candidates: Set<string>, walkable: (k: string) => boolean): Action | null {
-    const kb = this.kb;
-    const here = key(s.x, s.y);
-    // Chega aqui só sem sala segura para explorar. Atira se souber onde ele está ou se restarem
-    // até 3 salas possíveis: mesmo errando, a falta do grito limpa a linha do tiro.
-    const targets = candidates.size === 1 ? [...candidates] : candidates.size <= 3 ? [...candidates] : [];
+  /**
+   * Vai até uma sala alinhada com o Wumpus e atira. Chega aqui só sem sala segura para explorar.
+   * Atira se souber onde ele está ou se restarem até 3 salas possíveis: mesmo errando, a falta do
+   * grito limpa a linha do tiro.
+   */
+  protected planShot(s: Senses, sit: Situation): Action | null {
+    const { candidates } = sit;
+    const targets = candidates.size <= 3 ? [...candidates] : [];
+    const certain = candidates.size === 1 ? 'Deduzi que o Wumpus está em' : 'O Wumpus pode estar em';
     for (const target of targets) {
-      const [tx, ty] = target.split(',').map(Number);
-      const spots = [...kb.visited.keys()].filter((k) => {
-        const [x, y] = k.split(',').map(Number);
-        return x === tx || y === ty;
-      });
-      const path = this.route(here, new Set(spots), walkable);
+      const path = this.route(sit.here, new Set(this.firingSpots(target)), sit.walkable);
       if (!path) continue;
-      const certain = candidates.size === 1 ? 'Deduzi que o Wumpus está em' : 'O Wumpus pode estar em';
-      if (path.length > 1) return this.walk(s, path, `${certain} ${fmt(target)}. Indo para a linha de tiro.`);
-      const want = this.dirTo(s.x, s.y, tx, ty);
-      if (s.dir !== want) return this.turn(s.dir, want, `${certain} ${fmt(target)}. Mirando.`);
+      const aim = `${certain} ${cellName(target)}.`;
+      if (path.length > 1) return this.walk(s, path, `${aim} Indo para a linha de tiro.`);
+      const [tx, ty] = parseKey(target);
+      const want = dirTo(s.x, s.y, tx, ty);
+      if (s.dir !== want) return this.turn(s.dir, want, `${aim} Mirando.`);
       this.pendingShot = { from: { x: s.x, y: s.y }, dir: s.dir };
-      return this.say(`${certain} ${fmt(target)}. Atirando!`, 'shoot');
+      return this.say(`${aim} Atirando!`, 'shoot');
     }
     return null;
+  }
+
+  /** Salas visitadas na mesma linha ou coluna do alvo (de onde a flecha o alcança). */
+  private firingSpots(target: string) {
+    const [tx, ty] = parseKey(target);
+    return [...this.kb.visited.keys()].filter((k) => {
+      const [x, y] = parseKey(k);
+      return x === tx || y === ty;
+    });
   }
 
   protected goHome(s: Senses, thought: string): Action {
@@ -225,29 +275,30 @@ export class ReasoningAgent implements Agent {
     return null;
   }
 
-  /** Converte o próximo passo de um caminho em ação (girar ou andar). */
-  protected walk(s: Senses, path: string[], thought: string): Action {
-    const [nx, ny] = path[1].split(',').map(Number);
-    const want = this.dirTo(s.x, s.y, nx, ny);
-    if (s.dir !== want) return this.turn(s.dir, want, thought);
-    return this.say(thought, 'forward');
+  /** Direção do primeiro passo de um caminho. */
+  protected firstStepDir(s: Senses, path: string[]): Dir {
+    const [nx, ny] = parseKey(path[1]);
+    return dirTo(s.x, s.y, nx, ny);
   }
 
-  protected dirTo(x: number, y: number, tx: number, ty: number): Dir {
-    if (tx > x) return 0;
-    if (ty > y) return 1;
-    if (tx < x) return 2;
-    return 3;
+  /** Converte o próximo passo de um caminho em ação (girar ou andar). */
+  protected walk(s: Senses, path: string[], thought: string): Action {
+    const want = this.firstStepDir(s, path);
+    if (s.dir !== want) return this.turn(s.dir, want, thought);
+    return this.say(thought, 'forward');
   }
 
   protected turn(dir: Dir, want: Dir, thought: string): Action {
     return this.say(thought, (want - dir + 4) % 4 === 3 ? 'right' : 'left');
   }
+}
 
-  protected say(thought: string, a: Action) {
-    this.thought = thought;
-    return a;
-  }
+/** Sala candidata do agente genético, com a nota dada pela fórmula. */
+interface ScoredCell {
+  cell: string;
+  path: string[];
+  score: number;
+  safe: boolean;
 }
 
 /**
@@ -271,67 +322,83 @@ export class GeneticAgent extends ReasoningAgent {
   }
 
   protected explore(s: Senses): Action {
-    const kb = this.kb;
-    const size = kb.size;
-    const here = key(s.x, s.y);
-    const candidates = kb.wumpusCandidates();
-    const walkable = (k: string) => kb.visited.has(k) || kb.safe(k, candidates);
-    const beliefs = kb.beliefs();
-    const g = this.genome;
-
-    // Mantém o alvo enquanto nada novo foi aprendido (mesmas salas visitadas, mesmo estado do Wumpus)
-    const plan = this.plan;
-    if (plan && plan.known === kb.visited.size && plan.dead === kb.wumpusDead && plan.candidates === candidates.size) {
-      const path = this.frontier(candidates).includes(plan.target) ? this.route(here, new Set([plan.target]), walkable) : null;
-      if (path) return this.walk(s, path, `Seguindo para ${fmt(plan.target)}, escolhida pela fórmula evoluída.`);
-    }
+    const sit = this.situation(s);
+    const kept = this.followPlan(s, sit);
+    if (kept) return kept;
     this.plan = null;
 
-    // Pontua cada sala da fronteira
-    let best: { cell: string; path: string[]; score: number; safe: boolean } | null = null;
-    let anySafe = false;
-    for (const cell of this.frontier(candidates)) {
-      const path = this.route(here, new Set([cell]), walkable);
-      if (!path) continue;
-      const b = beliefs.get(cell)!;
-      const safe = kb.safe(cell, candidates);
-      anySafe ||= safe;
-      const [cx, cy] = cell.split(',').map(Number);
-      const neighbors = kb.neighbors(cell);
-      const [nx, ny] = path[1].split(',').map(Number);
-      const diff = (this.dirTo(s.x, s.y, nx, ny) - s.dir + 4) % 4;
-      const turns = diff === 0 ? 0 : diff === 2 ? 1 : 0.5;
-      const features = [
-        riskOf(b),
-        (path.length - 1) / size,
-        safe ? 1 : 0,
-        neighbors.filter((n) => !kb.visited.has(n)).length / 4,
-        (cx + cy) / (2 * size),
-        turns,
-        neighbors.filter((n) => kb.visited.get(n)?.breeze).length / 4,
-        neighbors.filter((n) => kb.visited.get(n)?.stench).length / 4,
-      ];
-      const score = features.reduce((sum, f, i) => sum + f * g[i], 0);
-      if (!best || score > best.score) best = { cell, path, score, safe };
+    const beliefs = this.kb.beliefs();
+    const { best, anySafe } = this.bestCell(s, sit, beliefs);
+    if (this.prefersShooting(s, sit.candidates, best, anySafe)) {
+      const shot = this.planShot(s, sit);
+      if (shot) return shot;
     }
-
-    // Pontua a opção de atirar
-    if (s.hasArrow && candidates.size > 0 && candidates.size <= 3) {
-      const [bias, certainty, safeLeft] = g.slice(CELL_GENES.length);
-      const shootScore = bias + certainty * (1 / candidates.size) + safeLeft * (anySafe ? 1 : 0);
-      if (!best || shootScore > best.score) {
-        const shot = this.planShot(s, candidates, walkable);
-        if (shot) return shot;
-      }
-    }
-
     if (!best) return this.idle();
-    this.plan = { target: best.cell, known: kb.visited.size, dead: kb.wumpusDead, candidates: candidates.size };
+
+    this.plan = { target: best.cell, known: this.kb.visited.size, dead: this.kb.wumpusDead, candidates: sit.candidates.size };
     const risk = riskOf(beliefs.get(best.cell)!);
     return this.walk(
       s,
       best.path,
-      `Pela fórmula evoluída, ${fmt(best.cell)} é a melhor opção (nota ${best.score.toFixed(2)}, ${best.safe ? 'segura' : `risco ${pct(risk)}`}).`,
+      `Pela fórmula evoluída, ${cellName(best.cell)} é a melhor opção (nota ${best.score.toFixed(2)}, ${best.safe ? 'segura' : `risco ${percent(risk)}`}).`,
     );
+  }
+
+  /** Mantém o alvo enquanto nada novo foi aprendido (mesmas salas visitadas, mesmo estado do Wumpus). */
+  private followPlan(s: Senses, sit: Situation): Action | null {
+    const plan = this.plan;
+    const kb = this.kb;
+    if (!plan || plan.known !== kb.visited.size || plan.dead !== kb.wumpusDead || plan.candidates !== sit.candidates.size) return null;
+    if (!this.frontier(sit.candidates).includes(plan.target)) return null;
+    const path = this.route(sit.here, new Set([plan.target]), sit.walkable);
+    return path ? this.walk(s, path, `Seguindo para ${cellName(plan.target)}, escolhida pela fórmula evoluída.`) : null;
+  }
+
+  /** Pontua cada sala alcançável da fronteira e devolve a melhor. */
+  private bestCell(s: Senses, sit: Situation, beliefs: Map<string, CellBelief>) {
+    let best: ScoredCell | null = null;
+    let anySafe = false;
+    for (const cell of this.frontier(sit.candidates)) {
+      const path = this.route(sit.here, new Set([cell]), sit.walkable);
+      if (!path) continue;
+      const safe = this.kb.safe(cell, sit.candidates);
+      anySafe ||= safe;
+      const score = this.weigh(this.cellFeatures(s, cell, path, safe, beliefs.get(cell)!));
+      if (!best || score > best.score) best = { cell, path, score, safe };
+    }
+    return { best, anySafe };
+  }
+
+  /** As características de CELL_GENES (genome.ts), na mesma ordem. */
+  private cellFeatures(s: Senses, cell: string, path: string[], safe: boolean, belief: CellBelief): number[] {
+    const kb = this.kb;
+    const size = kb.size;
+    const [cx, cy] = parseKey(cell);
+    const neighbors = kb.neighbors(cell);
+    const share = (test: (n: string) => boolean) => neighbors.filter(test).length / 4;
+    const diff = (this.firstStepDir(s, path) - s.dir + 4) % 4;
+    const turns = diff === 0 ? 0 : diff === 2 ? 1 : 0.5;
+    return [
+      riskOf(belief),
+      (path.length - 1) / size,
+      safe ? 1 : 0,
+      share((n) => !kb.visited.has(n)),
+      (cx + cy) / (2 * size),
+      turns,
+      share((n) => !!kb.visited.get(n)?.breeze),
+      share((n) => !!kb.visited.get(n)?.stench),
+    ];
+  }
+
+  private weigh(features: number[]) {
+    return features.reduce((sum, f, i) => sum + f * this.genome[i], 0);
+  }
+
+  /** Nota da opção "atirar" (SHOOT_GENES), comparada com a da melhor sala. */
+  private prefersShooting(s: Senses, candidates: Set<string>, best: ScoredCell | null, anySafe: boolean) {
+    if (!s.hasArrow || candidates.size === 0 || candidates.size > 3) return false;
+    const [bias, certainty, safeLeft] = this.genome.slice(CELL_GENES.length);
+    const shootScore = bias + certainty * (1 / candidates.size) + safeLeft * (anySafe ? 1 : 0);
+    return !best || shootScore > best.score;
   }
 }

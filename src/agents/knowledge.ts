@@ -1,6 +1,6 @@
 // Base de conhecimento do agente: tudo o que ele deduz a partir das percepções.
 // O agente NÃO enxerga o mapa — só sabe onde já esteve e o que sentiu em cada sala.
-import { DIR_VEC, key, type Cell, type Dir } from '../game/world';
+import { DIR_VEC, gridNeighbors, inGrid, key, parseKey, type Cell, type Dir } from '../game/world';
 
 export interface CellBelief {
   pit: number; // probabilidade de poço (0 a 1)
@@ -21,6 +21,25 @@ interface Observation {
 // Acima disso a enumeração exata fica lenta; usa uma estimativa
 const MAX_ENUMERATION = 16;
 
+/**
+ * P(poço) exata em cada sala da fronteira: soma o peso de todas as combinações de poços que explicam
+ * todas as brisas (`breezy[i]` = vizinhas da fronteira de cada sala com brisa), com a priori `p` por sala.
+ */
+function enumeratePits(frontier: string[], breezy: string[][], p: number): number[] {
+  const idx = new Map(frontier.map((k, i) => [k, i]));
+  const masks = breezy.map((ns) => ns.reduce((m, n) => m | (1 << idx.get(n)!), 0));
+  const weights = new Array<number>(frontier.length).fill(0);
+  let total = 0;
+  for (let combo = 0; combo < 1 << frontier.length; combo++) {
+    if (!masks.every((m) => (combo & m) !== 0)) continue; // não explica alguma brisa
+    let w = 1;
+    for (let i = 0; i < frontier.length; i++) w *= combo & (1 << i) ? p : 1 - p;
+    total += w;
+    for (let i = 0; i < frontier.length; i++) if (combo & (1 << i)) weights[i] += w;
+  }
+  return weights.map((w) => (total ? w / total : p));
+}
+
 export class Knowledge {
   readonly size: number;
   readonly pitPrior: number;
@@ -34,11 +53,8 @@ export class Knowledge {
   }
 
   neighbors(k: string): string[] {
-    const [x, y] = k.split(',').map(Number);
-    return Object.values(DIR_VEC)
-      .map(([dx, dy]) => [x + dx, y + dy])
-      .filter(([nx, ny]) => nx >= 0 && ny >= 0 && nx < this.size && ny < this.size)
-      .map(([nx, ny]) => key(nx, ny));
+    const [x, y] = parseKey(k);
+    return gridNeighbors(this.size, x, y).map((n) => key(n.x, n.y));
   }
 
   allCells(): string[] {
@@ -56,7 +72,7 @@ export class Knowledge {
   arrowMissed(from: Cell, dir: Dir) {
     const [dx, dy] = DIR_VEC[dir];
     let { x, y } = from;
-    while (x + dx >= 0 && y + dy >= 0 && x + dx < this.size && y + dy < this.size) {
+    while (inGrid(this.size, x + dx, y + dy)) {
       x += dx;
       y += dy;
       this.noWumpus.add(key(x, y));
@@ -117,18 +133,7 @@ export class Knowledge {
     for (const k of unknown) result.set(k, p); // fora da fronteira vale a probabilidade a priori
 
     if (frontier.length <= MAX_ENUMERATION) {
-      const idx = new Map(frontier.map((k, i) => [k, i]));
-      const masks = breezy.map((ns) => ns.reduce((m, n) => m | (1 << idx.get(n)!), 0));
-      const weights = new Array(frontier.length).fill(0);
-      let total = 0;
-      for (let combo = 0; combo < 1 << frontier.length; combo++) {
-        if (!masks.every((m) => (combo & m) !== 0)) continue; // não explica alguma brisa
-        let w = 1;
-        for (let i = 0; i < frontier.length; i++) w *= combo & (1 << i) ? p : 1 - p;
-        total += w;
-        for (let i = 0; i < frontier.length; i++) if (combo & (1 << i)) weights[i] += w;
-      }
-      frontier.forEach((k, i) => result.set(k, total ? weights[i] / total : p));
+      enumeratePits(frontier, breezy, p).forEach((prob, i) => result.set(frontier[i], prob));
     } else {
       // Estimativa: uma brisa com u vizinhos desconhecidos dá ~1/u de chance a cada um
       for (const ns of breezy) for (const n of ns) result.set(n, Math.max(result.get(n)!, 1 / ns.length));

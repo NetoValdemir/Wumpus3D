@@ -8,42 +8,31 @@
 // com a diferença pareada e o intervalo de 95%, para decidir se vale trocar o genoma padrão.
 import { train } from '../src/agents/genetic';
 import { BAYES_LIKE_GENOME, DEFAULT_GENOME } from '../src/agents/genome';
-import { createAgent, sensesOf } from '../src/agents/agents';
+import { playMaps } from '../src/agents/benchmark';
 import { arenaMaps, mulberry32, seedFromText } from '../src/arena/rng';
-import { WumpusWorld, type MapLayout } from '../src/game/world';
+import type { MapLayout } from '../src/game/world';
 import { pairedDiff } from '../src/report/report';
+import { parseFlags } from './args';
 
 function parseArgs(argv: string[]) {
-  const opts = { seed: 'treino', start: 'bayes', pop: 24, gens: 20, maps: 120, sizes: [4], validation: 0, pits: 0.2, compare: 2000 };
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    const next = () => argv[++i];
-    if (a === '--seed') opts.seed = next();
-    else if (a === '--inicio') opts.start = next();
-    else if (a === '--pop') opts.pop = Number(next());
-    else if (a === '--geracoes') opts.gens = Number(next());
-    else if (a === '--mapas') opts.maps = Number(next());
-    else if (a === '--tamanhos' || a === '--size') opts.sizes = next().split(',').map(Number);
-    else if (a === '--validacao') opts.validation = Number(next());
-    else if (a === '--pits') opts.pits = Number(next());
-    else if (a === '--comparar') opts.compare = Number(next());
-  }
-  return opts;
+  return parseFlags(argv, { seed: 'treino', start: 'bayes', pop: 24, gens: 20, maps: 120, sizes: [4], validation: 0, pits: 0.2, compare: 2000 }, {
+    '--seed': (o, next) => (o.seed = next()),
+    '--inicio': (o, next) => (o.start = next()),
+    '--pop': (o, next) => (o.pop = Number(next())),
+    '--geracoes': (o, next) => (o.gens = Number(next())),
+    '--mapas': (o, next) => (o.maps = Number(next())),
+    '--tamanhos': (o, next) => (o.sizes = next().split(',').map(Number)),
+    '--size': (o, next) => (o.sizes = next().split(',').map(Number)),
+    '--validacao': (o, next) => (o.validation = Number(next())),
+    '--pits': (o, next) => (o.pits = Number(next())),
+    '--comparar': (o, next) => (o.compare = Number(next())),
+  });
 }
 
 /** Pontuação de cada partida, vitórias e uso da flecha nos mapas dados. */
 function play(id: 'bayes' | 'genetic', genome: number[] | undefined, maps: MapLayout[]) {
-  let wins = 0, shots = 0;
-  const scores = maps.map((layout) => {
-    const world = WumpusWorld.fromLayout(layout);
-    const agent = createAgent(id, world.size, world.pitProbability, genome);
-    while (!world.gameOver) world.step(agent.decide(sensesOf(world)));
-    if (world.status === 'won') wins++;
-    if (!world.hasArrow) shots++;
-    return world.score;
-  });
+  const { scores, wins, shots, avg } = playMaps(id, genome, maps);
   const n = maps.length;
-  const avg = scores.reduce((s, v) => s + v, 0) / n;
   return { scores, text: `${avg.toFixed(1)} pts, ${((100 * wins) / n).toFixed(1)}% vitórias, tiro em ${((100 * shots) / n).toFixed(1)}%` };
 }
 

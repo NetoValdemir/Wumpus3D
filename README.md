@@ -170,14 +170,16 @@ Os PDFs de `docs/` são gerados por `scripts/docs/gerar.sh` a partir do código 
 
 ```
 src/
+├── main.ts          # ponto de entrada: liga teclado, botões e painéis aos módulos de ui/
 ├── game/world.ts    # regras do jogo (puro TypeScript, sem 3D)
+├── render/view.ts   # cena 3D com Three.js (lê o estado do mundo e desenha)
 ├── agents/
 │   ├── knowledge.ts # base de conhecimento: deduções lógicas e probabilidades
 │   ├── agents.ts    # agentes aleatório, lógico, probabilístico e genético
 │   ├── genome.ts    # genes (pesos) do agente genético e o genoma padrão
 │   ├── genetic.ts   # algoritmo genético (seleção, cruzamento, mutação)
 │   ├── ga.worker.ts # roda o treino em segundo plano
-│   └── benchmark.ts # roda várias partidas para medir um agente
+│   └── benchmark.ts # partidas rápidas sem 3D (treino, medição e scripts)
 ├── arena/
 │   ├── protocol.ts  # contrato com os agentes externos (registerAgent, sentidos, decisão)
 │   ├── sandbox.ts   # roda agentes externos isolados num Web Worker
@@ -186,16 +188,23 @@ src/
 │   ├── ranking.ts   # estatísticas e ordenação do ranking
 │   ├── rng.ts       # mapas reproduzíveis a partir de uma semente
 │   └── ui.ts        # tela da Arena
-├── storage.ts       # mapas, genoma e agentes importados salvos no navegador
+├── report/          # relatórios, gráficos, partidas humanas e tela de Análise
+├── ui/
+│   ├── state.ts     # estado da partida em andamento e campos de configuração
+│   ├── game.ts      # controle da partida: ação, passo do agente, recomeçar, câmera
+│   ├── hud.ts       # placares, percepções, pensamento do agente e fim de jogo
+│   ├── players.ts   # quem joga: nomes, seletor e criação do agente
+│   ├── *-panel.ts   # seções do painel: mapas, agente genético, avaliação, minhas partidas
+│   └── dom.ts       # utilitários de tela (mensagens, download, copiar, confirmar)
+├── util/format.ts   # formatação sem DOM (porcentagens, números, HTML, nomes de arquivo)
+├── storage.ts       # mapas, genoma, agentes importados e partidas salvos no navegador
+└── style.css        # interface sobre o canvas
 scripts/arena.ts     # arena na linha de comando (npm run arena)
 scripts/treinar.ts   # treino do agente genético na linha de comando (npm run treinar)
 scripts/medir.ts     # tabela de desempenho dos agentes (npm run medir)
 scripts/docs/        # geradores dos PDFs de docs/
 tests/               # testes automatizados (vitest)
 agents/              # agentes da competição (um arquivo .js cada)
-├── render/view.ts   # cena 3D com Three.js (lê o estado do mundo e desenha)
-├── main.ts          # teclado, botões e HUD
-└── style.css        # interface sobre o canvas
 ```
 
 A lógica fica separada da renderização. Assim você pode trocar o visual sem mexer nas regras, ou colocar um agente de IA jogando sozinho chamando `world.step(acao)`.
